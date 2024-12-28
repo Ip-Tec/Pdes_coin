@@ -19,7 +19,7 @@ Embrace the future of digital finance with Pdes Coin.
 
 ## Project Root Directory
 
-pdes-crypto/
+pdes-crypto
 ├── backend/
 ├── web/
 ├── mobile/
@@ -28,7 +28,7 @@ pdes-crypto/
 
 ## Backend (Flask)
 
-backend/
+backend
 ├── app/
 │   ├── __init__.py         # App factory and initialization
 │   ├── routes/
@@ -49,7 +49,7 @@ backend/
 
 ## Web Frontend (React.js)
 
-web/
+web
 ├── public/
 │   ├── index.html          # Main HTML file
 │   └── favicon.ico         # App favicon
@@ -71,7 +71,7 @@ web/
 
 ## Mobile App (React Native)
 
-mobile/
+mobile
 ├── android/                # Android-specific files
 ├── ios/                    # iOS-specific files
 ├── src/
@@ -91,7 +91,7 @@ mobile/
 
 ## Shared Code (Optional)
 
-shared/
+shared
 ├── constants/              # Shared constants (e.g., coin symbols, API URLs)
 │   └── index.js
 ├── hooks/                  # Shared hooks (React custom hooks)
