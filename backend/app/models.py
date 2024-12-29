@@ -15,8 +15,6 @@ class User(db.Model):
     ), onupdate=db.func.current_timestamp())
 
 # Transaction model
-
-
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -29,10 +27,9 @@ class Transaction(db.Model):
     ), onupdate=db.func.current_timestamp())
 
 # Crypto model
-
-
 class Crypto(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    crypto_name = db.Column(db.String(100), nullable=False)
     amount = db.Column(db.Float, nullable=False)
+    crypto_name = db.Column(db.String(100), nullable=False)
+    account_address= db.Column(db.String(100), unique=True, nullable=False)

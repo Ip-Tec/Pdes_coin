@@ -9,9 +9,7 @@ def get_users():
     return jsonify({"users": []})
 
 # User referral router
-
-
-@users_bp.route("/referral", methods=["POST"])
+@users_bp.route("/referral", methods=["GET", "POST"])
 def create_referral():
     # Implement logic to create a referral
     # For now, let's return a dummy response
