@@ -1,4 +1,6 @@
 venv/
+instance/
+migrations/
 __pycache__/
 node_modules/
 app/__pycache__/

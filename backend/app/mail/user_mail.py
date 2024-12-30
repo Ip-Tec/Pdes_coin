@@ -53,7 +53,6 @@ def send_password_reset_email(recipient, reset_link):
     msg.body = f"Hello,\n\nClick the link below to reset your password:\n{reset_link}\n\nIf you did not request a password reset, please ignore this email."
     mail.send(msg)
 
-
 def send_delete_account_email(recipient, reset_link):
     """
     Send password reset email with a link.

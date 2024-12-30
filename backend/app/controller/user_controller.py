@@ -1,7 +1,8 @@
 from app import db
 from app.models import User
 from flask import request, jsonify
-from mail.user_mail import send_password_reset_email, send_register_email
+from app.key_gen import generate_referral_code
+from app.mail.user_mail import send_password_reset_email, send_register_email
 from werkzeug.security import generate_password_hash, check_password_hash
 
 class UserController:
@@ -33,7 +34,7 @@ class UserController:
         email = data.get("email")
         username = data.get("username")
         password = data.get("password")
-        referral_code = data.get("referral_code")
+        referral_code = generate_referral_code()
         
         if User.query.filter_by(email=email).first():
             return jsonify({"message": "Email already registered"}), 400
@@ -95,7 +96,7 @@ class UserController:
         
         # TODO: Implement link generation logic (e.g., using JWT or a token system)
         reset_link = f"https://pdes.xyz/auth/reset-password?email={email}"
-        
+
         try:
             send_password_reset_email(recipient=email, reset_link=reset_link)
             return jsonify({"message": "Password reset link sent to your email", "link": reset_link}), 200
