@@ -1,14 +1,19 @@
+import os
 from flask_cors import CORS
+from dotenv import load_dotenv
 from flask import Flask, jsonify
 from flask_migrate import Migrate
+from app.key_gen import generate_key
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.exceptions import HTTPException
 
 db = SQLAlchemy()
 migrate = Migrate()
+load_dotenv()
 
 def create_app():
     app = Flask(__name__)
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY")
     
     # Override default exception handler
     @app.errorhandler(Exception)

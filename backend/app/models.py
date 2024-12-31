@@ -9,7 +9,7 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
 
     # Referral system
-    refferral_code = db.Column(db.String(16), unique=True, nullable=True)
+    referral_code = db.Column(db.String(16), unique=True, nullable=True)  # Updated field name
     referrer_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
     referrals = db.relationship('User', backref=db.backref('referrer', remote_side=[id]), lazy=True)
 
@@ -19,8 +19,7 @@ class User(db.Model):
 
     # Timestamps
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
-    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(
-        ), onupdate=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
 # Transaction model
 class Transaction(db.Model):
