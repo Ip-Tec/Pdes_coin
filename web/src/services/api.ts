@@ -47,4 +47,18 @@ export const loginUser = async (loginData: {
   }
 };
 
+// dashboard Function to get user details and transactions
+export const getDashboard = async () => {
+  try {
+    const response = await API.get("/auth/dashboard");
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data; // Safely access the error response data
+      throw new Error(errorData?.message || "Login failed");
+    }
+    throw new Error("Network error. Please try again.");
+  }
+}
+
 export default API;
