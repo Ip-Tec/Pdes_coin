@@ -16,7 +16,6 @@ import Navigation from "./components/NavigationBar";
 import Activity from "./pages/Activity";
 import Withdraw from "./pages/Withdraw";
 import Profile from "./pages/Profile";
-import Upload from "./pages/Upload";
 
 const App: React.FC = () => {
   const DisplayNavbar: React.FC = () => {
@@ -31,7 +30,6 @@ const App: React.FC = () => {
         <DisplayNavbar />
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/up" element={<Upload  />} />
           <Route
             path="/wallet"
             element={

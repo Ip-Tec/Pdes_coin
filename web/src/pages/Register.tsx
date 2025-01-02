@@ -1,10 +1,13 @@
 import logo from "../assets/pdes.png";
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { registerUser } from "../services/api";
+import { useAuth } from "../contexts/AuthContext";
 import InputField from "../components/InputField";
 
 const Register: React.FC = () => {
+    const { isAuth } = useAuth();
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -21,6 +24,10 @@ const Register: React.FC = () => {
 
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate(); // Initialize useNavigate
+
+  if (isAuth) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const validateForm = () => {
     let isValid = true;
@@ -94,7 +101,7 @@ const Register: React.FC = () => {
           setErrorMessage("An unexpected error occurred. Please try again.");
         }
       } finally {
-        setLoading(false); // Hide loading overlay
+        setLoading(false);
       }
     }
   };

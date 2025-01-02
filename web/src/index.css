@@ -31,3 +31,28 @@
 .animate-zoomInOut {
   animation: zoomInOut 1.5s infinite;
 }
+
+/* Hide scrollbar but allow scrolling */
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* For Chrome, Safari, and Edge */
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* For IE and Edge */
+  scrollbar-width: none;     /* For Firefox */
+}
+
+@keyframes logoMove {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(100px); 
+  }
+  100% {
+    transform: translateX(0); 
+  }
+}
+
+.animate-logo {
+  animation: logoMove 1s ease-in-out;
+}

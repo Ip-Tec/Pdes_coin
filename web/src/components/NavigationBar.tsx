@@ -12,7 +12,7 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-lg lg:hidden">
+    <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 shadow-lg">
       <div className="flex justify-around items-center py-3">
         {navItems.map((item, index) => (
           <Link

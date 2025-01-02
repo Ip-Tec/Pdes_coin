@@ -9,7 +9,7 @@ const BalanceCard = () => {
           <p className="text-sm">Exp: 02/15</p>
         </div>
         <div className="flex items-center m-4 bg-transparent absolute bottom-0 right-0">
-          <button className="bg-secondary px-4 py-2 rounded-lg shadow-lg">
+          <button className="bg-secondary hover:bg-secondary-dark px-4 py-2 rounded-lg shadow-lg">
             Add Money
           </button>
         </div>

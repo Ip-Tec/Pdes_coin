@@ -2,7 +2,31 @@
 
 const TransactionList = () => {
   const transactions = [
-    { type: "Top up", amount: "+$100.00", time: "Today 1:53 PM", mode: "Deposit" },
+    { type: "Top up", amount: "+$100.00", time: "Today 1:53 PM", mode: "Deposit", icon: "🚀" },
+    { type: "Transfer", amount: "-$50.00", time: "Today 2:33 PM", mode: "Send" },
+    { type: "Received", amount: "+$50.00", time: "Today 3:32 PM", mode: "Deposit" },
+    { type: "Top up", amount: "+$20.00", time: "Jan 15, 5:15 AM", mode: "Deposit" },
+    { type: "Transfer", amount: "-$50.00", time: "Today 2:33 PM", mode: "Send" },
+    { type: "Received", amount: "+$50.00", time: "Today 3:32 PM", mode: "Deposit" },
+    { type: "Top up", amount: "+$20.00", time: "Jan 15, 5:15 AM", mode: "Deposit" },
+    { type: "Transfer", amount: "-$50.00", time: "Today 2:33 PM", mode: "Send" },
+    { type: "Received", amount: "+$50.00", time: "Today 3:32 PM", mode: "Deposit" },
+    { type: "Top up", amount: "+$20.00", time: "Jan 15, 5:15 AM", mode: "Deposit" },
+    { type: "Transfer", amount: "-$50.00", time: "Today 2:33 PM", mode: "Send" },
+    { type: "Received", amount: "+$50.00", time: "Today 3:32 PM", mode: "Deposit" },
+    { type: "Top up", amount: "+$20.00", time: "Jan 15, 5:15 AM", mode: "Deposit" },
+    { type: "Transfer", amount: "-$50.00", time: "Today 2:33 PM", mode: "Send" },
+    { type: "Received", amount: "+$50.00", time: "Today 3:32 PM", mode: "Deposit" },
+    { type: "Top up", amount: "+$20.00", time: "Jan 15, 5:15 AM", mode: "Deposit" },
+    { type: "Transfer", amount: "-$50.00", time: "Today 2:33 PM", mode: "Send" },
+    { type: "Received", amount: "+$50.00", time: "Today 3:32 PM", mode: "Deposit" },
+    { type: "Top up", amount: "+$20.00", time: "Jan 15, 5:15 AM", mode: "Deposit" },
+    { type: "Transfer", amount: "-$50.00", time: "Today 2:33 PM", mode: "Send" },
+    { type: "Received", amount: "+$50.00", time: "Today 3:32 PM", mode: "Deposit" },
+    { type: "Top up", amount: "+$20.00", time: "Jan 15, 5:15 AM", mode: "Deposit" },
+    { type: "Transfer", amount: "-$50.00", time: "Today 2:33 PM", mode: "Send" },
+    { type: "Received", amount: "+$50.00", time: "Today 3:32 PM", mode: "Deposit" },
+    { type: "Top up", amount: "+$20.00", time: "Jan 15, 5:15 AM", mode: "Deposit" },
     { type: "Transfer", amount: "-$50.00", time: "Today 2:33 PM", mode: "Send" },
     { type: "Received", amount: "+$50.00", time: "Today 3:32 PM", mode: "Deposit" },
     { type: "Top up", amount: "+$20.00", time: "Jan 15, 5:15 AM", mode: "Deposit" },
@@ -10,7 +34,7 @@ const TransactionList = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mt-6 text-black">
+      <div className="flex justify-between items-center mt-6 text-black min-h-fit">
         <h3 className="text-lg font-bold">Transactions</h3>
         <a href="#" className="text-primary hover:underline">
           See All

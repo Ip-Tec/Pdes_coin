@@ -1,6 +1,7 @@
 import { useState } from "react";
 import logo from "../assets/pdes.png";
 import { loginUser } from "../services/api";
+import { Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import { useAuth } from "../contexts/AuthContext";
@@ -11,7 +12,11 @@ const Login: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, isAuth } = useAuth();
+
+  if (isAuth) {
+    return <Navigate to="/dashboard" replace />;
+  }
 
   const validateForm = () => {
     let isValid = true;
@@ -49,7 +54,7 @@ const Login: React.FC = () => {
     if (validateForm()) {
       try {
         const response = await loginUser(formData);
-        const token = response.token;        
+        const token = response.token;
         login(token); // Store token using context
         navigate("/dashboard");
       } catch (error: unknown) {

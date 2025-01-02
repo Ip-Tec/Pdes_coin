@@ -19,6 +19,7 @@ export default {
         },
         secondary: {
           DEFAULT: "#d67d34",
+          dark: "#b05f2a",
         },
         bgColor: {
           DEFAULT: "#00687E",
