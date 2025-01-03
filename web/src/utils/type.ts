@@ -7,11 +7,18 @@ export interface InputFieldProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 export interface User {
-  fullName: string;
+  id: number;
   email: string;
-  password: string;
-  confirmPassword: string;
+  full_name: string;
+  username: string;
+  balance: number;
+  crypto_balance: number;
+  referral_code: string | null;
+  total_referrals: number;
+  referral_reward: number;
+  created_at: string;
 }
+
 
 export interface Login {
   email: string;
@@ -22,4 +29,54 @@ export interface ErrorResponse {
   message: string;
   status?: number;
   error?: string;
+}
+
+export interface Balance {
+  id: number;
+  user_id: number;
+  balance: number;
+  crypto_balance: number;
+}
+
+export interface Transactions {
+  id: number;
+  user_id: number;
+  amount: number;
+  account_name: string;
+  account_number: string;
+  transaction_type: string;
+  created_at: string;  // ISO 8601 formatted string
+  updated_at: string;  // ISO 8601 formatted string
+}
+export interface Crypto {
+  id: number;
+  user_id: number;
+  amount: number;
+  crypto_name: string;
+  account_address: string;
+}
+
+export interface CryptoHistory {
+  id: number;
+  user_id: number;
+  amount: number;
+  crypto_name: string;
+  account_address: string;
+  created_at: string;  // ISO 8601 formatted string
+}
+
+export interface TransactionHistory {
+  id: number;
+  user_id: number;
+  amount: number;
+  account_name: string;
+  account_number: string;
+  transaction_type: string;
+  created_at: string;  // ISO 8601 formatted string
+  updated_at: string;  // ISO 8601 formatted string
+}
+
+export interface DashboardData {
+  user: User;
+  transactions: TransactionHistory[];
 }

@@ -1,7 +1,7 @@
 import os
 from flask_cors import CORS
 from dotenv import load_dotenv
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_migrate import Migrate
 from app.key_gen import generate_key
 from flask_sqlalchemy import SQLAlchemy
@@ -35,13 +35,24 @@ def create_app():
     def not_found(e):
         return jsonify({"error": "Not Found", "message": "The requested URL was not found on the server."}), 404
 
+    # Handle preflight requests
+    @app.before_request
+    def handle_options():
+        if request.method == "OPTIONS":
+            response = app.make_response("")
+            response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
+            response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+            response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+            response.headers["Access-Control-Allow-Credentials"] = "true"
+            return response, 200
+
     # Load configuration
     app.config.from_object("app.config.Config")
     
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
-    CORS(app)  # Enable CORS for cross-origin requests
+    CORS(app, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:5173"}})  # Enable CORS for cross-origin requests
     
     # Register blueprints
     from app.routes import auth, users, transactions
@@ -52,7 +63,7 @@ def create_app():
     # Add shell context for easier debugging
     @app.shell_context_processor
     def make_shell_context():
-        from app.models import User, Transaction
-        return {"db": db, "User": User, "Transaction": Transaction}
+        from app.models import User, Transaction, Crypto, Balance
+        return {"db": db, "User": User, "Transaction": Transaction, "Crypto": Crypto, "Balance": Balance}
     
     return app

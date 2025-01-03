@@ -15,13 +15,14 @@ class UserTransactionsController:
     # Get user transactions history
     @staticmethod
     @token_required
-    def get_transactions():
-        # Get the login user id from the token
-        user_id = request.user_id
-        # Get the user transactions history
-        transactions = Transaction.query.filter_by(user_id=user_id).all()
-        # Return the user transactions history
-        return jsonify({"message": [transaction.serialize() for transaction in transactions]}), 200
+    def get_transactions(current_user):
+        # Check if current_user is passed, if not handle accordingly
+        if not current_user:
+            return jsonify({"message": "User not authenticated!"}), 401
+
+        transactions = Transaction.query.filter_by(user_id=current_user.id).all()
+        transaction_data = [transaction.serialize() for transaction in transactions]
+        return jsonify({"transactions": transaction_data}), 200
     
     # Get user transactions history by id
     @staticmethod
@@ -104,7 +105,7 @@ class UserTransactionsController:
         data = request.get_json()
         # Get the user transactions
         transaction = Transaction(user_id=user_id,
-                                  amount=data['amount'],
+                                  amount={'+'+data['amount']},
                                   account_name=data['account_name'],
                                   account_number=data['account_number'],
                                   transaction_type=data["transaction_type"])
@@ -128,7 +129,7 @@ class UserTransactionsController:
         data = request.get_json()
         # Get the user transactions
         transaction = Transaction(user_id=user_id,
-                                  amount=data['amount'],
+                                  amount={'-'+data['amount']},
                                   account_name=data['account_name'],
                                   account_number=data['account_number'],
                                   transaction_type=data["transaction_type"])

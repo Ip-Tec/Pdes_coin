@@ -2,7 +2,7 @@ import jwt
 import datetime
 from app import db
 from app.models import User
-from flask import request, jsonify
+from flask import current_app, request, jsonify
 from app.key_gen import generate_key
 from app.services import token_required
 from app.utils import validate_required_param
@@ -13,8 +13,25 @@ class UserController:
     """
     User Controller Class
     """
-    SECRET_KEY = generate_key(88)
+    
+   # Get login user information
+    @staticmethod
+    @token_required
+    def get_user(current_user):
+        # Use current_user instead of request.user_id
+        if current_user:
+            return jsonify({"message": current_user.serialize()}), 200
+        else:
+            return jsonify({"message": "User not found"}), 404
 
+
+    # Find a user by id
+    @staticmethod
+    def get_user_by_id(user_id):
+        user = User.query.filter_by(id=user_id).first()
+        if not user:
+            return jsonify({"message": "User not found"}), 404
+        return jsonify({"message": user.serialize()}), 200
 
     @staticmethod
     def login():
@@ -29,9 +46,10 @@ class UserController:
 
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
+            # Use the app's SECRET_KEY from config
             token = jwt.encode(
                 {"user_id": user.id, "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
-                UserController.SECRET_KEY,
+                current_app.config["SECRET_KEY"],  # Use the same secret key as in config
                 algorithm="HS256"
             )
             return jsonify({"message": "Login successful", "token": token}), 200

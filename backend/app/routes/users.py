@@ -1,12 +1,22 @@
 from flask import Blueprint, jsonify
+from app.controller.user_controller import UserController
 
 users_bp = Blueprint("users", __name__)
 
 
-@users_bp.route("/", methods=["GET"])
+# Get Login user info
+@users_bp.route("/user", methods=["GET", "OPTIONS"])
 def get_users():
     # Fetch users from the database
-    return jsonify({"users": []})
+    get_users = UserController.get_user()
+    return get_users
+
+# find user by id
+@users_bp.route("/user/<int:user_id>", methods=["GET"])
+def get_user(user_id):
+    # Fetch user from the database
+    get_user = UserController.get_user_by_id(user_id)
+    return get_user
 
 # User referral router
 @users_bp.route("/referral", methods=["GET", "POST"])

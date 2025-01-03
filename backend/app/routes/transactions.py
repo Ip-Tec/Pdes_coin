@@ -1,4 +1,6 @@
+from app.services import token_required
 from flask import Blueprint, request, jsonify
+from app.controller.user_transactions import UserTransactionsController
  
 # Transactions API
 txn_bp = Blueprint("transactions", __name__)
@@ -7,9 +9,8 @@ txn_bp = Blueprint("transactions", __name__)
 
 @txn_bp.route("/history", methods=["GET"])
 def get_transaction_history():
-    # Implement logic to retrieve transaction history
-    # For now, let's return a dummy response
-    return jsonify({"message": "Transaction history endpoint"})
+    # Pass the current_user to the controller
+    return UserTransactionsController.get_transactions()
 
 # Transaction Deposit router
 @txn_bp.route("/deposit", methods=["POST"])
@@ -38,3 +39,10 @@ def request_funds():
     # Implement logic to request funds
     # For now, let's return a dummy response
     return jsonify({"message": "Request funds endpoint"})
+
+# get ancount balance
+@txn_bp.route("/balance", methods=["GET"])
+def get_account_balance():
+    # Implement logic to get account balance
+    get_transactions = UserTransactionsController.get_transactions()
+    return get_transactions

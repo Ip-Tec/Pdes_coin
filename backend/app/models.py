@@ -25,6 +25,28 @@ class User(db.Model):
 
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+    
+    # Return a serialize info
+    def serialize(self):
+        # If no balance is found, default to 0.0
+        balance = self.balance.balance if self.balance else 0.0
+
+        # Calculate total crypto_balance (sum of all crypto balances)
+        total_crypto_balance = sum(crypto.crypto_balance for crypto in self.cryptos) if self.cryptos else 0.0
+
+        return {
+            "id": self.id,
+            "email": self.email,
+            "full_name": self.name,
+            "username": self.username,
+            "balance": balance,
+            "crypto_balance": total_crypto_balance,
+            "referral_code": self.referral_code,
+            "total_referrals": self.total_referrals,
+            "referral_reward": self.referral_reward,
+            "created_at": self.created_at.isoformat(),
+        }
+
 
 # Balance model
 class Balance(db.Model):
@@ -43,6 +65,18 @@ class Transaction(db.Model):
     transaction_type = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
+    
+    # Return a serialize info
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "amount": self.amount,
+            "account_name": self.account_name,
+            "account_number": self.account_number,
+            "transaction_type": self.transaction_type,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat(),}
 
 # Crypto model
 class Crypto(db.Model):
@@ -51,3 +85,13 @@ class Crypto(db.Model):
     amount = db.Column(db.Float, nullable=False)
     crypto_name = db.Column(db.String(100), nullable=False)
     account_address = db.Column(db.String(100), unique=True, nullable=False)
+    
+    # Rerun the balance of the crypto
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "amount": self.amount,
+            "crypto_name": self.crypto_name,
+            "account_address": self.account_address,
+        }
