@@ -1,10 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navigation from "../components/NavigationBar";
 import logo from "../assets/pdes.png";
+import { getDashboard } from "../services/api";
+import Loading from "../components/Loading";
+import { useAuth } from "../contexts/AuthContext";
 
 function Profile() {
+  const { user, setUserData, logout } = useAuth(); // Get the data and functions from context
   const [animationClass, setAnimationClass] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchDashboard = async () => {
+      try {
+        const { user, transactions } = await getDashboard(); // Fetch data
+        setUserData(user, transactions); // Update the context with user and transactions data
+      } catch (error) {
+        console.error("Failed to fetch dashboard data", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, [setUserData]);
+
+  if (isLoading) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-mainBG">
+        <Loading isLoading={isLoading} />
+      </div>
+    );
+  }
 
   const handleLogoClick = () => {
     setAnimationClass("animate-logo");
@@ -15,10 +43,25 @@ function Profile() {
     setIsModalOpen(!isModalOpen);
   };
 
-  const user = {
-    name: "John Doe",
-    email: "johndoe@example.com",
-    accountNumber: "1234 5678 9012 3456",
+  const handleLogout = () => {
+    logout();
+  };
+
+  const userProfile = {
+    name: user?.full_name, // Access user data from context
+    email: user?.email,
+    accountNumber: user?.username,
+    referralCode: user?.referral_code, // Add referral code to user profile
+  };
+
+  const copyToClipboard = async () => {
+    const referralLink = `https://yourwebsite.com/referral/${userProfile.referralCode}`;
+    try {
+      await navigator.clipboard.writeText(referralLink); // Copy the referral link to clipboard
+      alert("Referral link copied to clipboard!"); // Show success message
+    } catch (error) {
+      console.error("Failed to copy referral link", error);
+    }
   };
 
   return (
@@ -28,13 +71,15 @@ function Profile() {
         <div className="bg-gradient-to-r from-primary to-primary-dark text-white p-6 rounded-lg shadow-md max-w-md mx-auto">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">User Info</h2>
-            <span className="text-sm">Your details</span>
+            <span className="text-sm cursor-pointer" onClick={copyToClipboard}>
+              Your referral link
+            </span>
           </div>
           <div className="space-y-2">
-            <p className="text-lg font-medium">{user.name}</p>
-            <p className="text-sm">{user.email}</p>
+            <p className="text-lg font-medium">{userProfile.name}</p>
+            <p className="text-sm">{userProfile.email}</p>
             <div className="text-lg tracking-widest font-mono mt-4">
-              {user.accountNumber}
+              {userProfile.accountNumber}
             </div>
           </div>
           <div className="flex justify-end mt-4">
@@ -50,21 +95,32 @@ function Profile() {
 
       {/* Navigation Cards */}
       <div className="flex flex-wrap flex-col md:flex-row justify-evenly items-center text-center m-auto px-4 py-4 gap-4 md:gap-1">
-        {["About", "Support", "Help Center", "Wallet", "Reset Password", "Logout"].map(
-          (item, index) => (
-            <div
-              key={index}
-              onClick={item === "Reset Password" ? toggleModal : undefined}
-              className={`p-4 rounded-lg shadow-md w-full md:w-[40%] md:h-[8rem] text-center bg-white cursor-pointer ${
-                item === "Logout"
-                  ? "text-red-500 hover:text-red-700"
-                  : "text-gray-700 hover:text-primary"
-              }`}
-            >
-              {item}
-            </div>
-          )
-        )}
+        {[
+          "About",
+          "Support",
+          "Help Center",
+          "Wallet",
+          "Reset Password",
+          "Logout",
+        ].map((item, index) => (
+          <div
+            key={index}
+            onClick={
+              item === "Reset Password"
+                ? toggleModal
+                : item === "Logout"
+                ? handleLogout
+                : undefined
+            } // Handle logout
+            className={`p-4 rounded-lg shadow-md w-full md:w-[40%] md:h-[8rem] text-center bg-white cursor-pointer ${
+              item === "Logout"
+                ? "text-red-500 hover:text-red-700"
+                : "text-gray-700 hover:text-primary"
+            }`}
+          >
+            {item}
+          </div>
+        ))}
       </div>
 
       {/* Change Password Modal */}
@@ -74,7 +130,10 @@ function Profile() {
             <h2 className="text-lg font-bold mb-4">Change Password</h2>
             <form>
               <div className="mb-4">
-                <label htmlFor="oldPassword" className="block text-sm font-medium mb-1">
+                <label
+                  htmlFor="oldPassword"
+                  className="block text-sm font-medium mb-1"
+                >
                   Old Password
                 </label>
                 <input
@@ -84,7 +143,10 @@ function Profile() {
                 />
               </div>
               <div className="mb-4">
-                <label htmlFor="newPassword" className="block text-sm font-medium mb-1">
+                <label
+                  htmlFor="newPassword"
+                  className="block text-sm font-medium mb-1"
+                >
                   New Password
                 </label>
                 <input
