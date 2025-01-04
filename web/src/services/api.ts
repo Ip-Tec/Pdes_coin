@@ -15,20 +15,43 @@ const API = axios.create({
 API.interceptors.request.use(
   (config) => {
     // Retrieve the token from localStorage
-    const token = localStorage.getItem("token");
+    const token = localStorage.getItem("authToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
-    // Handle request errors
-    return Promise.reject(error);
-  }
+  (error) => Promise.reject(error)
 );
 
 // Helper function to generate endpoint URLs
 const apiUrl = (endpoint: string) => `${API.defaults.baseURL}${endpoint}`;
+
+// Check token validity
+export const checkTokenValidity = async (token: string): Promise<boolean> => {
+  try {
+    const response = await API.get(apiUrl("/auth/validate-token"), {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return response.status === 200;
+  } catch (error) {
+    console.error("Token validation failed", error);
+    return false;
+  }
+};
+
+// Refresh token
+export const refreshTokenAPI = async (refreshToken: string) => {
+  try {
+    const response = await API.post(apiUrl("/auth/refresh-token"), {
+      refreshToken,
+    });
+    return response.data.access_token; // Updated to use "access_token"
+  } catch (error) {
+    console.error("Failed to refresh token", error);
+    throw error;
+  }
+};
 
 // Register Function
 export const registerUser = async (userData: {
@@ -50,13 +73,20 @@ export const registerUser = async (userData: {
 };
 
 // Login Function
-export const loginUser = async (loginData: { email: string; password: string }) => {
+export const loginUser = async (loginData: {
+  email: string;
+  password: string;
+}) => {
   try {
     const response = await API.post(apiUrl("/auth/login"), loginData);
-    if (response.data.token) {
-      localStorage.setItem("token", response.data.token); // Store the token in localStorage
-    }
-    return response.data;
+    const { access_token, refresh_token, user } = response.data;
+
+    localStorage.setItem("authToken", access_token);
+    localStorage.setItem("refreshToken", refresh_token);
+
+    console.log({ user, access_token, refresh_token });
+
+    return { user, access_token, refresh_token };
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const errorData: ErrorResponse = error.response?.data;
@@ -66,28 +96,181 @@ export const loginUser = async (loginData: { email: string; password: string }) 
   }
 };
 
-// Get Dashboard Details (User and Transactions)
-export const getDashboard = async () => {
+// Get Transaction History
+export const getTransactionHistory = async () => {
   try {
-    const userResponse = await API.get(apiUrl("/users/user")); // Token will be added automatically
-    const user = userResponse.data.message;
+    const response = await API.get(apiUrl("/transactions/history"));
 
-    const transactionsResponse = await API.get(apiUrl("/transactions/history")); // Token will be added automatically
-    const transactions = transactionsResponse.data.transactions;
-
-    
-    return { user, transactions };
+    return response.data.transactions;
   } catch (error) {
-    // Gracefully handle errors without breaking
     if (axios.isAxiosError(error)) {
       const errorData: ErrorResponse = error.response?.data;
-      console.error(errorData?.message || "Failed to fetch dashboard data");
-      return { user: null, transactions: [] };  // Return default/fallback data
+      console.error(errorData?.message || "Failed to fetch transactions");
+      return [];
     }
     console.error("Network error. Please try again.");
-    return { user: null, transactions: [] };  // Return default/fallback data
+    return [];
   }
 };
 
+// Deposit Funds
+export const depositFunds = async (amount: number) => {
+  try {
+    const response = await API.post(apiUrl("/transactions/deposit"), {
+      amount,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      throw new Error(errorData?.message || "Deposit failed");
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// Withdraw Funds
+export const withdrawFunds = async (amount: number) => {
+  try {
+    const response = await API.post(apiUrl("/transactions/withdraw"), {
+      amount,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      throw new Error(errorData?.message || "Withdraw failed");
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// Transfer Funds
+export const transferFunds = async (amount: number, recipientId: string) => {
+  try {
+    const response = await API.post(apiUrl("/transactions/transfer"), {
+      amount,
+      recipient_id: recipientId,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      throw new Error(errorData?.message || "Transfer failed");
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// Request Funds
+export const requestFunds = async (amount: number) => {
+  try {
+    const response = await API.post(apiUrl("/transactions/request"), {
+      amount,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      throw new Error(errorData?.message || "Request failed");
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// Get Account Balance
+export const getAccountBalance = async () => {
+  try {
+    const response = await API.get(apiUrl("/transactions/balance"));
+    return response.data.balance;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      console.error(errorData?.message || "Failed to fetch balance");
+      return 0;
+    }
+    console.error("Network error. Please try again.");
+    return 0;
+  }
+};
+
+// Buy/Sell PDES
+export const buySellPdes = async (
+  action: "buy" | "sell",
+  amount: number,
+  price: number
+) => {
+  try {
+    const response = await API.post(apiUrl("/transactions/buy_sell"), {
+      action,
+      amount,
+      price,
+    });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      throw new Error(errorData?.message || "Buy/Sell transaction failed");
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// Update Price History
+export const updatePriceHistory = async (priceData: {
+  open_price: number;
+  high_price: number;
+  low_price: number;
+  close_price: number;
+  volume: number;
+}) => {
+  try {
+    const response = await API.post(
+      apiUrl("/transactions/update_price_history"),
+      priceData
+    );
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      throw new Error(errorData?.message || "Failed to update price history");
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// Fetch the current price of Pdes coin
+export const fetchCurrentPrice = async () => {
+  try {
+    const response = await API.get(apiUrl("/transactions/get_current_price"));
+    return response.data.current_price;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      throw new Error(errorData?.message || "Failed to fetch current price");
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// Fetch user Referral list
+export const fetchUserReferralList = async () => {
+  try {
+    const response = await API.get(apiUrl("/users/referral"));
+    // const response = await API.get(apiUrl("/transactions/get_user_activity"));
+
+    return response.data.referrals;
+  } catch (error) {
+    console.log(error);
+
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      throw new Error(
+        errorData?.message || "Failed to fetch user referral list"
+      );
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
 
 export default API;

@@ -9,7 +9,7 @@ const TransactionList = ({ transactions }: TransactionListProps) => {
   if (!transactions || transactions.length === 0) {
     return (
       <div className="mt-6">
-        <h3 className="text-lg font-bold">Transactions</h3>
+        <h3 className="text-lg font-bold text-slate-700">Transactions</h3>
         <p className="text-center text-gray-500">You have no transactions yet.</p>
       </div>
     );

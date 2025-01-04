@@ -4,7 +4,7 @@ from app import db
 from app.models import User
 from flask import current_app, request, jsonify
 from app.key_gen import generate_key
-from app.services import token_required
+from app.services import generate_access_token, generate_refresh_token, token_required
 from app.utils import validate_required_param
 from app.mail.user_mail import send_password_reset_email, send_register_email
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -47,14 +47,20 @@ class UserController:
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
             # Use the app's SECRET_KEY from config
-            token = jwt.encode(
-                {"user_id": user.id, "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1)},
-                current_app.config["SECRET_KEY"],  # Use the same secret key as in config
-                algorithm="HS256"
-            )
-            return jsonify({"message": "Login successful", "token": token}), 200
+            access_token = generate_access_token(user.id)
+            refresh_token = generate_refresh_token(user.id)
+            
+            print(f"{access_token, refresh_token, user.serialize()}")
+
+            return jsonify({
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "user": user.serialize()
+            }), 200
+            
         else:
             return jsonify({"message": "Invalid credentials"}), 401
+                
 
     @staticmethod
     def register():
@@ -205,3 +211,28 @@ class UserController:
         db.session.delete(user)
         db.session.commit()
         return jsonify({"message": "User deleted successfully"}), 200
+    
+    # Get all users that the current user referral
+    @staticmethod
+    @token_required
+    def get_referrals(current_user):
+        """
+        Get all users that the current user has referred.
+        """
+        print("current_user:::>", current_user)
+
+        if current_user:
+            # Query users where referrer_id matches current user's referral_code
+            referrals = User.query.filter_by(referrer_id=current_user.id).all()
+
+            # Serialize the referrals
+            serialized_referrals = [referral.serialize() for referral in referrals]
+
+            print("get_referrals:::>", serialized_referrals)
+
+            return jsonify({"referrals": serialized_referrals}), 200
+        else:
+            return jsonify({"message": "User not found"}), 404
+
+
+

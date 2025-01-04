@@ -1,30 +1,23 @@
-import { useEffect, useState } from "react";
-import Navigation from "../components/NavigationBar";
 import logo from "../assets/pdes.png";
-import { getDashboard } from "../services/api";
+import { useEffect, useState } from "react";
 import Loading from "../components/Loading";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import Navigation from "../components/NavigationBar";
 
 function Profile() {
-  const { user, setUserData, logout } = useAuth(); // Get the data and functions from context
+  const { user, logout, isAuth } = useAuth(); // Use context to get user data and authentication status
   const [animationClass, setAnimationClass] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading] = useState(false);
+  const navigate = useNavigate();
 
+  // Redirect to login if user is not authenticated
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const { user, transactions } = await getDashboard(); // Fetch data
-        setUserData(user, transactions); // Update the context with user and transactions data
-      } catch (error) {
-        console.error("Failed to fetch dashboard data", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDashboard();
-  }, [setUserData]);
+    if (!isAuth) {
+      navigate("/login");
+    }
+  }, [isAuth, navigate]);
 
   if (isLoading) {
     return (
@@ -45,6 +38,7 @@ function Profile() {
 
   const handleLogout = () => {
     logout();
+    navigate("/login");
   };
 
   const userProfile = {
@@ -55,7 +49,7 @@ function Profile() {
   };
 
   const copyToClipboard = async () => {
-    const referralLink = `https://yourwebsite.com/referral/${userProfile.referralCode}`;
+    const referralLink = `https://pdes.xyz/referral/${userProfile.referralCode}`;
     try {
       await navigator.clipboard.writeText(referralLink); // Copy the referral link to clipboard
       alert("Referral link copied to clipboard!"); // Show success message
@@ -72,7 +66,8 @@ function Profile() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">User Info</h2>
             <span className="text-sm cursor-pointer" onClick={copyToClipboard}>
-              Your referral link
+              <span></span>Referral Code: {userProfile.referralCode}
+              <span>https://pdes.xyz/referral/{userProfile.referralCode}</span>
             </span>
           </div>
           <div className="space-y-2">

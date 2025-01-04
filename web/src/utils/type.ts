@@ -12,13 +12,12 @@ export interface User {
   full_name: string;
   username: string;
   balance: number;
-  crypto_balance: number;
+  crypto_balance?: number;
   referral_code: string | null;
   total_referrals: number;
   referral_reward: number;
   created_at: string;
 }
-
 
 export interface Login {
   email: string;
@@ -35,7 +34,7 @@ export interface Balance {
   id: number;
   user_id: number;
   balance: number;
-  crypto_balance: number;
+  crypto_balance?: number;
 }
 
 export interface Transactions {
@@ -45,8 +44,8 @@ export interface Transactions {
   account_name: string;
   account_number: string;
   transaction_type: string;
-  created_at: string;  // ISO 8601 formatted string
-  updated_at: string;  // ISO 8601 formatted string
+  created_at: string; // ISO 8601 formatted string
+  updated_at: string; // ISO 8601 formatted string
 }
 export interface Crypto {
   id: number;
@@ -62,7 +61,7 @@ export interface CryptoHistory {
   amount: number;
   crypto_name: string;
   account_address: string;
-  created_at: string;  // ISO 8601 formatted string
+  created_at: string; // ISO 8601 formatted string
 }
 
 export interface TransactionHistory {
@@ -72,11 +71,13 @@ export interface TransactionHistory {
   account_name: string;
   account_number: string;
   transaction_type: string;
-  created_at: string;  // ISO 8601 formatted string
-  updated_at: string;  // ISO 8601 formatted string
+  created_at: string; // ISO 8601 formatted string
+  updated_at: string; // ISO 8601 formatted string
 }
 
 export interface DashboardData {
   user: User;
   transactions: TransactionHistory[];
 }
+
+export type Referrals = User[];

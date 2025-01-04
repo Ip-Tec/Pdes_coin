@@ -13,9 +13,9 @@ const QuickActions = () => {
     if (label === "Withdraw") {
       navigate("/withdraw");
     } else if (label === "Buy") {
-      navigate("/trade?action=buy");
+      navigate("/trade");
     } else if (label === "Sale") {
-      navigate("/trade?action=sale");
+      navigate("/trade");
     } else if (label === "More") {
       setIsModalOpen(true);
     }

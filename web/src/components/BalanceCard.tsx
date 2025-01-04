@@ -1,13 +1,14 @@
 import { User } from "../utils/type";
 import logo from "../assets/pdes.png";
+import { formattedMoneyUSD } from "../utils/helpers";
 const BalanceCard = ({ balance, crypto_balance, full_name, email }: User) => {
   return (
     <div className="bg-primary text-white rounded-2xl p-4 shadow-md relative">
-      <h2 className="text-xl font-semibold">${balance}</h2>
+      <h2 className="text-2xl font-semibold">${formattedMoneyUSD(balance)}</h2>
       <p className="text-sm">
         <span className="font-semibold flex">
           <img src={logo} width={50} />
-          {crypto_balance}
+          <p className="text-xl mt-3">{crypto_balance}</p>
         </span>
       </p>
       <div className="flex justify-between items-center mt-4">

@@ -7,7 +7,6 @@ import {
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
 import HomePage from "./pages/HomePage";
-import WalletPage from "./pages/WalletPage";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Register from "./pages/Register";
@@ -16,6 +15,7 @@ import Navigation from "./components/NavigationBar";
 import Activity from "./pages/Activity";
 import Withdraw from "./pages/Withdraw";
 import Profile from "./pages/Profile";
+import BuySellCoin from "./pages/BuySellCoin";
 
 const App: React.FC = () => {
   const DisplayNavbar: React.FC = () => {
@@ -31,10 +31,10 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route
-            path="/wallet"
+            path="/trade"
             element={
               <ProtectedRoute isAuth={true}>
-                <WalletPage />
+                <BuySellCoin />
               </ProtectedRoute>
             }
           />

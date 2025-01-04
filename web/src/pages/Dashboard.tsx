@@ -1,31 +1,43 @@
 import { useEffect, useState } from "react";
-import { getDashboard } from "../services/api";
 import BalanceCard from "../components/BalanceCard";
 import Navigation from "../components/NavigationBar";
 import QuickActions from "../components/QuickActions";
 import TransactionList from "../components/TransactionList";
 import Loading from "../components/Loading";
 import { useAuth } from "../contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
-  const { user, transactions, setUserData, setDashboardData } = useAuth(); // Destructure setUserData, setDashboardData
-  const [isLoading, setIsLoading] = useState(true);
+  const { user, transactions, logout } = useAuth(); // Access user and transactions from context
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
 
+  // The transactions are already available in the context, no need to fetch them here
   useEffect(() => {
-    const fetchDashboard = async () => {
-      try {
-        const data = await getDashboard();
-        setUserData(data.user, data.transactions); // Update context with the data
-        setDashboardData(data); // Update the dashboard data in context
-      } catch (error) {
-        console.error("Failed to fetch dashboard data", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    // If we need to load additional data, we can trigger a loading state
+    setIsLoading(false); // Set loading to false once the data is ready
+  }, [transactions]);
 
-    fetchDashboard();
-  }, [setUserData, setDashboardData]);
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  if (!user) {
+    return (
+      <div className="h-screen flex items-center justify-center flex-col bg-mainBG">
+        <p className="text-xl font-bold text-gray-500">
+          Please log in to view your dashboard.
+        </p>
+        <button
+          className="text-2xl bg-red-400 py-2 px-3 hover:bg-red-600 rounded"
+          onClick={handleLogout}
+        >
+          Logout
+        </button>
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -34,17 +46,6 @@ const Dashboard = () => {
       </div>
     );
   }
-
-  if (!user) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-mainBG">
-        <p className="text-xl font-bold text-gray-500">
-          Please log in to view your dashboard.
-        </p>
-      </div>
-    );
-  }
-  
 
   // If user exists, render dashboard components
   return (

@@ -1,14 +1,25 @@
+import os
 import jwt
+import secrets
+import datetime
 from app.models import User
 from functools import wraps
+from dotenv import load_dotenv
 from flask import current_app, request, jsonify
 from jwt import ExpiredSignatureError, InvalidTokenError
+from app.utils import save_refresh_key_to_db, get_refresh_key_from_db
+
+
+load_dotenv()
+SECRET_KEY = os.getenv("SECRET_KEY")
+REFRESH_SECRET_KEY = os.getenv("SECRET_KEY") 
+
 
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get("Authorization")
-        print({"Authorization Header": token})
+        # print({"services.py NO 14 :====> Authorization Header": token})
 
         if not token:
             return jsonify({"message": "Token is missing!"}), 401
@@ -18,7 +29,6 @@ def token_required(f):
             token = token.split(" ")[1]
 
         try:
-            SECRET_KEY = current_app.config["SECRET_KEY"]
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             current_user = User.query.get(data["user_id"])
         except ExpiredSignatureError:
@@ -35,7 +45,54 @@ def token_required(f):
 def generate_token(user_id):
     payload = {
         "user_id": user_id,
-        "exp": datetime.utcnow() + timedelta(hours=1),  # Token expires in 1 hour
-        "iat": datetime.utcnow()  # Issued at time
+        "exp": datetime.datetime.now(datetime.timezone.utc) + datetime.timedelta(hours=1),  # Use full datetime reference
+        "iat": datetime.datetime.now(datetime.timezone.utc),  # Issued at time
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
+
+# Token generation
+def generate_access_token(user_id):
+    payload = {
+        "user_id": user_id,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),
+        "iat": datetime.datetime.utcnow()
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
+def generate_refresh_token(user_id):
+    refresh_secret_key = secrets.token_hex(16)  # Generate a unique key for each refresh token
+    payload = {
+        "user_id": user_id,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7),  # Refresh token valid for 7 days
+        "iat": datetime.datetime.utcnow()
+    }
+    token = jwt.encode(payload, refresh_secret_key, algorithm="HS256")
+    
+    # Save the refresh secret key securely (e.g., database)
+    save_refresh_key_to_db(user_id, refresh_secret_key)
+    
+    return token
+
+# Token refresh
+def refresh_access_token(refresh_token):
+    try:
+        # Decode without validation to get the user_id
+        unverified_payload = jwt.decode(refresh_token, options={"verify_signature": False})
+        user_id = unverified_payload["user_id"]
+
+        # Retrieve the refresh secret key for this user
+        refresh_secret_key = get_refresh_key_from_db(user_id)
+        if not refresh_secret_key:
+            return jsonify({"message": "Invalid refresh token!"}), 401
+
+        # Validate the token with the correct secret key
+        data = jwt.decode(refresh_token, refresh_secret_key, algorithms=["HS256"])
+        new_access_token = generate_access_token(data["user_id"])
+        return jsonify({"access_token": new_access_token}), 200
+    except ExpiredSignatureError:
+        return jsonify({"message": "Refresh token has expired!"}), 401
+    except InvalidTokenError:
+        return jsonify({"message": "Invalid refresh token!"}), 401
+    except Exception as e:
+        return jsonify({"message": str(e)}), 401

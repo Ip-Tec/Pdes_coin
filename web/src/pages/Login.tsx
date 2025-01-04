@@ -1,6 +1,5 @@
 import { useState } from "react";
 import logo from "../assets/pdes.png";
-import { loginUser } from "../services/api";
 import { Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
@@ -53,9 +52,7 @@ const Login: React.FC = () => {
     setLoading(true);
     if (validateForm()) {
       try {
-        const response = await loginUser(formData);
-        const token = response.token;
-        login(token); // Store token using context
+        await login(formData.email, formData.password); // Now calling login from AuthContext
         navigate("/dashboard");
       } catch (error: unknown) {
         if (error instanceof Error) {

@@ -1,31 +1,32 @@
 from flask import Blueprint, jsonify
+from app.services import token_required
 from app.controller.user_controller import UserController
 
 users_bp = Blueprint("users", __name__)
 
 
 # Get Login user info
-@users_bp.route("/user", methods=["GET", "OPTIONS"])
+@users_bp.route("/", methods=["GET", "OPTIONS"])
+@token_required
 def get_users():
     # Fetch users from the database
     get_users = UserController.get_user()
     return get_users
 
 # find user by id
-@users_bp.route("/user/<int:user_id>", methods=["GET"])
-def get_user(user_id):
-    # Fetch user from the database
-    get_user = UserController.get_user_by_id(user_id)
-    return get_user
+# @users_bp.route("/user/<int:user_id>", methods=["GET"])
+# def get_user(user_id):
+#     # Fetch user from the database
+#     get_user = UserController.get_user_by_id(user_id)
+#     return get_user
 
 # User referral router
-@users_bp.route("/referral", methods=["GET", "POST"])
-def create_referral():
+@users_bp.route("/referral", methods=["GET"])
+def get_referral():
     # Implement logic to create a referral
+    referral = UserController.get_referrals()
     # For now, let's return a dummy response
-    return jsonify({"message": "Create referral endpoint"})
-
-# User profile router
+    return referral
 
 
 @users_bp.route("/profile", methods=["GET"])
