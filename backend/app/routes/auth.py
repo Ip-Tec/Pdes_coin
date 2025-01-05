@@ -16,7 +16,6 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 @auth_bp.route("/login", methods=["POST"])
 def login():
     user = user_controller.UserController.login()
-    print(f"{user}")
     return user
 
 # Register router
@@ -80,4 +79,4 @@ def refresh_token():
     
     # Add refresh token logic here
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-    return jsonify({"message": "Token refreshed successfully", "token": token})
+    return {"message": "Token refreshed successfully", "token": token}

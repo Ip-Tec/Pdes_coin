@@ -81,3 +81,27 @@ export interface DashboardData {
 }
 
 export type Referrals = User[];
+
+export interface AccountDetailFullList {
+  id: number;
+  user_id: number;
+  BTCAddress: string;
+  BTCAddressSeed: string;
+  ETHAddress: string;
+  ETHAddressSeed: string;
+  LTCAddress: string;
+  LTCAddressSeed: string;
+  USDCAddress: string;
+  USDCAddressSeed: string;
+  PDESAddres: string;
+}
+
+export interface AccountDetail {
+  id: number;
+  user_id?: number;
+  BTC: string;
+  ETH: string;
+  LTC: string;
+  USDC: string;
+  PDES?: string;
+}

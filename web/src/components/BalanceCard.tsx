@@ -1,7 +1,13 @@
 import { User } from "../utils/type";
 import logo from "../assets/pdes.png";
+import { useNavigate } from "react-router-dom";
 import { formattedMoneyUSD } from "../utils/helpers";
 const BalanceCard = ({ balance, crypto_balance, full_name, email }: User) => {
+  const navigate = useNavigate();
+
+  const handelAddMoney = () => {
+    navigate("/deposit");
+  };
   return (
     <div className="bg-primary text-white rounded-2xl p-4 shadow-md relative">
       <h2 className="text-2xl font-semibold">${formattedMoneyUSD(balance)}</h2>
@@ -17,7 +23,10 @@ const BalanceCard = ({ balance, crypto_balance, full_name, email }: User) => {
           <p className="text-sm">{email}</p>
         </div>
         <div className="flex items-center m-4 bg-transparent absolute bottom-0 right-0">
-          <button className="bg-secondary hover:bg-secondary-dark px-4 py-2 rounded-lg shadow-lg">
+          <button
+            onClick={handelAddMoney}
+            className="bg-secondary hover:bg-secondary-dark px-4 py-2 rounded-lg shadow-lg"
+          >
             Add Money
           </button>
         </div>

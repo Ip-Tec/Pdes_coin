@@ -26,6 +26,8 @@ function Activity() {
           // Replace with the actual API call for referrals if available
           const data = await fetchUserReferralList(); // Example data
 
+          console.log({ data });
+
           setReferralData(data);
         }
       } catch (err: any) {

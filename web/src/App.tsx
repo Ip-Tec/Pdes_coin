@@ -16,6 +16,7 @@ import Activity from "./pages/Activity";
 import Withdraw from "./pages/Withdraw";
 import Profile from "./pages/Profile";
 import BuySellCoin from "./pages/BuySellCoin";
+import Deposit from "./pages/Deposit";
 
 const App: React.FC = () => {
   const DisplayNavbar: React.FC = () => {
@@ -31,6 +32,13 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route
+            path="/deposit"
+            element={
+              <ProtectedRoute isAuth={true}>
+                <Deposit />
+              </ProtectedRoute>
+            }
+          /><Route
             path="/trade"
             element={
               <ProtectedRoute isAuth={true}>

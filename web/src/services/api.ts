@@ -35,8 +35,16 @@ export const checkTokenValidity = async (token: string): Promise<boolean> => {
     });
     return response.status === 200;
   } catch (error) {
-    console.error("Token validation failed", error);
-    return false;
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
+      const errorData: ErrorResponse = error.response?.data;
+      console.error(errorData?.message || "Failed to fetch Token");
+
+      throw new Error(errorData?.message || "Failed to update validate token");
+    }
+    throw new Error("Token validation failed.");
   }
 };
 
@@ -48,8 +56,16 @@ export const refreshTokenAPI = async (refreshToken: string) => {
     });
     return response.data.access_token; // Updated to use "access_token"
   } catch (error) {
-    console.error("Failed to refresh token", error);
-    throw error;
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
+      const errorData: ErrorResponse = error.response?.data;
+      console.error(errorData?.message || "Failed to fetch Token");
+
+      throw new Error(errorData?.message || "Failed to update refresh token");
+    }
+    throw new Error("Failed to refresh token.");
   }
 };
 
@@ -89,6 +105,9 @@ export const loginUser = async (loginData: {
     return { user, access_token, refresh_token };
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
       const errorData: ErrorResponse = error.response?.data;
       throw new Error(errorData?.message || "Login failed");
     }
@@ -104,6 +123,9 @@ export const getTransactionHistory = async () => {
     return response.data.transactions;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
       const errorData: ErrorResponse = error.response?.data;
       console.error(errorData?.message || "Failed to fetch transactions");
       return [];
@@ -122,6 +144,9 @@ export const depositFunds = async (amount: number) => {
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
       const errorData: ErrorResponse = error.response?.data;
       throw new Error(errorData?.message || "Deposit failed");
     }
@@ -138,6 +163,9 @@ export const withdrawFunds = async (amount: number) => {
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
       const errorData: ErrorResponse = error.response?.data;
       throw new Error(errorData?.message || "Withdraw failed");
     }
@@ -171,6 +199,9 @@ export const requestFunds = async (amount: number) => {
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
       const errorData: ErrorResponse = error.response?.data;
       throw new Error(errorData?.message || "Request failed");
     }
@@ -185,6 +216,9 @@ export const getAccountBalance = async () => {
     return response.data.balance;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
       const errorData: ErrorResponse = error.response?.data;
       console.error(errorData?.message || "Failed to fetch balance");
       return 0;
@@ -209,6 +243,9 @@ export const buySellPdes = async (
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
       const errorData: ErrorResponse = error.response?.data;
       throw new Error(errorData?.message || "Buy/Sell transaction failed");
     }
@@ -232,6 +269,9 @@ export const updatePriceHistory = async (priceData: {
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
       const errorData: ErrorResponse = error.response?.data;
       throw new Error(errorData?.message || "Failed to update price history");
     }
@@ -246,6 +286,9 @@ export const fetchCurrentPrice = async () => {
     return response.data.current_price;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
       const errorData: ErrorResponse = error.response?.data;
       throw new Error(errorData?.message || "Failed to fetch current price");
     }
@@ -264,6 +307,10 @@ export const fetchUserReferralList = async () => {
     console.log(error);
 
     if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
+
       const errorData: ErrorResponse = error.response?.data;
       throw new Error(
         errorData?.message || "Failed to fetch user referral list"
@@ -271,6 +318,79 @@ export const fetchUserReferralList = async () => {
     }
     throw new Error("Network error. Please try again.");
   }
+};
+
+// Types for request and response
+interface CreateAccountRequest {
+  user_id: number;
+  username: string;
+}
+
+interface AccountDetail {
+  id: number;
+  user_id: number;
+  BTC: string;
+  ETH: string;
+  LTC: string;
+  USDC: string;
+}
+
+// API methods
+export const AccountAPI = {
+  /**
+   * Create a new account
+   * @param data - The user ID and username for creating the account
+   * @returns The account details
+   */
+  createAccount: async (data: CreateAccountRequest): Promise<AccountDetail> => {
+    try {
+      const response = await API.post<AccountDetail>(
+        apiUrl("/account/create_account"),
+        data
+      );
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.status === 401) {
+          window.location.href = "/login";
+        }
+        const errorData: ErrorResponse = error.response?.data || error.message;
+        console.error(
+          "Error creating account:",
+          error.response?.data || error.message
+        );
+        throw new Error(errorData?.message || "Error retrieving account");
+      }
+      throw new Error("Failed to create account");
+    }
+  },
+
+  /**
+   * Get account details by user ID
+   * @param userId - The user ID for retrieving the account details
+   * @returns The account details
+   */
+  getAccount: async (): Promise<AccountDetail> => {
+    try {
+      const response = await API.get<AccountDetail>(
+        apiUrl(`/account/get_account`)
+      );
+      console.log(response);
+
+      return response;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.status === 401) {
+          window.location.href = "/login";
+        }
+        const errorData: ErrorResponse | string | undefined = error.response?.data || error.message;
+
+        console.error("Error retrieving account:", errorData);
+        throw new Error(errorData);
+      }
+      throw new Error("Failed to retrieve account");
+    }
+  },
 };
 
 export default API;

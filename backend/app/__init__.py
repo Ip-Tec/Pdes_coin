@@ -55,15 +55,16 @@ def create_app():
     CORS(app, supports_credentials=True, resources={r"/*": {"origins": "http://localhost:5173"}})  # Enable CORS for cross-origin requests
     
     # Register blueprints
-    from app.routes import auth, users, transactions
+    from app.routes import auth, users, transactions, account
     app.register_blueprint(auth.auth_bp, url_prefix="/api/auth")
     app.register_blueprint(users.users_bp, url_prefix="/api/users")
+    app.register_blueprint(account.account_bp, url_prefix="/api/account")
     app.register_blueprint(transactions.txn_bp, url_prefix="/api/transactions")
     
     # Add shell context for easier debugging
     @app.shell_context_processor
     def make_shell_context():
-        from app.models import User, Transaction, Crypto, Balance
-        return {"db": db, "User": User, "Transaction": Transaction, "Crypto": Crypto, "Balance": Balance}
+        from app.models import User, Transaction, Crypto, Balance, AccountDetail
+        return {"db": db, "User": User, "Transaction": Transaction, "Crypto": Crypto, "Balance": Balance, "Account": AccountDetail}
     
     return app

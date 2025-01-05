@@ -1,5 +1,6 @@
 import { useState } from "react";
 import logo from "../assets/pdes.png";
+import { withdrawFunds } from "../services/api";
 
 function Withdraw() {
   const userBalance = 5000; // Example user balance
@@ -14,34 +15,41 @@ function Withdraw() {
     setAmount(e.target.value);
   };
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
     const withdrawalAmount = parseFloat(amount);
-
+  
     if (isNaN(withdrawalAmount)) {
       alert("Please enter a valid amount.");
       return;
     }
-
+  
     if (withdrawalAmount < withdrawalLimit) {
       alert(`Minimum withdrawal amount is $${withdrawalLimit}.`);
       return;
     }
-
+  
     if (withdrawalAmount > userBalance) {
       alert("You cannot withdraw more than your balance.");
       return;
     }
-
-    if (selectedOption === "BTC") {
-      alert(
-        `BTC Address: ${btcAddress}\nAmount: $${withdrawalAmount.toFixed(2)}`
-      );
-    } else if (selectedOption === "Naira") {
-      alert(
-        `${accountType} Account Number: ${accountNumber}\nAmount: $${withdrawalAmount.toFixed(
-          2
-        )}`
-      );
+  
+    const requestData = {
+      amount: withdrawalAmount,
+      type: selectedOption,
+      btcAddress: selectedOption === "BTC" ? btcAddress : undefined,
+      accountNumber: selectedOption === "Naira" ? accountNumber : undefined,
+      accountType: selectedOption === "Naira" ? accountType : undefined,
+    };
+  
+    try {
+      const response = await withdrawFunds(requestData);
+      if (response.success) {
+        alert(`Withdrawal successful: ${response.message}`);
+      } else {
+        alert(`Withdrawal failed: ${response.message}`);
+      }
+    } catch (error) {
+      alert("An error occurred while processing your withdrawal.");
     }
   };
 
