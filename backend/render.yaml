@@ -1,0 +1,12 @@
+# Exported from Render on 2025-01-05T17:04:50Z
+services:
+- type: web
+  name: Pdes-coin
+  runtime: python
+  repo: https://github.com/Ip-Tec/Pdes_coin
+  plan: free
+  region: oregon
+  buildCommand: pip install -r requirements.txt
+  startCommand: gunicorn run:app
+  rootDir: ./backend/
+version: "1"
