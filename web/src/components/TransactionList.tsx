@@ -36,7 +36,7 @@ const TransactionList = ({ transactions }: TransactionListProps) => {
             <div className="text-right">
               <p
                 className={`${
-                  transaction.amount.startsWith("+")
+                  transaction.amount.toString().startsWith("+")
                     ? "text-green-500"
                     : "text-red-500"
                 } font-semibold`}

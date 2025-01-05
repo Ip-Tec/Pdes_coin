@@ -8,10 +8,15 @@ import { AccountAPI } from "../services/api";
 import { AccountDetail } from "../utils/type";
 import { ToastContainer, toast } from "react-toastify";
 
+interface RespondDATA {
+  error: string;
+  message: string;
+  data?: AccountDetail;
+}
 function Profile() {
   const { user, logout, isAuth } = useAuth();
   const [animationClass, setAnimationClass] = useState("");
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [isAccordionOpen, setIsAccordionOpen] = useState(false);
   const [accountData, setAccountData] = useState<AccountDetail>();
@@ -49,12 +54,11 @@ function Profile() {
   const handleWalletAddressClick = async () => {
     try {
       setIsLoading(true);
-      const { data, error, message } = await AccountAPI.getAccount();
-      if (error) {
-        toast.error(message);
+      const response = await AccountAPI.getAccount();
+      if (!response) {
+        toast.error(response);
       }
-      setAccountData(data);
-      console.log({ data, error, message });
+      setAccountData(response);
 
       setIsAccordionOpen(!isAccordionOpen);
     } catch (error) {
@@ -126,49 +130,57 @@ function Profile() {
         ].map((item, index) => (
           <div
             key={index}
-            onClick={
-              item === "Wallet Address"
-                ? handleWalletAddressClick
-                : item === "Reset Password"
-                ? toggleModal
-                : item === "Logout"
-                ? handleLogout
-                : undefined
-            } // Handle logout
-            className={`p-4 rounded-lg shadow-md w-full md:w-[40%] md:h-[8rem] text-center bg-white cursor-pointer ${
+            className={`p-2 rounded-lg shadow-md w-full bg-white cursor-pointer ${
               item === "Logout"
                 ? "text-red-500 hover:text-red-700"
                 : "text-gray-700 hover:text-primary"
             }`}
           >
-            {item}
+            {item === "Wallet Address" ? (
+              <div>
+                <div
+                  onClick={handleWalletAddressClick}
+                  className="cursor-pointer"
+                >
+                  {item}
+                </div>
+                {isAccordionOpen && accountData && (
+                  <div className="mt-2 bg-gray-100 text-left rounded-md shadow-inner text-md">
+                    <h3 className="text-lg font-bold mb-2">Account Details</h3>
+                    <p className="">
+                      <strong>BTC Address:</strong> {accountData.BTC}
+                    </p>
+                    <p>
+                      <strong>ETH Address:</strong> {accountData.ETH}
+                    </p>
+                    <p>
+                      <strong>BCH Address:</strong> {accountData.BTC}
+                    </p>
+                    {/* <p>
+                      <strong>USDC Address:</strong> {accountData.USDC}
+                    </p> */}
+                    <p>
+                      <strong>PDES Address:</strong> {accountData.PDES}
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div
+                onClick={
+                  item === "Reset Password"
+                    ? toggleModal
+                    : item === "Logout"
+                    ? handleLogout
+                    : undefined
+                }
+              >
+                {item}
+              </div>
+            )}
           </div>
         ))}
       </div>
-
-      {/* Accordion for Wallet Address */}
-      {isAccordionOpen && accountData && (
-        <div className="bg-transparent p-4 rounded-lg shadow-md mx-4 my-4 text-gray-800">
-          <h3 className="text-lg font-bold mb-2">Account Details</h3>
-          <h4>Name : {user?.full_name}</h4>
-          <p>
-            <strong>BTC Address:</strong> {accountData.BTC}
-          </p>
-          <p>
-            <strong>ETH Address:</strong> {accountData.ETH}
-          </p>
-          <p>
-            <strong>LTC Address:</strong> {accountData.LTC}
-          </p>
-          <p>
-            <strong>USDC Address:</strong> {accountData.USDC}
-          </p>
-          <p>
-            <strong>PDES Address:</strong> {accountData.PDES}
-          </p>
-          {/* Add more account details as needed */}
-        </div>
-      )}
 
       <Navigation />
     </div>

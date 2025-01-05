@@ -377,7 +377,7 @@ export const AccountAPI = {
       );
       console.log(response);
 
-      return response;
+      return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response && error.response.status === 401) {
@@ -386,11 +386,10 @@ export const AccountAPI = {
         const errorData: ErrorResponse | string | undefined = error.response?.data || error.message;
 
         console.error("Error retrieving account:", errorData);
-        throw new Error(errorData);
+        throw new Error(typeof errorData === 'string' ? errorData : errorData?.message || 'Error retrieving account');
       }
       throw new Error("Failed to retrieve account");
     }
-  },
-};
+  },};
 
 export default API;
