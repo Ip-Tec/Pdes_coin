@@ -9,11 +9,11 @@ import { AccountDetail } from "../utils/type";
 import { ToastContainer, toast } from "react-toastify";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface RespondDATA {
-  error: string;
-  message: string;
-  data?: AccountDetail;
-}
+// interface RespondDATA {
+//   error: string;
+//   message: string;
+//   data?: AccountDetail;
+// }
 function Profile() {
   const { user, logout, isAuth } = useAuth();
   const [animationClass, setAnimationClass] = useState("");
