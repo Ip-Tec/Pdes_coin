@@ -155,10 +155,18 @@ export const depositFunds = async (amount: number) => {
 };
 
 // Withdraw Funds
-export const withdrawFunds = async (amount: number) => {
+export const withdrawFunds = async (
+  amount: number,
+  btcAddress: string | undefined,
+  accountNumber: string | number,
+  accountType: string | undefined
+) => {
   try {
     const response = await API.post(apiUrl("/transactions/withdraw"), {
       amount,
+      btcAddress,
+      accountType,
+      accountNumber,
     });
     return response.data;
   } catch (error) {
@@ -383,13 +391,19 @@ export const AccountAPI = {
         if (error.response && error.response.status === 401) {
           window.location.href = "/login";
         }
-        const errorData: ErrorResponse | string | undefined = error.response?.data || error.message;
+        const errorData: ErrorResponse | string | undefined =
+          error.response?.data || error.message;
 
         console.error("Error retrieving account:", errorData);
-        throw new Error(typeof errorData === 'string' ? errorData : errorData?.message || 'Error retrieving account');
+        throw new Error(
+          typeof errorData === "string"
+            ? errorData
+            : errorData?.message || "Error retrieving account"
+        );
       }
       throw new Error("Failed to retrieve account");
     }
-  },};
+  },
+};
 
 export default API;

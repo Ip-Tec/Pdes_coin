@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import logo from "../assets/pdes.png";
+import { DepositType } from "../utils/type";
 
 function Deposit() {
   const [depositType, setDepositType] = useState<"Naira" | "Crypto" | "">("");
@@ -9,7 +10,7 @@ function Deposit() {
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [selectedCrypto, setSelectedCrypto] = useState<string | null>(null);
   const [cryptoAmount, setCryptoAmount] = useState<string>("");
-  const [accountDetails, setAccountDetails] = useState<string>("9036577779");
+  const [accountDetails, setAccountDetails] = useState<DepositType>();
   const [cryptoAddress, setCryptoAddress] = useState<string | null>(null);
 
   // Fetch conversion rate from API
@@ -23,6 +24,7 @@ function Deposit() {
         setConversionRate(data.rate); // Set conversion rate
       } catch (error) {
         toast.error("Failed to fetch conversion rate. Please try again.");
+        console.error(error);
       }
     }
 
@@ -33,10 +35,11 @@ function Deposit() {
   const fetchAccountDetails = async () => {
     try {
       const response = await fetch("https://your-api-endpoint/account-details");
-      const data = await response.json();
+      const { data } = await response.json();
       setAccountDetails(data);
     } catch (error) {
       toast.error("Failed to fetch account details. Please try again.");
+      console.error(error);
     }
   };
 
@@ -50,6 +53,7 @@ function Deposit() {
       setCryptoAddress(data.address);
     } catch (error) {
       toast.error("Failed to fetch crypto address. Please try again.");
+      console.error(error);
     }
   };
 

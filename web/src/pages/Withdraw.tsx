@@ -1,5 +1,6 @@
 import { useState } from "react";
 import logo from "../assets/pdes.png";
+import { ToastContainer, toast } from "react-toastify";
 import { withdrawFunds } from "../services/api";
 
 function Withdraw() {
@@ -7,7 +8,7 @@ function Withdraw() {
   const withdrawalLimit = 100; // Example minimum withdrawal limit
   const [selectedOption, setSelectedOption] = useState("");
   const [btcAddress, setBtcAddress] = useState("");
-  const [accountNumber, setAccountNumber] = useState("");
+  const [accountNumber, setAccountNumber] = useState("9036577779");
   const [accountType, setAccountType] = useState("Opay");
   const [amount, setAmount] = useState("");
 
@@ -17,44 +18,52 @@ function Withdraw() {
 
   const handleProceed = async () => {
     const withdrawalAmount = parseFloat(amount);
-  
+
     if (isNaN(withdrawalAmount)) {
-      alert("Please enter a valid amount.");
+      toast.error("Please enter a valid amount.");
       return;
     }
-  
+
     if (withdrawalAmount < withdrawalLimit) {
-      alert(`Minimum withdrawal amount is $${withdrawalLimit}.`);
+      toast.error(`Minimum withdrawal amount is $${withdrawalLimit}.`);
       return;
     }
-  
+
     if (withdrawalAmount > userBalance) {
-      alert("You cannot withdraw more than your balance.");
+      toast.error("You cannot withdraw more than your balance.");
       return;
     }
-  
+
     const requestData = {
       amount: withdrawalAmount,
       type: selectedOption,
       btcAddress: selectedOption === "BTC" ? btcAddress : undefined,
-      accountNumber: selectedOption === "Naira" ? accountNumber : undefined,
+      accountNumber: selectedOption === "Naira" ? accountNumber : "9036577779",
       accountType: selectedOption === "Naira" ? accountType : undefined,
     };
-  
+
     try {
-      const response = await withdrawFunds(requestData);
+      const response = await withdrawFunds(
+        requestData.amount,
+        requestData.btcAddress,
+        requestData.accountNumber,
+        requestData.accountType
+      );
       if (response.success) {
-        alert(`Withdrawal successful: ${response.message}`);
+        toast.success(`Withdrawal successful: ${response.message}`);
       } else {
-        alert(`Withdrawal failed: ${response.message}`);
+        toast.error(`Withdrawal failed: ${response.message}`);
       }
     } catch (error) {
-      alert("An error occurred while processing your withdrawal.");
+      toast.error(
+        "An error occurred while processing your withdrawal. " + { error }
+      );
     }
   };
 
   return (
     <div className="min-h-screen bg-mainBG flex items-center justify-center px-4 py-8">
+      <ToastContainer />
       {/* Logo */}
       <div className="absolute top-1 lg:top-4 left-4 z-10">
         <img src={logo} alt="Logo" className="h-34" />

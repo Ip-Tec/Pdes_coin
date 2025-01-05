@@ -1,6 +1,7 @@
-import { User } from "../utils/type";
+import { TransactionHistory, User } from "../utils/type";
 import { useState, useEffect } from "react";
 import { formattedMoneyUSD } from "../utils/helpers";
+import { ToastContainer, toast } from "react-toastify";
 import { getTransactionHistory, fetchUserReferralList } from "../services/api";
 
 function Activity() {
@@ -30,8 +31,10 @@ function Activity() {
 
           setReferralData(data);
         }
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch data.");
+      } catch (error) {
+        setError("Failed to fetch data.");
+        toast.error("Failed to fetch data.")
+        console.error(error)
       } finally {
         setLoading(false);
       }
@@ -44,6 +47,7 @@ function Activity() {
 
   return (
     <div className="min-h-screen max-w-lg m-auto w-auto bg-mainBG pb-16 text-gray-600">
+      <ToastContainer />
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 bg-white shadow-md max-w-lg m-auto w-full z-10">
         <div className="flex justify-around items-center border-b border-gray-200">
@@ -81,7 +85,7 @@ function Activity() {
             <h2 className="text-lg font-bold mb-2">History</h2>
             {historyData.length > 0 ? (
               <ul>
-                {historyData.map((item: any, index: number) => (
+                {historyData.map((item: TransactionHistory, index: number) => (
                   <li
                     key={index}
                     className={`py-2 border-b-2 border-gray-200 ${

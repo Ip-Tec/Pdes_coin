@@ -105,3 +105,11 @@ export interface AccountDetail {
   USDC: string;
   PDES?: string;
 }
+
+export interface DepositType {
+  bank: string | number;
+  accountName: string;
+  accountNumber: string;
+  amount: number;
+  accountType: string;
+}
