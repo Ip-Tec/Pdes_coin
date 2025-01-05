@@ -7,6 +7,6 @@ services:
   plan: free
   region: oregon
   buildCommand: pip install -r requirements.txt
-  startCommand: gunicorn run:app
+  startCommand: python backend/run.py
   rootDir: ./backend/
 version: "1"
