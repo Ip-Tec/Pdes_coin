@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ErrorResponse } from "../utils/type";
+import { ErrorResponse, User } from "../utils/type";
 
 // Create API instance
 const API = axios.create({
@@ -112,6 +112,24 @@ export const loginUser = async (loginData: {
       throw new Error(errorData?.message || "Login failed");
     }
     throw new Error("Network error. Please try again.");
+  }
+};
+
+// Get user info
+export const getUser = async (): Promise<User | null> => {
+  try {
+    const response = await API.get<User>(apiUrl("/users/"), {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+      },
+    });
+
+    console.log(response);
+
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return null; // Return null if the user is not logged in or an error occurs
   }
 };
 

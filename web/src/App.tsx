@@ -5,23 +5,33 @@ import {
   Route,
   useLocation,
 } from "react-router-dom";
-import { AuthProvider } from "./contexts/AuthContext";
-import HomePage from "./pages/HomePage";
 import Login from "./pages/Login";
-import Dashboard from "./pages/Dashboard";
-import Register from "./pages/Register";
-import ProtectedRoute from "./components/ProtectedRoute";
-import Navigation from "./components/NavigationBar";
-import Activity from "./pages/Activity";
-import Withdraw from "./pages/Withdraw";
-import Profile from "./pages/Profile";
-import BuySellCoin from "./pages/BuySellCoin";
 import Deposit from "./pages/Deposit";
+import Profile from "./pages/Profile";
+import Activity from "./pages/Activity";
+import HomePage from "./pages/HomePage";
+import Withdraw from "./pages/Withdraw";
+import Register from "./pages/Register";
+import Dashboard from "./pages/Dashboard";
+import BuySellCoin from "./pages/BuySellCoin";
+import Navigation from "./components/NavigationBar";
+import { AuthProvider } from "./contexts/AuthContext";
+import ProtectedRoute from "./components/ProtectedRoute";
+import ResetPassword from "./pages/ResetPassword";
+import AboutPage from "./pages/AboutPage";
 
 const App: React.FC = () => {
   const DisplayNavbar: React.FC = () => {
     const location = useLocation();
-    const showNavbar = !["/login", "/register"].includes(location.pathname); // Hide on login/register
+    const hideNavbarPaths = [
+      "/",
+      "/login",
+      "/register",
+      "/reset-password",
+      "/reset-password/:token",
+      "/about",
+    ];
+    const showNavbar = !hideNavbarPaths.includes(location.pathname);
     return showNavbar ? <Navigation /> : null;
   };
 
@@ -38,7 +48,8 @@ const App: React.FC = () => {
                 <Deposit />
               </ProtectedRoute>
             }
-          /><Route
+          />
+          <Route
             path="/trade"
             element={
               <ProtectedRoute isAuth={true}>
@@ -75,6 +86,22 @@ const App: React.FC = () => {
             element={
               <ProtectedRoute isAuth={true}>
                 <Profile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/reset-password"
+            element={
+              <ProtectedRoute isAuth={true}>
+                <ResetPassword />
+              </ProtectedRoute>
+            }
+          />{" "}
+          <Route
+            path="/about"
+            element={
+              <ProtectedRoute isAuth={true}>
+                <AboutPage />
               </ProtectedRoute>
             }
           />

@@ -6,11 +6,19 @@ import TransactionList from "../components/TransactionList";
 import Loading from "../components/Loading";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
 
 const Dashboard = () => {
-  const { user, transactions, logout } = useAuth(); // Access user and transactions from context
+  const { user, getUser, setUser, transactions, logout, isAuth } = useAuth();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const navigate = useNavigate();
+
+  // Redirect to login if user is not authenticated
+  useEffect(() => {
+    if (!isAuth) {
+      navigate("/login");
+    }
+  }, [isAuth, navigate]);
 
   // The transactions are already available in the context, no need to fetch them here
   useEffect(() => {
@@ -23,21 +31,30 @@ const Dashboard = () => {
     navigate("/login");
   };
 
-  if (!user) {
-    return (
-      <div className="h-screen flex items-center justify-center flex-col bg-mainBG">
-        <p className="text-xl font-bold text-gray-500">
-          Please log in to view your dashboard.
-        </p>
-        <button
-          className="text-2xl bg-red-400 py-2 px-3 hover:bg-red-600 rounded"
-          onClick={handleLogout}
-        >
-          Logout
-        </button>
-      </div>
-    );
-  }
+  useEffect(() => {
+    const fetchUser = async () => {
+      if (!user) {
+        const storedUser = localStorage.getItem("user");
+        if (storedUser) {
+          const parsedUser = JSON.parse(storedUser);
+          setUser(parsedUser);
+        } else if (getUser) {
+          try {
+            const fetchedUser = await getUser(); // Use the function
+            if (fetchedUser) {
+              setUser(fetchedUser);
+              localStorage.setItem("user", JSON.stringify(fetchedUser));
+            }
+          } catch (error) {
+            toast.error(`Failed to fetch user: ${error}`);
+            handleLogout();
+          }
+        }
+      }
+    };
+
+    fetchUser();
+  }, [user, getUser, setUser]);
 
   if (isLoading) {
     return (
@@ -47,13 +64,18 @@ const Dashboard = () => {
     );
   }
 
+  if (!user) {
+    return null; // or a loading indicator
+  }
+
   // If user exists, render dashboard components
   return (
     <div className="h-screen bg-mainBG pb-16 overflow-hidden">
+      <ToastContainer />
       {/* Desktop Layout */}
       <div className="lg:flex lg:space-x-6 m-2 overflow-hidden">
         {/* Fixed Left Section for Desktop */}
-        <div className="lg:w-1/3 lg:sticky lg:top-6 lg:mt-[25%]">
+        <div className="lg:w-1/3 lg:sticky lg:top-4 lg:mt-[15%]">
           <BalanceCard
             id={user.id}
             email={user.email}

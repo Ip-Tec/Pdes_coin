@@ -3,6 +3,7 @@ import {
   refreshTokenAPI,
   getTransactionHistory,
   loginUser,
+  getUser as getUserAPI,
 } from "../services/api";
 import { TransactionHistory, User } from "../utils/type";
 import {
@@ -16,6 +17,8 @@ import {
 interface AuthContextType {
   isAuth: boolean;
   user: User | null;
+  getUser: () => Promise<User | null>;
+  setUser: (user: User | null) => void;
   transactions: TransactionHistory[];
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
@@ -62,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email,
         password,
       });
-
+      localStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("authToken", access_token);
       localStorage.setItem("refreshToken", refresh_token);
 
@@ -103,6 +106,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Fetch user data from the API
+  const getUser = async () => {
+    const user = await getUserAPI();
+    console.log("getUser", user);
+    localStorage.setItem("user", JSON.stringify(user));
+    setUser(user);
+    return user;
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("authToken");
     if (token && isTokenExpired(token)) {
@@ -112,7 +124,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ isAuth, user, transactions, login, logout, refreshAuthToken }}
+      value={{
+        isAuth,
+        user,
+        setUser,
+        getUser,
+        transactions,
+        login,
+        logout,
+        refreshAuthToken,
+      }}
     >
       {children}
     </AuthContext.Provider>
