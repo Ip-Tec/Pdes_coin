@@ -189,12 +189,12 @@ const Register: React.FC = () => {
             />
             <label className="text-gray-700">
               I agree to the{" "}
-              <a
-                href="/about"
+              <Link
+                to="/about"
                 className="text-blue-500 hover:underline"
               >
                 terms and conditions
-              </a>
+              </Link>
             </label>
           </div>
 
