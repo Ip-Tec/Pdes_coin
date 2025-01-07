@@ -10,7 +10,7 @@ const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [comfirmPassword, setComfirmPassword] = useState("");
-  const [token, setToken] = useState("");
+  const [token] = useState("");
   const [stage, setStage] = useState<"email" | "reset" | "sent">("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -18,7 +18,7 @@ const ForgotPassword: React.FC = () => {
   const handleEmailSubmit = async () => {
     setLoading(true);
     try {
-      const response = await API.post("/auth/forgot-password", { email });
+    //   const response = await API.post("/auth/forgot-password", { email });
       //   if (response.status === 200) {
       setStage("sent");
       setTimeout(() => setStage("reset"), 2000); // Move to reset password after 2 seconds

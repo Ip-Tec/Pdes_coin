@@ -6,7 +6,6 @@ from flask import request, jsonify
 from app.key_gen import generate_key
 from app.services import token_required
 from app.utils import validate_required_param
-from app.mail.user_mail import send_password_reset_email, send_register_email
 
 class UserTransactionsController:
     """
