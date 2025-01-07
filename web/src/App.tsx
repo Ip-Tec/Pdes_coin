@@ -18,7 +18,9 @@ import Navigation from "./components/NavigationBar";
 import { AuthProvider } from "./contexts/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import ResetPassword from "./pages/ResetPassword";
+import ForgotPassword from "./pages/ForgotPassword";
 import AboutPage from "./pages/AboutPage";
+import { AnimatePresence, motion } from "framer-motion";
 
 const App: React.FC = () => {
   const DisplayNavbar: React.FC = () => {
@@ -29,85 +31,219 @@ const App: React.FC = () => {
       "/register",
       "/reset-password",
       "/reset-password/:token",
+      "/forgot-password",
       "/about",
     ];
     const showNavbar = !hideNavbarPaths.includes(location.pathname);
     return showNavbar ? <Navigation /> : null;
   };
 
-  return (
-    <AuthProvider>
-      <Router>
-        <DisplayNavbar />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
+  // Page animation variants
+  const pageVariants = {
+    initial: { opacity: 0, x: -100 },
+    animate: { opacity: 1, x: 0, transition: { duration: 0.5 } },
+    exit: { opacity: 0, x: 100, transition: { duration: 0.5 } },
+  };
+
+  const AnimatedRoutes: React.FC = () => {
+    const location = useLocation();
+
+    return (
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          <Route
+            path="/"
+            element={
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <HomePage />
+              </motion.div>
+            }
+          />
           <Route
             path="/deposit"
             element={
-              <ProtectedRoute isAuth={true}>
-                <Deposit />
-              </ProtectedRoute>
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <ProtectedRoute isAuth={true}>
+                  <Deposit />
+                </ProtectedRoute>
+              </motion.div>
             }
           />
           <Route
             path="/trade"
             element={
-              <ProtectedRoute isAuth={true}>
-                <BuySellCoin />
-              </ProtectedRoute>
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <ProtectedRoute isAuth={true}>
+                  <BuySellCoin />
+                </ProtectedRoute>
+              </motion.div>
             }
           />
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute isAuth={true}>
-                <Dashboard />
-              </ProtectedRoute>
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <ProtectedRoute isAuth={true}>
+                  <Dashboard />
+                </ProtectedRoute>
+              </motion.div>
             }
           />
           <Route
             path="/activity"
             element={
-              <ProtectedRoute isAuth={true}>
-                <Activity />
-              </ProtectedRoute>
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <ProtectedRoute isAuth={true}>
+                  <Activity />
+                </ProtectedRoute>
+              </motion.div>
             }
           />
           <Route
             path="/withdraw"
             element={
-              <ProtectedRoute isAuth={true}>
-                <Withdraw />
-              </ProtectedRoute>
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <ProtectedRoute isAuth={true}>
+                  <Withdraw />
+                </ProtectedRoute>
+              </motion.div>
             }
           />
           <Route
             path="/profile"
             element={
-              <ProtectedRoute isAuth={true}>
-                <Profile />
-              </ProtectedRoute>
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <ProtectedRoute isAuth={true}>
+                  <Profile />
+                </ProtectedRoute>
+              </motion.div>
             }
           />
           <Route
             path="/reset-password"
             element={
-              <ProtectedRoute isAuth={true}>
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
                 <ResetPassword />
-              </ProtectedRoute>
+              </motion.div>
             }
-          />{" "}
+          />
+          <Route
+            path="/reset-password/:token"
+            element={
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <ResetPassword />
+              </motion.div>
+            }
+          />
+          <Route
+            path="/forgot-password"
+            element={
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <ForgotPassword />
+              </motion.div>
+            }
+          />
+          <Route
+            path="/login"
+            element={
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <Login />
+              </motion.div>
+            }
+          />
+          <Route
+            path="/register"
+            element={
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <Register />
+              </motion.div>
+            }
+          />
           <Route
             path="/about"
             element={
-              <ProtectedRoute isAuth={true}>
-                <AboutPage />
-              </ProtectedRoute>
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <ProtectedRoute isAuth={true}>
+                  <AboutPage />
+                </ProtectedRoute>
+              </motion.div>
             }
           />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
         </Routes>
+      </AnimatePresence>
+    );
+  };
+
+  return (
+    <AuthProvider>
+      <Router>
+        <DisplayNavbar />
+        <AnimatedRoutes />
       </Router>
     </AuthProvider>
   );

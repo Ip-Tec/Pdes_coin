@@ -7,12 +7,13 @@ import { useAuth } from "../contexts/AuthContext";
 import InputField from "../components/InputField";
 
 const Register: React.FC = () => {
-    const { isAuth } = useAuth();
+  const { isAuth } = useAuth();
   const [formData, setFormData] = useState({
-    fullName: "",
     email: "",
+    fullName: "",
     password: "",
     confirmPassword: "",
+    terms: false, // Changed to boolean for easier condition checking
   });
   const [loading, setLoading] = useState(false); // Loading state
   const [errors, setErrors] = useState({
@@ -93,8 +94,7 @@ const Register: React.FC = () => {
       } catch (error: unknown) {
         if (error instanceof Error) {
           console.log("Registration Error: ", { error });
-          console.log("Registration Error: ", error.stack
-          );
+          console.log("Registration Error: ", error.stack);
 
           setErrorMessage(error.message || "Registration failed");
         } else {
@@ -176,10 +176,35 @@ const Register: React.FC = () => {
             </p>
           )}
 
+          {/* Terms and Conditions Checkbox */}
+          <div className="flex items-center mb-4">
+            <input
+              type="checkbox"
+              name="terms"
+              checked={formData.terms}
+              onChange={(e) =>
+                setFormData({ ...formData, terms: e.target.checked })
+              }
+              className="mr-2 p-10 w-6 h-6  border-2 border-gray-300 rounded-md bg-slate-400 checked:bg-blue-500 checked:border-blue-500 checked:ring-2 checked:ring-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-200 ease-in-out"
+            />
+            <label className="text-gray-700">
+              I agree to the{" "}
+              <a
+                href="/about"
+                className="text-blue-500 hover:underline"
+              >
+                terms and conditions
+              </a>
+            </label>
+          </div>
+
           <div className="flex justify-center items-center">
             <button
               type="submit"
-              className="w-2/3 py-2 mt-4 bg-bgColor text-white rounded-3xl hover:bg-blue-600 transition duration-300"
+              disabled={!formData.terms} // Disable button if terms are not accepted
+              className={`w-2/3 py-2 mt-4 bg-bgColor text-white rounded-3xl hover:bg-blue-600 transition duration-300 ${
+                !formData.terms ? "opacity-50 cursor-not-allowed" : ""
+              }`}
             >
               Register
             </button>

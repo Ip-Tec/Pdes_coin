@@ -67,13 +67,13 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-[#FBF0EC] relative">
+    <div className="h-screen flex items-center justify-center bg-[#FBF0EC] relative overflow-x-hidden">
       {loading && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <img
             src={logo}
             alt="Loading"
-            className="animate-zoomInOut w-56 h-56"
+            className="animate-bounce w-56 h-56"
           />
         </div>
       )}
@@ -130,6 +130,12 @@ const Login: React.FC = () => {
           <span className="text-gray-600">Don't have an account?</span>{" "}
           <a href="/register" className="text-textColor hover:underline">
             Sign Up
+          </a>
+        </div>
+        {/* Forget Password */}
+        <div className="mt-4 text-center">
+          <a href="/forgot-password" className="text-textColor hover:underline">
+            Forgot Password?
           </a>
         </div>
       </div>

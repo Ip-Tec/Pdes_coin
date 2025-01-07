@@ -4,6 +4,7 @@ export interface InputFieldProps {
   name: string;
   value: string;
   required?: boolean;
+  icon?: React.ReactNode;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 export interface User {
@@ -112,4 +113,11 @@ export interface DepositType {
   accountNumber: string;
   amount: number;
   accountType: string;
+}
+
+export interface ResetPassword {
+  email?: string;
+  token?: string;
+  password?: string;
+  newPassword?: string;
 }

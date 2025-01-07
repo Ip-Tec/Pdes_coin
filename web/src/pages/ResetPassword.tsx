@@ -1,21 +1,24 @@
 import { useState } from "react";
+import logo from "../assets/pdes.png";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { ToastContainer, toast } from "react-toastify";
 import Navbar from "../components/Header";
+import InputField from "../components/InputField";
+import { resetPassword } from "../services/api";
 
 function ResetPassword() {
   const { isAuth } = useAuth();
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
 
-    if (password !== confirmPassword) {
+    if (password !== newPassword) {
       toast.error("Passwords do not match!");
       return;
     }
@@ -24,10 +27,14 @@ function ResetPassword() {
       setIsLoading(true);
 
       // Replace this with your API call for password reset
-      await new Promise((resolve) => setTimeout(resolve, 2000));
+      const response = await resetPassword({ newPassword, password });
+      if (response) {
+        toast.success("Password reset successfully!");
+      } else {
+        toast.error("Failed to reset password. Please try again");
+      }
 
-      toast.success("Password reset successfully!");
-      navigate("/login"); // Redirect to login page after success
+      navigate("/login");
     } catch (error) {
       toast.error(`Failed to reset password. Please try again /n ${error}`);
     } finally {
@@ -36,56 +43,43 @@ function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-mainBG flex items-center justify-center">
+    <div className="min-h-screen bg-mainBG flex flex-col items-center justify-center mx-4">
       <ToastContainer />
+      <img src={logo} alt="Logo" className="mx-auto h-64 w-64" />
       <div className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           Reset Password
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              New Password
-            </label>
-            <input
+            <InputField
+              label="Password"
               type="password"
-              id="password"
+              name="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="mt-1 block w-full p-2 border rounded-md focus:ring-primary focus:border-primary"
-              required
             />
-          </div>
-          <div>
-            <label
-              htmlFor="confirmPassword"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Confirm New Password
-            </label>
-            <input
+            <InputField
+              label="Confirm Password"
               type="password"
-              id="confirmPassword"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="mt-1 block w-full p-2 border rounded-md focus:ring-primary focus:border-primary"
-              required
+              name="confirmPassword"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
             />
           </div>
-          <button
-            type="submit"
-            className={`w-full py-2 px-4 bg-primary text-white font-bold rounded-md focus:outline-none focus:ring ${
-              isLoading
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-primary-dark"
-            }`}
-            disabled={isLoading}
-          >
-            {isLoading ? "Resetting..." : "Reset Password"}
-          </button>
+          <div className="w-full pt-4 justify-center items-center flex flex-col">
+            <button
+              type="submit"
+              className={`w-[85%] mx-auto py-2 px-4 bg-primary text-white font-bold rounded-3xl focus:outline-none focus:ring ${
+                isLoading
+                  ? "opacity-50 cursor-not-allowed"
+                  : "hover:bg-primary-dark"
+              }`}
+              disabled={isLoading}
+            >
+              {isLoading ? "Resetting..." : "Reset Password"}
+            </button>
+          </div>
         </form>
         <p className="text-sm text-gray-500 text-center mt-4">
           Remember your password?{" "}
@@ -102,5 +96,4 @@ function ResetPassword() {
     </div>
   );
 }
-
 export default ResetPassword;

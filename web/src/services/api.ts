@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ErrorResponse, User } from "../utils/type";
+import { ErrorResponse, ResetPassword, User } from "../utils/type";
 
 // Create API instance
 const API = axios.create({
@@ -422,6 +422,36 @@ export const AccountAPI = {
       throw new Error("Failed to retrieve account");
     }
   },
+};
+
+// Reset user password
+export const resetPassword = async ({
+  email,
+  token,
+  password,
+  newPassword,
+}: ResetPassword): Promise<User | ErrorResponse> => {
+  try {
+    const response = await API.post(apiUrl("/auth/reset-password"), {
+      email,
+      token,
+      password,
+      newPassword,
+    });
+
+    console.log(response);
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
+      const errorData: ErrorResponse = error.response?.data;
+      throw new Error(errorData?.message || "Failed to reset password");
+    }
+    throw new Error("Failed to reset password.");
+  }
 };
 
 export default API;
