@@ -1,6 +1,6 @@
 import { useState } from "react";
 import logo from "../assets/pdes.png";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import { useAuth } from "../contexts/AuthContext";
@@ -128,15 +128,15 @@ const Login: React.FC = () => {
         </form>
         <div className="mt-4 text-center">
           <span className="text-gray-600">Don't have an account?</span>{" "}
-          <a href="/register" className="text-textColor hover:underline">
+          <Link to={"/register"} className="text-textColor hover:underline">
             Sign Up
-          </a>
+          </Link>
         </div>
         {/* Forget Password */}
         <div className="mt-4 text-center">
-          <a href="/forgot-password" className="text-textColor hover:underline">
+          <Link to={"/forgot-password"} className="text-textColor hover:underline">
             Forgot Password?
-          </a>
+          </Link>
         </div>
       </div>
     </div>

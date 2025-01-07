@@ -1,6 +1,6 @@
 import logo from "../assets/pdes.png";
 import React, { useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { registerUser } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
@@ -212,9 +212,9 @@ const Register: React.FC = () => {
         </form>
         <div className="mt-4 text-center">
           <span className="text-gray-600">Already have an account?</span>{" "}
-          <a href="/login" className="text-textColor hover:underline">
+          <Link to="/login" className="text-textColor hover:underline">
             Login
-          </a>
+          </Link>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { TransactionHistory } from "../utils/type";
 
 interface TransactionListProps {
@@ -19,9 +20,9 @@ const TransactionList = ({ transactions }: TransactionListProps) => {
     <div>
       <div className="flex justify-between items-center mt-6 text-black min-h-fit">
         <h3 className="text-lg font-bold">Transactions</h3>
-        <a href="#" className="text-primary hover:underline">
+        <Link to="#" className="text-primary hover:underline">
           See All
-        </a>
+        </Link>
       </div>
       <div className="mt-3 space-y-3">
         {transactions.map((transaction, index) => (

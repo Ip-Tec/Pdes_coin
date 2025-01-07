@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import logo from "../assets/pdes.png";
 
 const Header: React.FC = () => {
@@ -20,14 +21,14 @@ const Header: React.FC = () => {
             </a>
           </li>
           <li>
-            <a href="/login" className="hover:text-bgColor">
+            <Link to={"/login"} className="hover:text-bgColor">
               Login
-            </a>
+            </Link>
           </li>
           <li>
-            <a href="/register" className="hover:text-bgColor">
+            <Link to={"/register"} className="hover:text-bgColor">
               Register
-            </a>
+            </Link>
           </li>
         </ul>
       </nav>
