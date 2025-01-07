@@ -105,7 +105,7 @@ const HomePage: React.FC = () => {
         </div>
       </section>
       {/* Coin left */}
-      <section className="coin-section py-10 px-2 text-center flex justify-center flex-col items-center h-[20vh] text-secondary bg-bgColor">
+      <section className="coin-section py-10 px-2 text-center flex justify-center flex-col items-center text-secondary bg-bgColor">
         <p className="text-3xl font-semibold text-white ">
           Currently, there are{" "}
           <span className="text-secondary font-semibold">7,980,000,000</span>{" "}
@@ -116,7 +116,7 @@ const HomePage: React.FC = () => {
         </p>
       </section>
       <section
-        className="features-section bg-gray-100 py-10 h-screen"
+        className="features-section bg-gray-100 py-10 lg:h-screen"
         id="features"
       >
         <div className="container mx-auto px-6">
