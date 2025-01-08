@@ -70,8 +70,8 @@ def change_password():
 
 
 # Verify Email router
-@auth_bp.route("/verify-email", methods=["POST"])
-def verify_email():
+@auth_bp.route("/verify-email/<token>", methods=["GET"])
+def verify_email(token):
     data = request.json
     # Add email verification logic here
     return jsonify({"message": "Email verified successfully"})

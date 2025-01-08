@@ -1,3 +1,4 @@
+import re
 import jwt
 import datetime
 from app import db
@@ -93,6 +94,10 @@ class UserController:
         username = data.get("username") or generate_key(4)
         password = data.get("password")
         confirmPassword = data.get("confirmPassword")
+        
+        valid_email = is_valid_email(email)
+        if not valid_email:
+            return jsonify({"message": "Invalid email format"}), 400
 
         # check if password and confirm password match
         if password != confirmPassword:
@@ -104,7 +109,7 @@ class UserController:
         # Validate required fields using the helper function
         for param, param_name in [
             (name, "Name"),
-            (email, "Email"),
+            (valid_email, "Email"),
             (password, "Password"),
         ]:
             validation_error = validate_required_param(param, param_name)
@@ -121,7 +126,7 @@ class UserController:
                 return jsonify({"message": "Invalid referral code"}), 400
 
         # Check if email is already registered
-        if User.query.filter_by(email=email).first():
+        if User.query.filter_by(email=valid_email).first():
             print({"message": "Email already registered"})
             return jsonify({"message": "Email already registered"}), 400
 
@@ -131,7 +136,7 @@ class UserController:
         # Create a new user
         user = User(
             name=name,
-            email=email,
+            email=valid_email,
             username=username,
             password=hashed_password,
             referral_code=referral_code,
@@ -146,7 +151,7 @@ class UserController:
             db.session.commit()
 
         # Optionally send a registration email
-        token = generate_password_reset_token(user.email)
+        token = generate_password_reset_token(user.valid_email)
         try:
             Email.send_register_email(user, token)
             # If email is sent successfully, return success message
@@ -289,3 +294,8 @@ class UserController:
             return jsonify({"referrals": serialized_referrals}), 200
         else:
             return jsonify({"message": "User not found"}), 404
+
+
+def is_valid_email(email):
+    regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
+    return re.match(regex, email)

@@ -18,7 +18,7 @@ const ForgotPassword: React.FC = () => {
   const handleEmailSubmit = async () => {
     setLoading(true);
     try {
-    //   const response = await API.post("/auth/forgot-password", { email });
+      //   const response = await API.post("/auth/forgot-password", { email });
       //   if (response.status === 200) {
       setStage("sent");
       setTimeout(() => setStage("reset"), 2000); // Move to reset password after 2 seconds
@@ -64,9 +64,7 @@ const ForgotPassword: React.FC = () => {
       <img
         src={logo}
         alt="Logo"
-        className={`mx-auto h-64 animate-bounce w-64 ${
-          stage == "sent" ? "hidden" : ""
-        }`}
+        className={`mx-auto h-64 w-64 ${stage == "sent" ? "hidden" : ""}`}
       />
 
       {/* Email Input Stage */}
@@ -96,7 +94,7 @@ const ForgotPassword: React.FC = () => {
               onClick={handleEmailSubmit}
               disabled={loading}
               className={`w-2/3 py-2 mt-4 ${
-                loading ? "bg-gray-400" : "bg-bgColor hover:bg-blue-600"
+                loading ? "bg-gray-400" : "bg-bgColor text-white hover:bg-secondary"
               } text-white rounded-3xl transition duration-300`}
             >
               {loading ? "Sending..." : "Send Reset Link"}
@@ -152,13 +150,16 @@ const ForgotPassword: React.FC = () => {
             />
           </div>
           {error && <p className="text-red-500 mb-2">{error}</p>}
-          <button
-            onClick={handleResetPassword}
-            className="bg-green-500 text-white px-4 py-2 rounded-md w-full"
-            disabled={loading}
-          >
-            {loading ? "Resetting..." : "Reset Password"}
-          </button>
+
+          <div className="flex w-full items-center flex-col justify-center">
+            <button
+              onClick={handleResetPassword}
+              className="bg-bgColor text-white hover:bg-secondary px-4 py-2 rounded-full w-2/3 mt-4"
+              disabled={loading}
+            >
+              {loading ? "Resetting..." : "Reset Password"}
+            </button>
+          </div>
         </motion.div>
       )}
     </div>

@@ -1,4 +1,5 @@
 import datetime
+from flask_mail import Message
 from flask import url_for, jsonify
 from app.mail.mail import create_mail_app
 
@@ -6,13 +7,14 @@ from app.mail.mail import create_mail_app
 # Initialize the app and mail
 app, mail = create_mail_app()
 
+
 def send_new_user_verification_email(user, token):
     """
     Send registration email with verification link to a new user.
     """
     # Generate verification token (use your preferred method)
     verification_token = token
-    verification_url = url_for('verify_email', token=verification_token, _external=True)
+    verification_url = url_for("auth.verify_email", token=verification_token, _external=True)
     logo_url = "https://example.com/pdes-logo.png"  # Replace with your logo URL
 
     msg = Message(
