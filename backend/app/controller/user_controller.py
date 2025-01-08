@@ -94,7 +94,7 @@ class UserController:
         username = data.get("username") or generate_key(4)
         password = data.get("password")
         confirmPassword = data.get("confirmPassword")
-        
+
         valid_email = is_valid_email(email)
         if not valid_email:
             return jsonify({"message": "Invalid email format"}), 400
@@ -298,4 +298,5 @@ class UserController:
 
 def is_valid_email(email):
     regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
-    return re.match(regex, email)
+    match = re.match(regex, email)
+    return email if match else None

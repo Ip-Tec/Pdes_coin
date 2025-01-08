@@ -4,10 +4,16 @@ import Loading from "../components/Loading";
 import { useEffect, useState } from "react";
 import { AccountAPI } from "../services/api";
 import { AccountDetail } from "../utils/type";
-import { Link, useNavigate } from "react-router-dom";
+import { MdChevronRight } from "react-icons/md";
 import { useAuth } from "../contexts/AuthContext";
-import Navigation from "../components/NavigationBar";
+import { Link, useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
+import {
+  FaInfoCircle,
+  FaWallet,
+  FaSignOutAlt,
+  FaQuestionCircle,
+} from "react-icons/fa";
 function Profile() {
   const { user, setUser, logout, isAuth } = useAuth();
   const [animationClass, setAnimationClass] = useState("");
@@ -75,7 +81,7 @@ function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-mainBG pb-16">
+    <div className="min-h-screen bg-mainBG pb-16 mb-28">
       <ToastContainer />
       <div className="container mx-auto px-4">
         {/* User Info Section */}
@@ -115,37 +121,67 @@ function Profile() {
 
         {/* Navigation Section */}
         <div className="flex flex-wrap justify-center mt-8 gap-4">
+          {/* Grouped Card for Support and Help Center */}
+          <div className="bg-white rounded-lg shadow-md p-4 text-center w-full md:w-40">
+            <h3 className="text-lg font-semibold text-gray-700">
+              Support & Help
+            </h3>
+            <button
+              onClick={() => navigate("/support")}
+              className="mt-2 w-full flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md text-gray-700 hover:text-primary"
+            >
+              <span className="flex items-center gap-2">
+                <FaQuestionCircle size={20} /> Support
+              </span>
+              <MdChevronRight size={20} />
+            </button>
+            <button
+              onClick={() => navigate("/help-center")}
+              className="mt-2 w-full flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md text-gray-700 hover:text-primary"
+            >
+              <span className="flex items-center gap-2">
+                <FaInfoCircle size={20} /> Help Center
+              </span>
+              <MdChevronRight size={20} />
+            </button>
+          </div>
+
+          {/* Other Navigation Buttons */}
           {[
             {
               label: "About",
-              action: () => {
-                navigate("/about");
-              },
+              action: () => navigate("/about"),
+              leftIcon: <FaInfoCircle size={20} />,
+              rightIcon: <MdChevronRight size={20} />,
             },
-            { label: "Support" },
-            { label: "Help Center" },
             {
               label: "Wallet Address",
               action: handleWalletAddressClick,
+              leftIcon: <FaWallet size={20} />,
+              rightIcon: <MdChevronRight size={20} />,
             },
             {
               label: "Logout",
               action: handleLogout,
+              leftIcon: <FaSignOutAlt size={20} />,
+              rightIcon: <MdChevronRight size={20} />,
               style: "text-red-500 hover:text-red-700",
             },
           ].map((item, index) => (
             <button
               key={index}
               onClick={item.action}
-              className={`px-4 py-2 bg-white rounded-lg shadow-md text-center w-full md:w-40 text-gray-700 hover:text-primary ${
+              className={`flex items-center justify-between px-4 py-2 bg-white rounded-lg shadow-md text-center w-full md:w-40 text-gray-700 hover:text-primary ${
                 item.style || ""
               }`}
             >
-              {item.label}
+              <span className="flex items-center gap-2">
+                {item.leftIcon} {item.label}
+              </span>
+              {item.rightIcon}
             </button>
           ))}
         </div>
-
         {/* Wallet Accordion */}
         {isAccordionOpen && (
           <motion.div
@@ -162,17 +198,17 @@ function Profile() {
                   Account Details
                 </h3>
                 <p className="text-gray-800">
-                  <strong>BTC Address:</strong> {accountData.BTC}
+                  <strong>PDES/BTC Address:</strong> {accountData.BTC}
                 </p>
                 <p className="text-gray-800">
-                  <strong>ETH Address:</strong> {accountData.ETH}
+                  <strong>PDES/ETH Address:</strong> {accountData.ETH}
                 </p>
                 <p className="text-gray-800">
-                  <strong>BCH Address:</strong> {accountData.BTC}
+                  <strong>PDES/BCH Address:</strong> {accountData.BTC}
                 </p>
-                <p className="text-gray-800">
+                {/* <p className="text-gray-800">
                   <strong>PDES Address:</strong> {accountData.PDES}
-                </p>
+                </p> */}
               </>
             ) : (
               <p className="text-gray-600">No account data available.</p>
@@ -180,9 +216,6 @@ function Profile() {
           </motion.div>
         )}
       </div>
-
-      {/* Navigation Bar */}
-      <Navigation />
     </div>
   );
 }

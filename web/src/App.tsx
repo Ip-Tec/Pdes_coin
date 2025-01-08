@@ -21,6 +21,9 @@ import ResetPassword from "./pages/ResetPassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import AboutPage from "./pages/AboutPage";
 import { AnimatePresence, motion } from "framer-motion";
+import SupportPage from "./pages/SupportPage";
+import HelpCenterPage from "./pages/HelpCenterPage";
+import WalletPage from "./pages/WalletPage";
 
 const App: React.FC = () => {
   const DisplayNavbar: React.FC = () => {
@@ -33,6 +36,8 @@ const App: React.FC = () => {
       "/reset-password/:token",
       "/forgot-password",
       "/about",
+      "/support",
+      "help-center",
     ];
     const showNavbar = !hideNavbarPaths.includes(location.pathname);
     return showNavbar ? <Navigation /> : null;
@@ -230,6 +235,51 @@ const App: React.FC = () => {
               >
                 <ProtectedRoute isAuth={true}>
                   <AboutPage />
+                </ProtectedRoute>
+              </motion.div>
+            }
+          />
+          <Route
+            path="/wallet"
+            element={
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <ProtectedRoute isAuth={true}>
+                  <WalletPage />
+                </ProtectedRoute>
+              </motion.div>
+            }
+          />
+          <Route
+            path="/support"
+            element={
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <ProtectedRoute isAuth={true}>
+                  <SupportPage />
+                </ProtectedRoute>
+              </motion.div>
+            }
+          />
+          <Route
+            path="/help-center"
+            element={
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <ProtectedRoute isAuth={true}>
+                  <HelpCenterPage />
                 </ProtectedRoute>
               </motion.div>
             }

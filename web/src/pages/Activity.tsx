@@ -46,7 +46,7 @@ function Activity() {
   }, [activeSection]);
 
   return (
-    <div className="min-h-screen max-w-lg m-auto w-auto bg-mainBG pb-16 text-gray-600">
+    <div className="min-h-screen max-w-lg m-auto w-auto bg-mainBG pb-16 text-gray-600 mb-28">
       <ToastContainer />
       {/* Fixed Header */}
       <div className="fixed top-0 left-0 right-0 bg-white shadow-md max-w-lg m-auto w-full z-10">

@@ -4,6 +4,7 @@ import { Link, Navigate } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import { useAuth } from "../contexts/AuthContext";
+import { toast, ToastContainer } from "react-toastify";
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -52,12 +53,14 @@ const Login: React.FC = () => {
     setLoading(true);
     if (validateForm()) {
       try {
-        await login(formData.email, formData.password); // Now calling login from AuthContext
+        await login(formData.email, formData.password);
         navigate("/dashboard");
       } catch (error: unknown) {
         if (error instanceof Error) {
+          toast.error(error.message || "Login failed");
           setErrorMessage(error.message || "Login failed");
         } else {
+          toast.error("An unexpected error occurred. Please try again.");
           setErrorMessage("An unexpected error occurred. Please try again.");
         }
       } finally {
@@ -68,6 +71,7 @@ const Login: React.FC = () => {
 
   return (
     <div className="h-screen flex items-center justify-center bg-[#FBF0EC] relative overflow-x-hidden">
+      <ToastContainer />
       {loading && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <img

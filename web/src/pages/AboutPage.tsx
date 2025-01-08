@@ -6,7 +6,7 @@ import NavigationBar from "../components/NavigationBar";
 const AboutPage: React.FC = () => {
   const { isAuth } = useAuth();
   return (
-    <div className="min-h-screen bg-gray-100 py-10 px-6 mt-10">
+    <div className="min-h-screen bg-gray-100 py-10 px-6 mt-10 mb-28">
       {/* Show navbar if the user is logged in */}
       {!isAuth && <Header />}
       <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">

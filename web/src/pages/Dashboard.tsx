@@ -70,7 +70,7 @@ const Dashboard = () => {
 
   // If user exists, render dashboard components
   return (
-    <div className="h-screen bg-mainBG pb-16 overflow-hidden">
+    <div className="h-screen bg-mainBG pb-16 overflow-hidden mb-28">
       <ToastContainer />
       {/* Desktop Layout */}
       <div className="lg:flex lg:space-x-6 m-2 overflow-hidden">
@@ -105,9 +105,6 @@ const Dashboard = () => {
           )}
         </div>
       </div>
-
-      {/* Bottom Navigation for Mobile */}
-      <Navigation />
     </div>
   );
 };
