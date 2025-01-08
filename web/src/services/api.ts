@@ -3,7 +3,7 @@ import { ErrorResponse, ResetPassword, User } from "../utils/type";
 
 // Create API instance
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "http://localhost:5000/api",
+  baseURL: import.meta.env.VITE_API_URL || "https://pdes-coin.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
