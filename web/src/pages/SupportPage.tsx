@@ -1,5 +1,11 @@
 import { useState } from "react";
-import { FaPhone, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
+import {
+  FaPhone,
+  FaEnvelope,
+  FaMapMarkerAlt,
+  FaArrowLeft,
+} from "react-icons/fa";
+import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import InputField from "../components/InputField";
@@ -14,8 +20,8 @@ function SupportPage() {
   });
 
   const { isAuth } = useAuth();
-
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
 
   const handleChange = (
     e: React.ChangeEvent<HTMLTextAreaElement | HTMLInputElement>
@@ -56,6 +62,16 @@ function SupportPage() {
   return (
     <div className="min-h-screen bg-mainBG py-8 px-4">
       <ToastContainer />
+
+      {/* Back Button */}
+      <button
+        className="flex items-center text-primary mb-4 md:hidden"
+        onClick={() => navigate(-1)}
+      >
+        <FaArrowLeft className="mr-2" />
+        <span>Back</span>
+      </button>
+
       <div className="container mx-auto max-w-4xl bg-white shadow-lg rounded-lg p-6 mb-24">
         <h1 className="text-3xl font-bold text-center text-primary mb-4">
           Support Center

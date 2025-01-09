@@ -422,6 +422,39 @@ export const AccountAPI = {
       throw new Error("Failed to retrieve account");
     }
   },
+
+  deleteWallet: async () => {
+    try {
+      const response = await API.delete(apiUrl("/account/delete_wallet"));
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.status === 401) {
+          window.location.href = "/login";
+        }
+        const errorData: ErrorResponse = error.response?.data;
+        throw new Error(errorData?.message || "Failed to delete wallet");
+      }
+      throw new Error("Network error. Please try again.");
+    }
+  },
+
+  generateNewWallet: async () => {
+    try {
+      const response = await API.post(apiUrl("/account/generate_new_wallet"));
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.status === 401) {
+          window.location.href = "/login";
+        }
+        const errorData: ErrorResponse = error.response?.data;
+        throw new Error(errorData?.message || "Failed to generate new wallet");
+      }
+      throw new Error("Network error. Please try again.");
+    }
+  }
+
 };
 
 // Reset user password

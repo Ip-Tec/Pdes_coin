@@ -1,14 +1,26 @@
 import React from "react";
 import Header from "../components/Header";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import NavigationBar from "../components/NavigationBar";
+import { FaArrowLeft } from "react-icons/fa";
 
 const AboutPage: React.FC = () => {
   const { isAuth } = useAuth();
+  const navigate = useNavigate();
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-6 mt-10 mb-28">
       {/* Show navbar if the user is logged in */}
       {!isAuth && <Header />}
+
+      {/* Back Button */}
+      <button
+        className="flex items-center text-primary mb-4 md:hidden"
+        onClick={() => navigate(-1)}
+      >
+        <FaArrowLeft className="mr-2" />
+        <span>Back</span>
+      </button>
       <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-lg p-8">
         <h1 className="text-3xl font-bold text-primary mb-6 text-center">
           About Pdes Cryptocurrency

@@ -1,10 +1,12 @@
-import { FaSearch, FaArrowRight } from "react-icons/fa";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import Navigation from "../components/NavigationBar";
+import { FaSearch, FaArrowRight, FaArrowLeft } from "react-icons/fa";
 
 function HelpCenterPage() {
   const { isAuth } = useAuth();
+  const navigate = useNavigate();
   const faqs = [
     {
       question: "What is PDES Coin?",
@@ -37,6 +39,13 @@ function HelpCenterPage() {
 
   return (
     <div className="min-h-screen bg-mainBG py-8 px-4">
+      <button
+        className="flex items-center text-primary mb-4 md:hidden"
+        onClick={() => navigate(-1)}
+      >
+        <FaArrowLeft className="mr-2" />
+        <span>Back</span>
+      </button>
       <div className="container mx-auto max-w-5xl bg-white shadow-lg rounded-lg p-6 mb-24">
         {/* Header */}
         <h1 className="text-3xl font-bold text-center text-primary mb-4">

@@ -1,9 +1,9 @@
 import logo from "../assets/pdes.png";
-import { motion } from "framer-motion";
+// import { motion } from "framer-motion";
 import Loading from "../components/Loading";
 import { useEffect, useState } from "react";
-import { AccountAPI } from "../services/api";
-import { AccountDetail } from "../utils/type";
+// import { AccountAPI } from "../services/api";
+// import { AccountDetail } from "../utils/type";
 import { MdChevronRight } from "react-icons/md";
 import { useAuth } from "../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
@@ -17,9 +17,9 @@ import {
 function Profile() {
   const { user, setUser, logout, isAuth } = useAuth();
   const [animationClass, setAnimationClass] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
-  const [isAccordionOpen, setIsAccordionOpen] = useState(false);
-  const [accountData, setAccountData] = useState<AccountDetail>();
+  const [isLoading] = useState(false);
+  // const [isAccordionOpen, setIsAccordionOpen] = useState(false);
+  // const [accountData, setAccountData] = useState<AccountDetail>();
   const navigate = useNavigate();
   const referralLink = `https://pdes.xyz/referral/re=${user?.referral_code}`;
 
@@ -55,21 +55,21 @@ function Profile() {
     navigate("/login");
   };
 
-  const handleWalletAddressClick = async () => {
-    try {
-      setIsLoading(true);
-      const response = await AccountAPI.getAccount();
-      if (!response) {
-        toast.error("Failed to fetch account details");
-      }
-      setAccountData(response);
-      setIsAccordionOpen(!isAccordionOpen);
-    } catch (error) {
-      toast.error(`Failed to fetch account data: ${error}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const handleWalletAddressClick = async () => {
+  //   try {
+  //     setIsLoading(true);
+  //     const response = await AccountAPI.getAccount();
+  //     if (!response) {
+  //       toast.error("Failed to fetch account details");
+  //     }
+  //     setAccountData(response);
+  //     setIsAccordionOpen(!isAccordionOpen);
+  //   } catch (error) {
+  //     toast.error(`Failed to fetch account data: ${error}`);
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   const copyToClipboard = async () => {
     try {
@@ -155,11 +155,17 @@ function Profile() {
               rightIcon: <MdChevronRight size={20} />,
             },
             {
-              label: "Wallet Address",
-              action: handleWalletAddressClick,
+              label: "Wallet",
+              action: () => navigate("/wallet"),
               leftIcon: <FaWallet size={20} />,
               rightIcon: <MdChevronRight size={20} />,
             },
+            // {
+            //   label: "Wallet Address",
+            //   action: handleWalletAddressClick,
+            //   leftIcon: <FaWallet size={20} />,
+            //   rightIcon: <MdChevronRight size={20} />,
+            // },
             {
               label: "Logout",
               action: handleLogout,
@@ -183,7 +189,7 @@ function Profile() {
           ))}
         </div>
         {/* Wallet Accordion */}
-        {isAccordionOpen && (
+        {/* {isAccordionOpen && (
           <motion.div
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
@@ -208,13 +214,13 @@ function Profile() {
                 </p>
                 {/* <p className="text-gray-800">
                   <strong>PDES Address:</strong> {accountData.PDES}
-                </p> */}
+                </p> 
               </>
             ) : (
               <p className="text-gray-600">No account data available.</p>
             )}
           </motion.div>
-        )}
+        )} */}
       </div>
     </div>
   );
