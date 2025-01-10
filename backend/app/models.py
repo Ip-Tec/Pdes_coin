@@ -160,17 +160,25 @@ class CoinPriceHistory(db.Model):
 
 
 class Utility(db.Model):
+    __tablename__ = "utility"
+    
     id = db.Column(db.Integer, primary_key=True)
     pdes_price = db.Column(db.Float, nullable=False)
     pdes_market_cap = db.Column(db.Float, nullable=False)
     pdes_circulating_supply = db.Column(db.Float, nullable=False)
-    pdes_total_supply = db.Column(db.Float, nullable=False)
+    conversion_rate = db.Column(db.Float, nullable=False, default=1980)
+    pdes_supply_left = db.Column(db.Float, nullable=False, default=8000000000.0)
+    pdes_total_supply = db.Column(db.Float, nullable=False, default=8000000000.0)
 
     def serialize(self):
         return {
             "id": self.id,
-            "name": self.name,
-            "value": self.value,
+            "pdes_price": self.pdes_price,
+            "conversion_rate": self.conversion_rate,
+            "pdes_market_cap": self.pdes_market_cap,
+            "pdes_supply_left": self.pdes_supply_left,
+            "pdes_total_supply": self.pdes_total_supply,
+            "pdes_circulating_supply": self.pdes_circulating_supply,
         }
 
 
@@ -188,7 +196,7 @@ class AccountDetail(db.Model):
     PDESAddres = db.Column(
         db.String(30), db.ForeignKey("user.username"), nullable=False
     )
-    
+
     def serialize(self):
         return {
             "id": self.id,
@@ -198,7 +206,7 @@ class AccountDetail(db.Model):
             "LTC": self.LTCAddress,
             "USDC": self.USDCAddress,
         }
-        
+
     # unserialize function
     def unserialize(self, data):
         self.user_id = data["user_id"]
@@ -210,7 +218,25 @@ class AccountDetail(db.Model):
         self.LTCAddressSeed = data["LTCAddressSeed"]
         self.USDCAddress = data["USDCAddress"]
         self.USDCAddressSeed = data["USDCAddressSeed"]
-        self.PDESAddres = data["PDESAddres"] 
+        self.PDESAddres = data["PDESAddres"]
+
+
+# Notification model
+class Notification(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    message = db.Column(db.String(200), nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "message": self.message,
+            "is_read": self.is_read,
+            "created_at": self.created_at.isoformat(),
+        }
 
 
 # Functions to handle deposits, withdrawals, and transactions

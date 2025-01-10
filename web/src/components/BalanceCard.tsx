@@ -27,7 +27,7 @@ const BalanceCard = ({ balance, crypto_balance, full_name, email }: User) => {
             onClick={handelAddMoney}
             className="bg-secondary hover:bg-secondary-dark px-4 py-2 rounded-lg shadow-lg"
           >
-            Add Money
+            Deposit
           </button>
         </div>
       </div>

@@ -1,19 +1,38 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import logo from "../assets/pdes.png";
 import { FaArrowLeft } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import { withdrawFunds } from "../services/api";
+import API, { apiUrl, withdrawFunds } from "../services/api";
 import { ToastContainer, toast } from "react-toastify";
+import { useAuth } from "../contexts/AuthContext";
 
 function Withdraw() {
-  const userBalance = 5000; // Example user balance
-  const withdrawalLimit = 100; // Example minimum withdrawal limit
+  const { user } = useAuth();
+  const userBalance = user?.balance || 0;
+  const withdrawalLimit = 100;
   const [selectedOption, setSelectedOption] = useState("");
   const [btcAddress, setBtcAddress] = useState("");
-  const [accountNumber, setAccountNumber] = useState("9036577779");
+  const [accountNumber, setAccountNumber] = useState("");
   const [accountType, setAccountType] = useState("Opay");
   const [amount, setAmount] = useState("");
   const navigate = useNavigate();
+  const [conversionRate, setConversionRate] = useState<number>(2000);
+
+  // Fetch conversion rate from API
+  useEffect(() => {
+    async function fetchConversionRate() {
+      try {
+        const response = await API.get(apiUrl("/transactions/conversion-rate"));
+        const conversion_rate = response.data.conversion_rate;
+        setConversionRate(conversion_rate.conversion_rate * 0.9);
+      } catch (error) {
+        toast.error("Failed to fetch conversion rate. Please try again.");
+        console.error("Conversion Rate Error:", error);
+      }
+    }
+
+    fetchConversionRate();
+  }, []);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAmount(e.target.value);
@@ -64,9 +83,14 @@ function Withdraw() {
     }
   };
 
+  useEffect(() => {
+    toast.info(
+      "Note: Withdrawals are subject to a 15% stamp duty deduction by banks."
+    );
+  }, []);
+
   return (
     <>
-      {/* Back Button */}
       <button
         className="flex items-center text-lg text-primary mb-4 px-3 py-4 md:hidden z-50"
         onClick={() => navigate(-1) || navigate("/home")}
@@ -77,12 +101,9 @@ function Withdraw() {
 
       <div className="min-h-screen bg-mainBG flex items-center justify-center px-4 py-8">
         <ToastContainer />
-        {/* Logo */}
         <div className="absolute top-1 lg:top-4 left-4 z-10">
           <img src={logo} alt="Logo" className="h-34" />
         </div>
-
-        {/* Main Content */}
         <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md z-20">
           <h1 className="text-2xl font-bold mb-4 text-center">
             Withdraw Funds
@@ -93,8 +114,10 @@ function Withdraw() {
               ${userBalance.toFixed(2)}
             </span>
           </p>
-
-          {/* Selection Buttons */}
+          <p className="text-center text-gray-600 mb-4">
+            Current Conversion Rate:{" "}
+            <span className="font-bold">1 USD = ₦{conversionRate}</span>
+          </p>
           <div className="flex justify-around mb-6">
             <button
               className={`px-4 py-2 rounded-lg font-medium ${
@@ -117,8 +140,6 @@ function Withdraw() {
               Withdraw Naira
             </button>
           </div>
-
-          {/* Common Amount Input */}
           {selectedOption && (
             <div>
               <label
@@ -137,8 +158,6 @@ function Withdraw() {
               />
             </div>
           )}
-
-          {/* Form for BTC */}
           {selectedOption === "BTC" && (
             <div>
               <label
@@ -157,8 +176,6 @@ function Withdraw() {
               />
             </div>
           )}
-
-          {/* Form for Naira */}
           {selectedOption === "Naira" && (
             <div>
               <label
@@ -192,8 +209,6 @@ function Withdraw() {
               />
             </div>
           )}
-
-          {/* Proceed Button */}
           {selectedOption && (
             <button
               className="w-full mt-6 bg-bgColor text-white py-2 rounded-lg hover:bg-secondary"
@@ -202,8 +217,6 @@ function Withdraw() {
               Proceed
             </button>
           )}
-
-          {/* Default Message */}
           {!selectedOption && (
             <p className="text-center text-gray-600 mt-4">
               Please select an option to proceed.

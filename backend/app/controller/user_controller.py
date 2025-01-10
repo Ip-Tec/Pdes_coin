@@ -109,7 +109,7 @@ class UserController:
         # Validate required fields using the helper function
         for param, param_name in [
             (name, "Name"),
-            (valid_email, "Email"),
+            (email, "Email"),
             (password, "Password"),
         ]:
             validation_error = validate_required_param(param, param_name)
@@ -126,7 +126,7 @@ class UserController:
                 return jsonify({"message": "Invalid referral code"}), 400
 
         # Check if email is already registered
-        if User.query.filter_by(email=valid_email).first():
+        if User.query.filter_by(email=email).first():
             print({"message": "Email already registered"})
             return jsonify({"message": "Email already registered"}), 400
 
@@ -136,7 +136,7 @@ class UserController:
         # Create a new user
         user = User(
             name=name,
-            email=valid_email,
+            email=email,
             username=username,
             password=hashed_password,
             referral_code=referral_code,
@@ -151,7 +151,7 @@ class UserController:
             db.session.commit()
 
         # Optionally send a registration email
-        token = generate_password_reset_token(user.valid_email)
+        token = generate_password_reset_token(user.email)
         try:
             Email.send_register_email(user, token)
             # If email is sent successfully, return success message

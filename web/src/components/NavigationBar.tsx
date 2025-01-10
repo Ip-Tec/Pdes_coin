@@ -18,8 +18,10 @@ const Navigation = () => {
           <Link
             key={index}
             to={item.path}
-            className={`flex flex-col rounded-full items-center p-4 text-gray-500 hover:bg-primary-light hover:text-text focus:text-text ${
-              location.pathname === item.path ? "bg-primary text-white" : ""
+            className={`flex flex-col rounded-full items-center p-4 hover:bg-primary-light hover:text-white ${
+              location.pathname == item.path
+                ? "bg-primary text-white"
+                : "text-gray-500"
             }`}
           >
             <span className="text-2xl">{item.icon}</span>

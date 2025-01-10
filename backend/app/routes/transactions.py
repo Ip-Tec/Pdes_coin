@@ -1,8 +1,11 @@
 from app import db
 from app.services import token_required
-from app.models import Balance, CoinPriceHistory
+from app.models import Balance, CoinPriceHistory, Utility
 from flask import Blueprint, request, jsonify
-from app.controller.user_transactions import UserTransactionsController
+from app.controller.user_transactions import (
+    UserTransactionsController,
+    get_pdes_coin_details,
+)
 
 # Transactions API
 txn_bp = Blueprint("transactions", __name__)
@@ -110,3 +113,21 @@ def get_user_activity():
         return jsonify({"user_activity": activity})
     else:
         return jsonify({"message": "Could't get User Activity"}), 404
+
+
+@txn_bp.route("/pdes-details", methods=["GET"])
+def fetch_pdes_details():
+    details = get_pdes_coin_details()
+    return jsonify(details)
+
+
+# Get the conversion rate
+@txn_bp.route("/conversion-rate", methods=["GET"])
+def get_conversion_rate():
+    rate = get_pdes_coin_details()
+    print(f"conversion_rate: {rate}")
+
+    if rate:
+        return jsonify({"conversion_rate": rate})
+
+    return jsonify({"message": "Conversion rate not found"}), 404

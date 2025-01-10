@@ -15,6 +15,7 @@ import {
 } from "chart.js";
 import { useAuth } from "../contexts/AuthContext";
 import { CryptoHistory } from "../utils/type";
+import InputField from "../components/InputField";
 
 // Register chart components
 ChartJS.register(
@@ -145,13 +146,13 @@ function BuySellCoin() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-between items-center">
-            <label className="text-sm font-medium">Amount of Pdes</label>
-            <input
+            <InputField
+              required
+              name="amount"
               type="number"
               value={amount}
+              label="Amount of Pdes"
               onChange={handleAmountChange}
-              className="w-3/4 px-4 py-2 border rounded-lg"
-              placeholder="Enter amount"
             />
           </div>
 

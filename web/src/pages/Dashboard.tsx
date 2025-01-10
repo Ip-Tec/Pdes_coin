@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import BalanceCard from "../components/BalanceCard";
-import Navigation from "../components/NavigationBar";
 import QuickActions from "../components/QuickActions";
 import TransactionList from "../components/TransactionList";
 import Loading from "../components/Loading";

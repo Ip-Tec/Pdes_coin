@@ -2,8 +2,12 @@ import axios from "axios";
 import { ErrorResponse, ResetPassword, User } from "../utils/type";
 
 // Create API instance
+const prod = import.meta.env.PROD;
+const url = prod ? import.meta.env.REACT_APP_API_URL : import.meta.env.VITE_API_URL;
+
+// Create API instance
 const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "https://pdes-coin.onrender.com/api",
+  baseURL: url || "https://pdes-coin.onrender.com/api",
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -25,7 +29,8 @@ API.interceptors.request.use(
 );
 
 // Helper function to generate endpoint URLs
-const apiUrl = (endpoint: string) => `${API.defaults.baseURL}${endpoint}`;
+export const apiUrl = (endpoint: string) =>
+  `${API.defaults.baseURL}${endpoint}`;
 
 // Check token validity
 export const checkTokenValidity = async (token: string): Promise<boolean> => {
@@ -453,8 +458,7 @@ export const AccountAPI = {
       }
       throw new Error("Network error. Please try again.");
     }
-  }
-
+  },
 };
 
 // Reset user password
