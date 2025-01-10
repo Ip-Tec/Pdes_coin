@@ -115,9 +115,10 @@ class UserTransactionsController:
     # Withdraw money from wallet and update balance
     @staticmethod
     @token_required
-    def withdraw_money():
-        user_id = request.user_id
+    def withdraw_money(user):
+        user_id = user.id
         data = request.get_json()
+        print (f"withdraw Trans:::: {data}")
 
         # Check if balance is sufficient
         balance = Balance.query.filter_by(user_id=user_id).first()
@@ -127,9 +128,9 @@ class UserTransactionsController:
         transaction = Transaction(
             user_id=user_id,
             amount=-data["amount"],
-            account_name=data["account_name"],
-            account_number=data["account_number"],
-            transaction_type="withdrawal",
+            account_name=data["accountName"],
+            account_number=data["accountNumber"],
+            transaction_type="withdraw",
         )
         db.session.add(transaction)
         db.session.commit()
@@ -138,7 +139,7 @@ class UserTransactionsController:
         balance.balance -= data["amount"]
         db.session.commit()
 
-        return jsonify({"message": transaction.serialize()}), 201
+        return jsonify({"message": "Withdraw in Progress", "data": transaction.serialize()}), 201
 
     # Buy PDES coin
     @staticmethod

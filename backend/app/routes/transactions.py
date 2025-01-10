@@ -33,9 +33,9 @@ def deposit_funds(current_user):
 @token_required
 def withdraw_funds(current_user):
     data = request.get_json()
-    print(f"withdraw Trans:::: {data}")
+    # print(f"withdraw Trans:::: {data}")
     # Call the controller method to withdraw money
-    return UserTransactionsController.withdraw_money(current_user)
+    return UserTransactionsController.withdraw_money()
 
 
 # Get account balance router
@@ -131,3 +131,9 @@ def get_conversion_rate():
         return jsonify({"conversion_rate": rate})
 
     return jsonify({"message": "Conversion rate not found"}), 404
+
+# Get Account details for flart and crypto
+@txn_bp.route("/get-account-details", methods=["GET"])
+def get_account_details():
+    # Fetch the latest Utility data
+    return UserTransactionsController.get_account_details()
