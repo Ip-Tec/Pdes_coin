@@ -3,9 +3,11 @@ export interface InputFieldProps {
   type: string;
   name: string;
   value: string;
+  disabled?: boolean;
+  placeholder?: string;
   required?: boolean;
   icon?: React.ReactNode;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 export interface User {
   id: number;

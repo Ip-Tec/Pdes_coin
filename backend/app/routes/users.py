@@ -7,7 +7,6 @@ users_bp = Blueprint("users", __name__)
 
 # Get Login user info
 @users_bp.route("/", methods=["GET", "OPTIONS"])
-@token_required
 def get_users():
     # Fetch users from the database
     get_users = UserController.get_user()

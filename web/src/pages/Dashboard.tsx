@@ -33,16 +33,18 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchUser = async () => {
       if (!user) {
-        const storedUser = localStorage.getItem("user");
+        const storedUser = sessionStorage.getItem("user");
         if (storedUser) {
           const parsedUser = JSON.parse(storedUser);
           setUser(parsedUser);
         } else if (getUser) {
           try {
-            const fetchedUser = await getUser(); // Use the function
+            const fetchedUser = await getUser();
             if (fetchedUser) {
+              console.log("fetchedUser", fetchedUser);
+
               setUser(fetchedUser);
-              localStorage.setItem("user", JSON.stringify(fetchedUser));
+              sessionStorage.setItem("user", JSON.stringify(fetchedUser));
             }
           } catch (error) {
             toast.error(`Failed to fetch user: ${error}`);
@@ -64,7 +66,7 @@ const Dashboard = () => {
   }
 
   if (!user) {
-    return null; // or a loading indicator
+    return <Loading isLoading={isLoading} />;
   }
 
   // If user exists, render dashboard components

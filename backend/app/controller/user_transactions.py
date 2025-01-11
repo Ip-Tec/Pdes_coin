@@ -124,12 +124,14 @@ class UserTransactionsController:
         balance = Balance.query.filter_by(user_id=user_id).first()
         if balance.balance < data["amount"]:
             return jsonify({"error": "Insufficient balance"}), 400
+         
 
         transaction = Transaction(
             user_id=user_id,
             amount=-data["amount"],
             account_name=data["accountName"],
-            account_number=data["accountNumber"],
+            btc_address = data["btcAddress"],
+            account_number= data["accountNumber"],
             transaction_type="withdraw",
         )
         db.session.add(transaction)

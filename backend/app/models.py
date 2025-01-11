@@ -73,7 +73,8 @@ class Transaction(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     account_name = db.Column(db.String(100), nullable=False)
-    account_number = db.Column(db.String(20), nullable=False)
+    account_number = db.Column(db.String(20), nullable=True)
+    btc_address = db.Column(db.String(20), nullable=True)
     transaction_type = db.Column(db.String(20), nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(

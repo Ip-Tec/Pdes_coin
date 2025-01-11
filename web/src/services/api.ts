@@ -3,7 +3,9 @@ import { ErrorResponse, ResetPassword, User } from "../utils/type";
 
 // Create API instance
 const prod = import.meta.env.PROD;
-const url = prod ? import.meta.env.REACT_APP_API_URL : import.meta.env.VITE_API_URL;
+const url = prod
+  ? import.meta.env.REACT_APP_API_URL
+  : import.meta.env.VITE_API_URL;
 
 // Create API instance
 const API = axios.create({
@@ -178,20 +180,15 @@ export const depositFunds = async (amount: number) => {
 };
 
 // Withdraw Funds
-export const withdrawFunds = async (
-  amount: number,
-  btcAddress: string | undefined,
-  accountNumber: string | number,
-  accountType: string | undefined
-) => {
+export const withdrawFunds = async (accountDetails: any) => {
+  console.group({ accountDetails });
   try {
     const response = await API.post(apiUrl("/transactions/withdraw"), {
-      amount,
-      btcAddress,
-      accountType,
-      accountNumber,
+      ...accountDetails,
     });
-    return response.data;
+    console.log(response);
+
+    return response;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response && error.response.status === 401) {

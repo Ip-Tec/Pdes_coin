@@ -5,21 +5,25 @@ import { useNavigate } from "react-router-dom";
 import API, { apiUrl, withdrawFunds } from "../services/api";
 import { ToastContainer, toast } from "react-toastify";
 import { useAuth } from "../contexts/AuthContext";
+import InputField from "../components/InputField";
 
 function Withdraw() {
-  const { user } = useAuth();
+  const { user, isAuth } = useAuth();
   const userBalance = user?.balance || 0;
-  const withdrawalLimit = 100;
+  const withdrawalLimit = 50;
   const [selectedOption, setSelectedOption] = useState("");
   const [btcAddress, setBtcAddress] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountType, setAccountType] = useState("Opay");
+  const [accountName, setAccountName] = useState(user?.full_name || "");
   const [amount, setAmount] = useState("");
   const navigate = useNavigate();
   const [conversionRate, setConversionRate] = useState<number>(2000);
 
-  // Fetch conversion rate from API
   useEffect(() => {
+    if (!isAuth || !user) {
+      navigate("/login");
+    }
     async function fetchConversionRate() {
       try {
         const response = await API.get(apiUrl("/transactions/conversion-rate"));
@@ -32,7 +36,7 @@ function Withdraw() {
     }
 
     fetchConversionRate();
-  }, []);
+  }, [isAuth, navigate]);
 
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setAmount(e.target.value);
@@ -47,7 +51,7 @@ function Withdraw() {
     }
 
     if (withdrawalAmount < withdrawalLimit) {
-      toast.error(`Minimum withdrawal amount is $${withdrawalLimit}.`);
+      toast.error(`Minimum withdrawal amount is ${withdrawalLimit}.`);
       return;
     }
 
@@ -60,29 +64,24 @@ function Withdraw() {
       amount: withdrawalAmount,
       type: selectedOption,
       btcAddress: selectedOption === "BTC" ? btcAddress : undefined,
-      accountNumber: selectedOption === "Naira" ? accountNumber : "9036577779",
-      accountType: selectedOption === "Naira" ? accountType : undefined,
+      accountNumber: selectedOption === "Naira" ? accountNumber : undefined,
+      accountType: selectedOption === "Naira" ? accountType : "BTC",
     };
 
+    console.group(requestData);
+
     try {
-      const response = await withdrawFunds(
-        requestData.amount,
-        requestData.btcAddress,
-        requestData.accountNumber,
-        requestData.accountType
-      );
-      if (response.success) {
-        toast.success(`Withdrawal successful: ${response.message}`);
+      const response = await withdrawFunds(requestData);
+      if (response.status == 201) {
+        toast.success(response.data.message);
       } else {
-        toast.error(`Withdrawal failed: ${response.message}`);
+        toast.error(`Withdrawal failed: ${response.data.message}`);
       }
     } catch (error) {
-      toast.error(
-        "An error occurred while processing your withdrawal. " + { error }
-      );
+      toast.error("An error occurred while processing your withdrawal.");
+      console.error("Withdrawal Error:", error);
     }
   };
-
   useEffect(() => {
     toast.info(
       "Note: Withdrawals are subject to a 15% stamp duty deduction by banks."
@@ -92,14 +91,14 @@ function Withdraw() {
   return (
     <>
       <button
-        className="flex items-center text-lg text-primary mb-4 px-3 py-4 md:hidden z-50"
+        className="flex items-center text-lg text-primary mb-5 px-3 py-4 md:hidden z-20"
         onClick={() => navigate(-1) || navigate("/home")}
       >
         <FaArrowLeft className="mr-2" />
         <span>Back</span>
       </button>
 
-      <div className="min-h-screen bg-mainBG flex items-center justify-center px-4 py-8">
+      <div className="min-h-screen bg-mainBG flex items-center justify-center px-4 py-8 md:mb-16">
         <ToastContainer />
         <div className="absolute top-1 lg:top-4 left-4 z-10">
           <img src={logo} alt="Logo" className="h-34" />
@@ -142,45 +141,31 @@ function Withdraw() {
           </div>
           {selectedOption && (
             <div>
-              <label
-                htmlFor="amount"
-                className="block text-sm font-medium mb-2"
-              >
-                Enter Amount
-              </label>
-              <input
+              <InputField
                 type="number"
-                id="amount"
+                name="amount"
                 value={amount}
+                label="Enter Amount"
                 onChange={handleAmountChange}
                 placeholder={`Minimum: $${withdrawalLimit}`}
-                className="w-full bg-gray-100 text-black px-4 py-2 border rounded-lg focus:ring-2 focus:ring-bgColor focus:outline-none"
               />
             </div>
           )}
           {selectedOption === "BTC" && (
-            <div>
-              <label
-                htmlFor="btcAddress"
-                className="block text-sm font-medium mt-4 mb-2"
-              >
-                Enter BTC Address
-              </label>
-              <input
-                type="text"
-                id="btcAddress"
-                value={btcAddress}
-                onChange={(e) => setBtcAddress(e.target.value)}
-                placeholder="e.g., 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
-                className="w-full bg-gray-100 text-black px-4 py-2 border rounded-lg focus:ring-2 focus:ring-bgColor focus:outline-none"
-              />
-            </div>
+            <InputField
+              label="Enter BTC Address"
+              name="btcAddress"
+              type="text"
+              value={btcAddress}
+              onChange={(e) => setBtcAddress(e.target.value)}
+              placeholder="e.g., 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
+            />
           )}
           {selectedOption === "Naira" && (
-            <div>
+            <>
               <label
                 htmlFor="accountType"
-                className="block text-sm font-medium mt-4 mb-2"
+                className="block text-sm font-medium mt-4 mb-2 text-gray-800"
               >
                 Select Account Type
               </label>
@@ -192,22 +177,26 @@ function Withdraw() {
               >
                 <option value="Opay">Opay</option>
                 <option value="Palmpay">Palmpay</option>
+                <option value="Access Bank">Access Bank</option>
               </select>
-              <label
-                htmlFor="accountNumber"
-                className="block text-sm font-medium mt-4 mb-2"
-              >
-                Enter {accountType} Account Number
-              </label>
-              <input
+
+              <InputField
+                label="Account Name"
+                name="accountName"
                 type="text"
-                id="accountNumber"
+                value={accountName}
+                disabled
+                onChange={(e) => setAccountName(e.target.value)}
+              />
+              <InputField
+                label={`Enter ${accountType} Account Number`}
+                name="accountNumber"
+                type="number"
                 value={accountNumber}
                 onChange={(e) => setAccountNumber(e.target.value)}
                 placeholder="e.g., 1234567890"
-                className="w-full bg-gray-100 text-black px-4 py-2 border rounded-lg focus:ring-2 focus:ring-bgColor focus:outline-none"
               />
-            </div>
+            </>
           )}
           {selectedOption && (
             <button

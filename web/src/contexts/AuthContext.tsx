@@ -65,7 +65,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email,
         password,
       });
-      localStorage.setItem("user", JSON.stringify(user));
+      sessionStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("authToken", access_token);
       localStorage.setItem("refreshToken", refresh_token);
 
@@ -110,7 +110,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const getUser = async () => {
     const user = await getUserAPI();
     console.log("getUser", user);
-    localStorage.setItem("user", JSON.stringify(user));
+    sessionStorage.setItem("user", JSON.stringify(user));
     setUser(user);
     return user;
   };
