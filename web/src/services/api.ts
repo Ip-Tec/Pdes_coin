@@ -1,5 +1,5 @@
 import axios from "axios";
-import { ErrorResponse, ResetPassword, User } from "../utils/type";
+import { AccountDetails, ErrorResponse, ResetPassword, User } from "../utils/type";
 
 // Create API instance
 const prod = import.meta.env.PROD;
@@ -180,13 +180,11 @@ export const depositFunds = async (amount: number) => {
 };
 
 // Withdraw Funds
-export const withdrawFunds = async (accountDetails: any) => {
-  console.group({ accountDetails });
+export const withdrawFunds = async (accountDetails: AccountDetails) => {
   try {
     const response = await API.post(apiUrl("/transactions/withdraw"), {
       ...accountDetails,
     });
-    console.log(response);
 
     return response;
   } catch (error) {
@@ -195,8 +193,10 @@ export const withdrawFunds = async (accountDetails: any) => {
         window.location.href = "/login";
       }
       const errorData: ErrorResponse = error.response?.data;
+      console.error("Withdraw Error:", errorData);
       throw new Error(errorData?.message || "Withdraw failed");
     }
+    console.error("Network error. Please try again.");
     throw new Error("Network error. Please try again.");
   }
 };
@@ -310,7 +310,7 @@ export const updatePriceHistory = async (priceData: {
 // Fetch the current price of Pdes coin
 export const fetchCurrentPrice = async () => {
   try {
-    const response = await API.get(apiUrl("/transactions/get_current_price"));
+    const response = await API.get(apiUrl("/utility/current-price"));
     return response.data.current_price;
   } catch (error) {
     if (axios.isAxiosError(error)) {

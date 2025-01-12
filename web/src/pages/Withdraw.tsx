@@ -63,16 +63,25 @@ function Withdraw() {
     const requestData = {
       amount: withdrawalAmount,
       type: selectedOption,
+      accountName: accountName,
       btcAddress: selectedOption === "BTC" ? btcAddress : undefined,
       accountNumber: selectedOption === "Naira" ? accountNumber : undefined,
       accountType: selectedOption === "Naira" ? accountType : "BTC",
     };
 
-    console.group(requestData);
-
     try {
       const response = await withdrawFunds(requestData);
       if (response.status == 201) {
+        const updatedBalance = userBalance - withdrawalAmount;
+        if (user) {
+          user.balance = updatedBalance;
+        }
+        setAmount("");
+        setSelectedOption("");
+        setBtcAddress("");
+        setAccountNumber("");
+        setAccountType("Opay");
+        setAccountName(user?.full_name || "");
         toast.success(response.data.message);
       } else {
         toast.error(`Withdrawal failed: ${response.data.message}`);
@@ -81,8 +90,7 @@ function Withdraw() {
       toast.error("An error occurred while processing your withdrawal.");
       console.error("Withdrawal Error:", error);
     }
-  };
-  useEffect(() => {
+  };  useEffect(() => {
     toast.info(
       "Note: Withdrawals are subject to a 15% stamp duty deduction by banks."
     );

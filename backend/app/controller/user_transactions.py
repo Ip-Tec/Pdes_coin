@@ -1,4 +1,6 @@
 import jwt
+import logging
+import traceback
 import datetime
 from app import db
 from app.models import (
@@ -10,11 +12,13 @@ from app.models import (
     PdesTransaction,
     CoinPriceHistory,
     Utility,
+    PdesTransaction,
 )
 from flask import request, jsonify
 from app.key_gen import generate_key
 from app.services import token_required
 from app.utils import validate_required_param
+from sqlalchemy.exc import SQLAlchemyError
 
 
 class UserTransactionsController:
@@ -22,20 +26,16 @@ class UserTransactionsController:
     Controller for user transactions
     """
 
-    # Get user transactions history
     @staticmethod
-    # @token_required
+    @token_required
     def get_transactions(current_user):
         if not current_user:
             return jsonify({"message": "User not authenticated!"}), 401
 
         transactions = Transaction.query.filter_by(user_id=current_user.id).all()
         transaction_data = [transaction.serialize() for transaction in transactions]
-        print({"history": transactions})
-
         return jsonify({"transactions": transaction_data}), 200
 
-    # Get user transactions history by id
     @staticmethod
     @token_required
     def get_transaction(id):
@@ -43,7 +43,6 @@ class UserTransactionsController:
         transaction = Transaction.query.filter_by(user_id=user_id, id=id).first()
         return jsonify({"message": transaction.serialize()}), 200
 
-    # Add user transactions
     @staticmethod
     @token_required
     def add_transaction():
@@ -60,7 +59,6 @@ class UserTransactionsController:
         db.session.commit()
         return jsonify({"message": transaction.serialize()}), 201
 
-    # Update user transactions
     @staticmethod
     @token_required
     def update_transaction():
@@ -76,7 +74,6 @@ class UserTransactionsController:
         db.session.commit()
         return jsonify({"message": transaction.serialize()}), 200
 
-    # Delete user transactions
     @staticmethod
     @token_required
     def delete_transaction():
@@ -89,7 +86,6 @@ class UserTransactionsController:
         db.session.commit()
         return jsonify({"message": "Transaction deleted successfully"}), 200
 
-    # Add money to wallet and update balance
     @staticmethod
     @token_required
     def add_money():
@@ -105,168 +101,82 @@ class UserTransactionsController:
         db.session.add(transaction)
         db.session.commit()
 
-        # Update balance
         balance = Balance.query.filter_by(user_id=user_id).first()
         balance.balance += data["amount"]
         db.session.commit()
 
         return jsonify({"message": transaction.serialize()}), 201
 
-    # Withdraw money from wallet and update balance
     @staticmethod
     @token_required
     def withdraw_money(user):
         user_id = user.id
         data = request.get_json()
-        print (f"withdraw Trans:::: {data}")
 
-        # Check if balance is sufficient
+        required_fields = {
+            "Amount": "amount",
+            "Account Name": "accountName",
+            "Account Type": "accountType",
+        }
+        for field, field_name in required_fields.items():
+            if field_name not in data or not data[field_name]:
+                return jsonify({"error": f"'{field_name}' field is required."}), 400
+
+        if not data.get("accountNumber") and not data.get("btcAddress"):
+            return (
+                jsonify({"error": "Provide either 'accountNumber' or 'btcAddress'."}),
+                400,
+            )
+
+        if data.get("accountNumber") and data.get("btcAddress"):
+            return (
+                jsonify(
+                    {
+                        "error": "Provide either 'accountNumber' or 'btcAddress', not both."
+                    }
+                ),
+                400,
+            )
+
+        try:
+            data["amount"] = float(data["amount"])
+        except (ValueError, TypeError):
+            return jsonify({"error": "'amount' must be a number"}), 400
+
         balance = Balance.query.filter_by(user_id=user_id).first()
+        if not balance:
+            return jsonify({"error": "Balance record not found."}), 400
         if balance.balance < data["amount"]:
-            return jsonify({"error": "Insufficient balance"}), 400
-         
+            return jsonify({"error": "Insufficient balance."}), 400
 
-        transaction = Transaction(
-            user_id=user_id,
-            amount=-data["amount"],
-            account_name=data["accountName"],
-            btc_address = data["btcAddress"],
-            account_number= data["accountNumber"],
-            transaction_type="withdraw",
-        )
-        db.session.add(transaction)
-        db.session.commit()
+        try:
+            transaction = Transaction(
+                user_id=user_id,
+                amount=-data["amount"],
+                account_name=data["accountName"],
+                btc_address=data.get("btcAddress"),
+                account_number=data.get("accountNumber"),
+                transaction_type=f"withdraw + {data['accountType']}",
+            )
+            db.session.add(transaction)
+            balance.balance -= data["amount"]
+            db.session.commit()
 
-        # Update balance
-        balance.balance -= data["amount"]
-        db.session.commit()
-
-        return jsonify({"message": "Withdraw in Progress", "data": transaction.serialize()}), 201
-
-    # Buy PDES coin
-    @staticmethod
-    @token_required
-    def buy_pdes():
-        user_id = request.user_id
-        data = request.get_json()
-
-        # Ensure user has sufficient balance
-        balance = Balance.query.filter_by(user_id=user_id).first()
-        if balance.balance < data["amount"]:
-            return jsonify({"error": "Insufficient balance"}), 400
-
-        total_cost = data["amount"] * data["price"]
-
-        # Deduct balance
-        balance.balance -= total_cost
-        db.session.commit()
-
-        # Create buy transaction for PDES coin
-        pdes_transaction = PdesTransaction(
-            user_id=user_id,
-            action="buy",
-            amount=data["amount"],
-            price=data["price"],
-            total=total_cost,
-        )
-        db.session.add(pdes_transaction)
-        db.session.commit()
-
-        return (
-            jsonify(
-                {
-                    "message": "PDES coins purchased successfully",
-                    "transaction": pdes_transaction.serialize(),
-                }
-            ),
-            201,
-        )
-
-    # Sell PDES coin
-    @staticmethod
-    @token_required
-    def sell_pdes():
-        user_id = request.user_id
-        data = request.get_json()
-
-        # Retrieve user's PDES crypto balance
-        crypto_balance = Crypto.query.filter_by(
-            user_id=user_id, crypto_name="PDES"
-        ).first()
-        if not crypto_balance or crypto_balance.amount < data["amount"]:
-            return jsonify({"error": "Insufficient PDES coin balance"}), 400
-
-        total_income = data["amount"] * data["price"]
-
-        # Deduct PDES coin
-        crypto_balance.amount -= data["amount"]
-        db.session.commit()
-
-        # Create sell transaction for PDES coin
-        pdes_transaction = PdesTransaction(
-            user_id=user_id,
-            action="sell",
-            amount=data["amount"],
-            price=data["price"],
-            total=total_income,
-        )
-        db.session.add(pdes_transaction)
-        db.session.commit()
-
-        # Update user balance with the income from selling
-        balance = Balance.query.filter_by(user_id=user_id).first()
-        balance.balance += total_income
-        db.session.commit()
-
-        return (
-            jsonify(
-                {
-                    "message": "PDES coins sold successfully",
-                    "transaction": pdes_transaction.serialize(),
-                }
-            ),
-            201,
-        )
-
-    # Get PDES coin price history
-    @staticmethod
-    @token_required
-    def get_pdes_price_history():
-        price_history = (
-            CoinPriceHistory.query.filter_by(crypto_name="PDES")
-            .order_by(CoinPriceHistory.timestamp.desc())
-            .all()
-        )
-        price_history_data = [price.serialize() for price in price_history]
-        return jsonify({"price_history": price_history_data}), 200
-
-    # Get user activity (transactions)
-    @staticmethod
-    @token_required
-    def get_user_activity(current_user):
-        user_id = current_user.id
-
-        # Get all transactions for the user
-        transactions = Transaction.query.filter_by(user_id=user_id).all()
-        pdes_transactions = PdesTransaction.query.filter_by(user_id=user_id).all()
-
-        # Combine all transactions
-        transaction_data = [transaction.serialize() for transaction in transactions]
-        pdes_transaction_data = [
-            pdes_transaction.serialize() for pdes_transaction in pdes_transactions
-        ]
-
-        print({transaction_data, pdes_transaction_data})
-
-        return (
-            jsonify(
-                {
-                    "transactions": transaction_data,
-                    "pdes_transactions": pdes_transaction_data,
-                }
-            ),
-            200,
-        )
+            return (
+                jsonify(
+                    {
+                        "message": "Withdrawal in Progress",
+                        "data": transaction.serialize(),
+                    }
+                ),
+                201,
+            )
+        except Exception as e:
+            db.session.rollback()
+            return (
+                jsonify({"error": "Transaction failed due to an unexpected error."}),
+                500,
+            )
 
 
 def get_pdes_coin_details():
@@ -291,31 +201,236 @@ def get_pdes_coin_details():
         return {"message": f"An error occurred: {str(e)}"}
 
 
-# Get Account Details for money and Crypto
-@staticmethod
-@token_required
-def get_account_details(user_details):
-    user = user_details
-    print(f"user: {user}")
+class AccountService:
+    """
+    Service for managing user account details
+    """
 
-    if not user:
-        return jsonify({"message": "User not found"}), 404
+    @staticmethod
+    @token_required
+    def get_account_details(user_details):
+        user = user_details
+        if not user:
+            return jsonify({"message": "User not found"}), 404
 
-    # Fetch the user Account from the Account details table
-    account_details = AccountDetail.query.filter_by(user_id=user.id).first()
+        account_details = AccountDetail.query.filter_by(user_id=user.id).first()
+        if not account_details:
+            return jsonify({"message": "Account details not found"}), 404
 
-    if not account_details:
-        return jsonify({"message": "Account details not found"}), 404
+        return {
+            "id": account_details.id,
+            "BTCAddress": account_details.BTCAddress,
+            "BTCAddressSeed": account_details.BTCAddressSeed,
+            "ETHAddress": account_details.ETHAddress,
+            "ETHAddressSeed": account_details.ETHAddressSeed,
+            "LTCAddress": account_details.LTCAddress,
+            "LTCAddressSeed": account_details.LTCAddressSeed,
+            "USDCAddress": account_details.USDCAddress,
+            "USDCAddressSeed": account_details.USDCAddressSeed,
+        }
 
-    # Construct the response with current data
-    return {
-        "id": account_details.id,
-        "BTCAddress": account_details.BTCAddress,
-        "BTCAddressSeed": account_details.BTCAddressSeed,
-        "ETHAddress": account_details.ETHAddress,
-        "ETHAddressSeed": account_details.ETHAddressSeed,
-        "LTCAddress": account_details.LTCAddress,
-        "LTCAddressSeed": account_details.LTCAddressSeed,
-        "USDCAddress": account_details.USDCAddress,
-        "USDCAddressSeed": account_details.USDCAddressSeed,
-    }
+
+# Setting up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+class PdesService:
+    # Buy PDES coin
+    @staticmethod
+    @token_required
+    def buy_pdes():
+        user_id = request.user_id
+        data = request.get_json()
+
+        # Validate required fields
+        required_fields = ["amount", "price"]
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({"error": f"{field} is required"}), 400
+
+        amount = data["amount"]
+        price = data["price"]
+
+        # Validate amount and price
+        if amount <= 0 or price <= 0:
+            return jsonify({"error": "Amount and price must be positive numbers"}), 400
+
+        try:
+            # Fetch user's balance
+            balance = Balance.query.filter_by(user_id=user_id).first()
+            if not balance:
+                return jsonify({"error": "User balance not found"}), 404
+
+            total_cost = amount * price
+
+            # Ensure sufficient balance
+            if balance.balance < total_cost:
+                return (
+                    jsonify(
+                        {
+                            "error": "INSUFFICIENT_BALANCE",
+                            "message": "Insufficient balance",
+                        }
+                    ),
+                    400,
+                )
+
+            # Deduct balance
+            balance.balance -= total_cost
+
+            # Create buy transaction
+            pdes_transaction = PdesTransaction(
+                user_id=user_id,
+                action="buy",
+                amount=amount,
+                price=price,
+                total=total_cost,
+            )
+            db.session.add(pdes_transaction)
+            db.session.commit()
+
+            logger.info(f"User {user_id} bought {amount} PDES at {price} per coin")
+
+            # Send transaction summary including remaining balance
+            return (
+                jsonify(
+                    {
+                        "status": "success",
+                        "message": "PDES coins purchased successfully",
+                        "transaction": pdes_transaction.serialize(),
+                        "balance": {
+                            "remaining_balance": balance.balance,
+                            "crypto_balance": 0,  # If you're tracking crypto balance, replace 0 with actual value
+                        },
+                    }
+                ),
+                201,
+            )
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            logger.error(f"Error during buy transaction: {str(e)}")
+            return (
+                jsonify({"error": "Transaction failed", "code": "TRANSACTION_FAILED"}),
+                500,
+            )
+
+    # Sell PDES coin
+    @staticmethod
+    @token_required
+    def sell_pdes():
+        user_id = request.user_id
+        data = request.get_json()
+
+        # Validate required fields
+        required_fields = ["amount", "price"]
+        for field in required_fields:
+            if field not in data or not data[field]:
+                return jsonify({"error": f"{field} is required"}), 400
+
+        amount = data["amount"]
+        price = data["price"]
+
+        # Validate amount and price
+        if amount <= 0 or price <= 0:
+            return jsonify({"error": "Amount and price must be positive numbers"}), 400
+
+        try:
+            # Fetch user's PDES crypto balance
+            crypto_balance = Crypto.query.filter_by(
+                user_id=user_id, crypto_name="PDES"
+            ).first()
+            if not crypto_balance or crypto_balance.amount < amount:
+                return (
+                    jsonify(
+                        {
+                            "error": "INSUFFICIENT_PDES_BALANCE",
+                            "message": "Insufficient PDES coin balance",
+                        }
+                    ),
+                    400,
+                )
+
+            total_income = amount * price
+
+            # Deduct PDES coins
+            crypto_balance.amount -= amount
+
+            # Create sell transaction
+            pdes_transaction = PdesTransaction(
+                user_id=user_id,
+                action="sell",
+                amount=amount,
+                price=price,
+                total=total_income,
+            )
+            db.session.add(pdes_transaction)
+
+            # Update user's balance
+            balance = Balance.query.filter_by(user_id=user_id).first()
+            if not balance:
+                return jsonify({"error": "User balance not found"}), 404
+            balance.balance += total_income
+
+            db.session.commit()
+
+            logger.info(f"User {user_id} sold {amount} PDES at {price} per coin")
+
+            # Send transaction summary including remaining balance
+            return (
+                jsonify(
+                    {
+                        "status": "success",
+                        "message": "PDES coins sold successfully",
+                        "transaction": pdes_transaction.serialize(),
+                        "balance": {
+                            "remaining_balance": balance.balance,
+                            "crypto_balance": crypto_balance.amount,
+                        },
+                    }
+                ),
+                201,
+            )
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            logger.error(f"Error during sell transaction: {str(e)}")
+            return (
+                jsonify({"error": "Transaction failed", "code": "TRANSACTION_FAILED"}),
+                500,
+            )
+
+    # Get PDES price history
+    @staticmethod
+    @token_required
+    def get_pdes_price_history():
+        price_history = (
+            CoinPriceHistory.query.filter_by(crypto_name="PDES")
+            .order_by(CoinPriceHistory.timestamp.desc())
+            .all()
+        )
+        price_history_data = [price.serialize() for price in price_history]
+        return jsonify({"price_history": price_history_data}), 200
+
+    # Get user activity
+    @staticmethod
+    @token_required
+    def get_user_activity(current_user):
+        user_id = current_user.id
+
+        transactions = Transaction.query.filter_by(user_id=user_id).all()
+        pdes_transactions = PdesTransaction.query.filter_by(user_id=user_id).all()
+
+        transaction_data = [transaction.serialize() for transaction in transactions]
+        pdes_transaction_data = [
+            pdes_transaction.serialize() for pdes_transaction in pdes_transactions
+        ]
+
+        return (
+            jsonify(
+                {
+                    "transactions": transaction_data,
+                    "pdes_transactions": pdes_transaction_data,
+                }
+            ),
+            200,
+        )

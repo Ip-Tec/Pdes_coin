@@ -75,11 +75,12 @@ def create_app():
         return jsonify({"message": "Welcome to the Pdes Wallet API!"}), 200
 
     # Register blueprints
-    from app.routes import auth, users, transactions, account
+    from app.routes import auth, users, transactions, account, utility
 
     app.register_blueprint(auth.auth_bp, url_prefix="/api/auth")
     app.register_blueprint(users.users_bp, url_prefix="/api/users")
     app.register_blueprint(account.account_bp, url_prefix="/api/account")
+    app.register_blueprint(utility.utility_bp, url_prefix="/api/utility")
     app.register_blueprint(transactions.txn_bp, url_prefix="/api/transactions")
 
     # Add shell context for easier debugging

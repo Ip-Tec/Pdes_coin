@@ -123,3 +123,12 @@ export interface ResetPassword {
   password?: string;
   newPassword?: string;
 }
+
+export interface AccountDetails {
+  accountName: string;
+  accountNumber?: string;
+  accountType: string;
+  amount: number;
+  btcAddress?: string;
+  type: string;
+}

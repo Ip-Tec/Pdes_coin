@@ -1,8 +1,10 @@
 from app import db
 from app.services import token_required
-from app.models import Balance, CoinPriceHistory, Utility
+from app.models import Balance, CoinPriceHistory
 from flask import Blueprint, request, jsonify
 from app.controller.user_transactions import (
+    AccountService,
+    PdesService,
     UserTransactionsController,
     get_pdes_coin_details,
 )
@@ -13,10 +15,9 @@ txn_bp = Blueprint("transactions", __name__)
 
 # Transaction History router
 @txn_bp.route("/history", methods=["GET"])
-@token_required
-def get_transaction_history(current_user):
+def get_transaction_history():
     # Pass the current_user to the controller
-    return UserTransactionsController.get_transactions(current_user)
+    return UserTransactionsController.get_transactions()
 
 
 # Transaction Deposit router
@@ -32,9 +33,6 @@ def deposit_funds(current_user):
 @txn_bp.route("/withdraw", methods=["POST"])
 @token_required
 def withdraw_funds(current_user):
-    data = request.get_json()
-    # print(f"withdraw Trans:::: {data}")
-    # Call the controller method to withdraw money
     return UserTransactionsController.withdraw_money()
 
 
@@ -58,13 +56,34 @@ def buy_sell(current_user):
     price = data["price"]  # Current price of PDES coin
     total = amount * price
 
+    # Validate price (you can fetch this from an external API or use static)
+    current_price = 50  # Example static price, replace with dynamic price if needed
+    if price != current_price:
+        return (
+            jsonify(
+                {
+                    "error": "INVALID_PRICE",
+                    "message": "Price doesn't match the current market price",
+                }
+            ),
+            400,
+        )
+
     # Call the controller method for buying or selling PDES coins
     if action == "buy":
-        return UserTransactionsController.buy_pdes(current_user)
+        return PdesService.buy_pdes()
     elif action == "sell":
-        return UserTransactionsController.sell_pdes(current_user)
+        return PdesService.sell_pdes()
 
-    return jsonify({"message": "Invalid action for buying/selling PDES coin"}), 400
+    return (
+        jsonify(
+            {
+                "error": "INVALID_ACTION",
+                "message": "Invalid action for buying/selling PDES coin",
+            }
+        ),
+        400,
+    )
 
 
 # Update price history router
@@ -132,8 +151,9 @@ def get_conversion_rate():
 
     return jsonify({"message": "Conversion rate not found"}), 404
 
+
 # Get Account details for flart and crypto
 @txn_bp.route("/get-account-details", methods=["GET"])
 def get_account_details():
     # Fetch the latest Utility data
-    return UserTransactionsController.get_account_details()
+    return AccountService.get_account_details()
