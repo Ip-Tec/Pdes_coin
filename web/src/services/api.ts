@@ -11,6 +11,10 @@ const prod = import.meta.env.PROD;
 export const url = prod
   ? import.meta.env.REACT_APP_API_URL
   : import.meta.env.VITE_API_URL;
+  
+export const feURL = prod
+  ? import.meta.env.EF_URL
+  : import.meta.env.EF_URL_LOCAL;
 
 // Create API instance
 const API = axios.create({

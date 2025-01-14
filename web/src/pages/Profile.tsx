@@ -14,6 +14,7 @@ import {
   FaSignOutAlt,
   FaQuestionCircle,
 } from "react-icons/fa";
+import { feURL } from "../services/api";
 function Profile() {
   const { user, setUser, logout, isAuth } = useAuth();
   const [animationClass, setAnimationClass] = useState("");
@@ -21,7 +22,8 @@ function Profile() {
   // const [isAccordionOpen, setIsAccordionOpen] = useState(false);
   // const [accountData, setAccountData] = useState<AccountDetail>();
   const navigate = useNavigate();
-  const referralLink = `https://pdes.xyz/referral/re=${user?.referral_code}`;
+  const referralLink = `${feURL}/referral/re=${user?.username}`;
+  console.log({ referralLink, user });
 
   useEffect(() => {
     if (!isAuth) {
