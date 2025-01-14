@@ -45,7 +45,15 @@ def create_app():
     CORS(
         app,
         supports_credentials=True,
-        resources={r"/*": {"origins": ["http://localhost:5173", "https://pdes-coin.vercel.app"]}},
+        resources={
+            r"/*": {
+                "origins": [
+                    "https://vercel.app",
+                    "http://localhost:5173",
+                    "https://pdes-coin.vercel.app",
+                ]
+            }
+        },
     )
 
     # Load configuration
@@ -61,7 +69,7 @@ def create_app():
     def handle_connect():
         print("Client connected")
         emit("response", {"message": "Welcome to the server!"})
-        
+
     @app.route("/", methods=["GET"])
     def index():
         return jsonify({"message": "Welcome to the Pdes Wallet API!"}), 200
