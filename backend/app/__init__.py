@@ -51,10 +51,25 @@ def create_app():
                     "https://vercel.app",
                     "http://localhost:5173",
                     "https://pdes-coin.vercel.app",
-                ]
+                ],
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization", "X-Requested-With"],
             }
         },
     )
+    
+    @app.before_request
+    def handle_preflight():
+        if request.method == "OPTIONS":
+            origin = request.headers.get("Origin")
+            if origin in ["http://localhost:5173", "https://pdes-coin.vercel.app"]:
+                response = jsonify({"message": "OK"})
+                response.headers["Access-Control-Allow-Origin"] = origin
+                response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+                response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+                response.headers["Access-Control-Allow-Credentials"] = "true"
+                return response
+
 
     # Load configuration
     app.config.from_object("app.config.Config")
