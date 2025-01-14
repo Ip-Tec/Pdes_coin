@@ -11,6 +11,9 @@ class User(db.Model):
     password = db.Column(db.String(200), nullable=False)
     refresh_key = db.Column(db.String(128))
 
+    role = db.Column(db.String(20), nullable=False, default="user")
+    last_reward_date = db.Column(db.DateTime, nullable=True)
+
     transactions = db.relationship("Transaction", backref="user", lazy=True)
     cryptos = db.relationship("Crypto", backref="user", lazy=True)
     balance = db.relationship("Balance", uselist=False, backref="user")
@@ -65,6 +68,60 @@ class Balance(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     balance = db.Column(db.Float, nullable=False, default=0.0)
     crypto_balance = db.Column(db.Float, nullable=False, default=0.0)
+    rewards = db.Column(db.Float, nullable=False, default=0.0)  # New column for rewards
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(
+        db.DateTime,
+        default=db.func.current_timestamp(),
+        onupdate=db.func.current_timestamp(),
+    )
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "balance": self.balance,
+            "crypto_balance": self.crypto_balance,
+            "rewards": self.rewards,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "updated_at": self.updated_at.isoformat() if self.updated_at else "",
+        }
+
+    def update_balance(self, amount):
+        self.balance += amount
+        db.session.commit()
+
+        return {
+            "balance": self.balance,
+            "crypto_balance": self.crypto_balance,
+            "rewards": self.rewards,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "updated_at": self.updated_at.isoformat() if self.updated_at else "",
+        }
+
+    def update_crypto_balance(self, amount):
+        self.crypto_balance += amount
+        db.session.commit()
+
+        return {
+            "balance": self.balance,
+            "crypto_balance": self.crypto_balance,
+            "rewards": self.rewards,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "updated_at": self.updated_at.isoformat() if self.updated_at else "",
+        }
+        
+    def update_rewards(self, amount):
+        self.rewards += amount
+        db.session.commit()
+
+        return {
+            "balance": self.balance,
+            "crypto_balance": self.crypto_balance,
+            "rewards": self.rewards,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "updated_at": self.updated_at.isoformat() if self.updated_at else "",
+        }
 
 
 # Transaction model
@@ -117,6 +174,41 @@ class Crypto(db.Model):
         }
 
 
+# Current percentage for rewards
+class RewardConfig(db.Model):
+    __tablename__ = "reward_config"
+
+    id = db.Column(db.Integer, primary_key=True)
+    percentage_weekly = db.Column(
+        db.Float, nullable=False, default=0.0
+    )  # Weekly percentage
+    updated_at = db.Column(
+        db.DateTime,
+        default=db.func.current_timestamp(),
+        onupdate=db.func.current_timestamp(),
+    )
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "percentage_weekly": self.percentage_weekly,
+            "updated_at": self.updated_at.isoformat(),
+        }
+
+
+# Reward percentage rate and its duration
+class RewardSetting(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    weekly_percentage = db.Column(
+        db.Float, nullable=False, default=20.0
+    )  # Weekly reward in %
+    start_date = db.Column(db.DateTime, default=db.func.current_timestamp())
+    end_date = db.Column(db.DateTime, nullable=True)  # Optional end date
+
+    def daily_rate(self):
+        return self.weekly_percentage / 7  # Convert weekly rate to daily
+
+
 # PdesTransaction model for handling buy/sell of Pdes coin
 class PdesTransaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -163,7 +255,7 @@ class CoinPriceHistory(db.Model):
 
 class Utility(db.Model):
     __tablename__ = "utility"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     pdes_price = db.Column(db.Float, nullable=False)
     pdes_market_cap = db.Column(db.Float, nullable=False)

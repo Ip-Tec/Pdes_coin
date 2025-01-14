@@ -14,6 +14,7 @@ from app.models import (
     Utility,
     PdesTransaction,
 )
+from app.access_level import AccessLevel
 from flask import request, jsonify
 from app.key_gen import generate_key
 from app.services import token_required
@@ -25,6 +26,13 @@ class UserTransactionsController:
     """
     Controller for user transactions
     """
+    
+    @staticmethod
+    @token_required
+    def get_all_transactions():
+        transactions = Transaction.query.all()
+        transaction_data = [transaction.serialize() for transaction in transactions]
+        return jsonify({"transactions": transaction_data}), 200
 
     @staticmethod
     @token_required
@@ -34,6 +42,7 @@ class UserTransactionsController:
 
         transactions = Transaction.query.filter_by(user_id=current_user.id).all()
         transaction_data = [transaction.serialize() for transaction in transactions]
+        print(f"transaction_data::: {transaction_data}")
         return jsonify({"transactions": transaction_data}), 200
 
     @staticmethod
@@ -88,6 +97,7 @@ class UserTransactionsController:
 
     @staticmethod
     @token_required
+    @AccessLevel.role_required("super_admin")
     def add_money():
         user_id = request.user_id
         data = request.get_json()

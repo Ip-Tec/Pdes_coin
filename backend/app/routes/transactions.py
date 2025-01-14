@@ -1,4 +1,4 @@
-from app import db
+from app import db, socketio
 from app.services import token_required
 from app.models import Balance, CoinPriceHistory
 from flask import Blueprint, request, jsonify
@@ -9,15 +9,35 @@ from app.controller.user_transactions import (
     get_pdes_coin_details,
 )
 
+from flask_socketio import SocketIO, emit
+
 # Transactions API
 txn_bp = Blueprint("transactions", __name__)
 
+# Define a SocketIO event
+@socketio.on("connect")
+def handle_connect():
+    print("Client connected")
+    emit("response", {"message": "Welcome to the server!"})
+    
+@socketio.on('disconnect')
+def handle_disconnect():
+    print('Client disconnected')
 
 # Transaction History router
-@txn_bp.route("/history", methods=["GET"])
+@socketio.on("get_transaction_history")
+@txn_bp.route("/all_transactions", methods=["GET"])
 def get_transaction_history():
+    transactions = UserTransactionsController.get_all_transactions()
+    emit("transaction_history", {"transactions": transactions})
+    return jsonify({"message": "Transaction history fetched successfully"}), 200
+
+
+@txn_bp.route("/history", methods=["GET"])
+def transaction_history():
     # Pass the current_user to the controller
-    return UserTransactionsController.get_transactions()
+    transactions = UserTransactionsController.get_transactions()
+    return transactions
 
 
 # Transaction Deposit router

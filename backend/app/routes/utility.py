@@ -27,3 +27,31 @@ def get_current_price():
         )
     else:
         return jsonify({"message": "Price data not available"}), 404
+
+
+@utility_bp.route("/reward-percentage", methods=["POST"])
+def set_reward_percentage():
+    if request.method == "POST":
+        data = request.get_json()
+        weekly_percentage = data.get("percentage_weekly")
+
+        if weekly_percentage is None or not (0 <= weekly_percentage <= 100):
+            return jsonify({"error": "Invalid percentage value."}), 400
+
+        reward_config = RewardConfig.query.first()
+        if not reward_config:
+            reward_config = RewardConfig(percentage_weekly=weekly_percentage)
+            db.session.add(reward_config)
+        else:
+            reward_config.percentage_weekly = weekly_percentage
+
+        db.session.commit()
+        return (
+            jsonify(
+                {
+                    "message": "Reward percentage updated successfully.",
+                    "data": reward_config.serialize(),
+                }
+            ),
+            200,
+        )

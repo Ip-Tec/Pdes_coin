@@ -2,7 +2,7 @@ import re
 import jwt
 import datetime
 from app import db
-from app.models import User
+from app.models import Notification, User
 from flask import current_app, request, jsonify
 from app.key_gen import generate_key
 from app.services import (
@@ -87,8 +87,6 @@ class UserController:
         data = request.get_json()
 
         # Extract required fields
-        # if the use user name is provided, use it, otherwise use fullName
-
         name = data.get("fullName") or data.get("name")
         email = data.get("email")
         username = data.get("username") or generate_key(4)
@@ -99,14 +97,14 @@ class UserController:
         if not valid_email:
             return jsonify({"message": "Invalid email format"}), 400
 
-        # check if password and confirm password match
+        # Check if password and confirm password match
         if password != confirmPassword:
             return (
                 jsonify({"message": "Password and confirm password do not match"}),
                 400,
             )
 
-        # Validate required fields using the helper function
+        # Validate required fields
         for param, param_name in [
             (name, "Name"),
             (email, "Email"),
@@ -116,22 +114,23 @@ class UserController:
             if validation_error:
                 return validation_error
 
-        # If the referral_code is provided, check if it exists in the database
+        # Validate referral code if provided
         referral_code = data.get("referral_code", None)
         referrer = None
         if referral_code:
             referrer = User.query.filter_by(referral_code=referral_code).first()
             if not referrer:
-                print({"message": "Invalid referral code"})
                 return jsonify({"message": "Invalid referral code"}), 400
 
         # Check if email is already registered
         if User.query.filter_by(email=email).first():
-            print({"message": "Email already registered"})
             return jsonify({"message": "Email already registered"}), 400
 
         # Hash the password
         hashed_password = generate_password_hash(password)
+
+        # Assign a default role if no role is provided
+        role = data.get("role", "user")  # Default role is 'user'
 
         # Create a new user
         user = User(
@@ -140,6 +139,7 @@ class UserController:
             username=username,
             password=hashed_password,
             referral_code=referral_code,
+            role=role,  # Assign the role to the user
         )
 
         db.session.add(user)
@@ -154,7 +154,6 @@ class UserController:
         token = generate_password_reset_token(user.email)
         try:
             Email.send_register_email(user, token)
-            # If email is sent successfully, return success message
             return (
                 jsonify(
                     {
@@ -164,7 +163,6 @@ class UserController:
                 201,
             )
         except Exception as e:
-            # If email fails, still return success message but notify user of the failure
             return (
                 jsonify(
                     {
@@ -294,6 +292,17 @@ class UserController:
             return jsonify({"referrals": serialized_referrals}), 200
         else:
             return jsonify({"message": "User not found"}), 404
+
+
+# Send reward notification
+def send_reward_notification(user, reward):
+    notification = Notification(
+        user_id=user.id,
+        message=f"You have received a reward of {reward:.2f} PDES.",
+        is_read=False,
+    )
+    db.session.add(notification)
+    db.session.commit()
 
 
 def is_valid_email(email):

@@ -1,8 +1,17 @@
+from app import db, socketio
 from flask import Blueprint, jsonify
 from app.services import token_required
 from app.controller.user_controller import UserController
 
+from flask_socketio import SocketIO, emit
+
 users_bp = Blueprint("users", __name__)
+
+
+@socketio.on('connect')
+def handle_connect():
+    print("Client connected")
+    emit('message', {'data': 'Connected successfully'})
 
 
 # Get Login user info
