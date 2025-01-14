@@ -7,6 +7,7 @@ services:
   plan: free
   region: oregon
   buildCommand: pip install -r requirements.txt
-  startCommand: python backend/run.py
+  startCommand: |
+      flask db upgrade && python run.py
   rootDir: ./backend/
 version: "1"
