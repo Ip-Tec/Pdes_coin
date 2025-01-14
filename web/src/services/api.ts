@@ -1,9 +1,14 @@
 import axios from "axios";
-import { AccountDetails, ErrorResponse, ResetPassword, User } from "../utils/type";
+import {
+  AccountDetails,
+  ErrorResponse,
+  ResetPassword,
+  User,
+} from "../utils/type";
 
 // Create API instance
 const prod = import.meta.env.PROD;
-const url = prod
+export const url = prod
   ? import.meta.env.REACT_APP_API_URL
   : import.meta.env.VITE_API_URL;
 
@@ -144,6 +149,7 @@ export const getUser = async (): Promise<User | null> => {
 export const getTransactionHistory = async () => {
   try {
     const response = await API.get(apiUrl("/transactions/history"));
+    console.log(response);
 
     return response.data.transactions;
   } catch (error) {

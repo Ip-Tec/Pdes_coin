@@ -59,12 +59,18 @@ export interface Crypto {
 }
 
 export interface CryptoHistory {
+  openPrice?: number;
+  highPrice?: number;
+  lowPrice?: number;
+  closePrice?: number;
+  
   id: number;
   user_id: number;
   amount: number;
   crypto_name: string;
   account_address: string;
   created_at: string; // ISO 8601 formatted string
+  data?: CandlestickChartProps
 }
 
 export interface TransactionHistory {
@@ -131,4 +137,14 @@ export interface AccountDetails {
   amount: number;
   btcAddress?: string;
   type: string;
+}
+
+export interface CandlestickChartProps {
+  data: {
+    time: string;
+    open: number;
+    high: number;
+    low: number;
+    close: number;
+  }[];
 }

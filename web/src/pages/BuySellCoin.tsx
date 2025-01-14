@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchCurrentPrice, getTransactionHistory } from "../services/api"; // Example service to fetch Pdes coin price
-
+import { fetchCurrentPrice, getTransactionHistory } from "../services/api";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -16,6 +15,7 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { CryptoHistory } from "../utils/type";
 import InputField from "../components/InputField";
+import CandlestickChart from "../components/CandlestickChart";
 
 // Register chart components
 ChartJS.register(
@@ -32,13 +32,12 @@ function BuySellCoin() {
   const { isAuth } = useAuth();
   const [price, setPrice] = useState<number | null>(null);
   const [amount, setAmount] = useState<string>("");
-  const [action, setAction] = useState<"buy" | "sell">("buy"); // Default action is buy
+  const [action, setAction] = useState<"buy" | "sell">("buy");
   const [isLoading, setIsLoading] = useState(true);
   const [chartType, setChartType] = useState<"line" | "candlestick">("line");
   const [priceHistory, setPriceHistory] = useState<CryptoHistory[]>([]);
   const navigate = useNavigate();
 
-  // Redirect to login if user is not authenticated
   useEffect(() => {
     if (!isAuth) {
       navigate("/login");
@@ -48,7 +47,8 @@ function BuySellCoin() {
   useEffect(() => {
     const fetchCoinPrice = async () => {
       try {
-        const coinPrice = await fetchCurrentPrice(); // Fetch the current price of Pdes coin
+        const coinPrice = await fetchCurrentPrice();
+        console.log("coinPrice", coinPrice);
         setPrice(coinPrice);
       } catch (error) {
         console.error("Error fetching coin price:", error);
@@ -59,7 +59,8 @@ function BuySellCoin() {
 
     const fetchPriceHistory = async () => {
       try {
-        const history = await getTransactionHistory(); // Fetch the price history of Pdes coin
+        const history = await getTransactionHistory();
+        console.log("history", history);
         setPriceHistory(history);
       } catch (error) {
         console.error("Error fetching price history:", error);
@@ -80,13 +81,16 @@ function BuySellCoin() {
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (amount && price) {
-      const totalAmount = parseFloat(amount) * price;
+    const amountValue = parseFloat(amount);
+    if (amountValue > 0 && price) {
+      const totalAmount = amountValue * price;
       alert(
         `${
           action.charAt(0).toUpperCase() + action.slice(1)
-        }ing ${amount} Pdes will cost $${totalAmount.toFixed(2)}`
+        }ing ${amount} Pdes will cost ${totalAmount.toFixed(2)}`
       );
+    } else {
+      alert("Please enter a valid amount.");
     }
   };
 
@@ -99,11 +103,11 @@ function BuySellCoin() {
   }
 
   const data = {
-    labels: priceHistory.map((item) => item.created_at), // Assuming priceHistory contains a 'date' field
+    labels: priceHistory.map((item) => item.created_at),
     datasets: [
       {
         label: "Pdes Coin Price",
-        data: priceHistory.map((item) => item.amount), // Assuming priceHistory contains a 'price' field
+        data: priceHistory.map((item) => item.amount),
         borderColor: "rgb(75, 192, 192)",
         backgroundColor: "rgba(75, 192, 192, 0.2)",
         fill: false,
@@ -111,24 +115,13 @@ function BuySellCoin() {
     ],
   };
 
-  // const candlestickData = {
-  //   // Here you would set your candlestick chart data (OHLC)
-  //   // For now, using placeholder data as an example
-  //   datasets: [
-  //     {
-  //       label: "Pdes Coin Price",
-  //       data: priceHistory.map((item) => ({
-  //         x: item.date, // Time
-  //         o: item.openPrice, // Open price
-  //         h: item.highPrice, // High price
-  //         l: item.lowPrice, // Low price
-  //         c: item.closePrice, // Close price
-  //       })),
-  //       borderColor: 'rgb(75, 192, 192)',
-  //       backgroundColor: 'rgba(75, 192, 192, 0.5)',
-  //     },
-  //   ],
-  // };
+  const candlestickData = priceHistory.map((item) => ({
+    time: item.created_at.split("T")[0],
+    open: item.openPrice ?? 0,
+    high: item.highPrice ?? 0,
+    low: item.lowPrice ?? 0,
+    close: item.closePrice ?? 0,
+  }));
 
   return (
     <div className="min-h-screen lg:mb-32 bg-mainBG p-4 overflow-y-auto">
@@ -204,14 +197,11 @@ function BuySellCoin() {
           {chartType === "line" ? (
             <Line data={data} />
           ) : (
-            // You can integrate a candlestick chart here
-            // Placeholder for candlestick chart rendering
-            <div>Candlestick chart is under development...</div>
+            <CandlestickChart data={candlestickData} />
           )}
         </div>
       </div>
     </div>
   );
 }
-
 export default BuySellCoin;

@@ -4,8 +4,10 @@ import {
   getTransactionHistory,
   loginUser,
   getUser as getUserAPI,
+  url,
 } from "../services/api";
 import { TransactionHistory, User } from "../utils/type";
+import { io } from "socket.io-client";
 import {
   createContext,
   useContext,
@@ -13,6 +15,7 @@ import {
   ReactNode,
   useEffect,
 } from "react";
+import { toast } from "react-toastify";
 
 interface AuthContextType {
   isAuth: boolean;
@@ -42,6 +45,16 @@ const isTokenExpired = (token: string): boolean => {
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
+const socket = io(url+"/api/", {
+  query: {
+    token: localStorage.getItem("authToken"),
+  },
+  reconnection: true,
+  reconnectionAttempts: 5,
+  reconnectionDelay: 1000,
+  transports: ["websocket", "polling"],
+});
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [isAuth, setIsAuth] = useState<boolean>(() => {
     const token = localStorage.getItem("authToken");
@@ -51,13 +64,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [transactions, setTransactions] = useState<TransactionHistory[]>([]);
 
+  // Handle WebSocket events for transactions
+  useEffect(() => {
+    socket.on("transaction_history", (data) => {
+      console.log("transaction_history", data);
+      setTransactions(data.transactions);
+    });
+
+    socket.on("error", (error) => {
+      console.error("WebSocket Error:", error);
+    });
+
+    return () => {
+      socket.off("transaction_history");
+      socket.off("error");
+    };
+  }, []);
+
   const login = async (email: string, password: string) => {
     try {
       // Check if the user is already authenticated before attempting login
       const token = localStorage.getItem("authToken");
       if (token && !isTokenExpired(token)) {
         // User is already logged in
-        console.log("User is already logged in.");
+        toast.info("User is already logged in.");
         return;
       }
 
@@ -71,11 +101,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setIsAuth(true);
       setUser(user);
+      // Emit event to fetch transactions after login
+      socket.emit("get_transaction_history");
+      toast.info("Login successful", user);
       console.log("Login successful", user);
 
       const { transactions } = await getTransactionHistory();
       setTransactions(transactions);
     } catch (error) {
+      toast.error("Login failed");
       console.error("Login failed", error);
       throw error;
     }
