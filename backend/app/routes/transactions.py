@@ -13,12 +13,6 @@ from flask_socketio import SocketIO, emit
 
 # Transactions API
 txn_bp = Blueprint("transactions", __name__)
-
-# Define a SocketIO event
-@socketio.on("connect")
-def handle_connect():
-    print("Client connected")
-    emit("response", {"message": "Welcome to the server!"})
     
 @socketio.on('disconnect')
 def handle_disconnect():

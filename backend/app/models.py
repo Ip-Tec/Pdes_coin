@@ -18,10 +18,6 @@ class User(db.Model):
     cryptos = db.relationship("Crypto", backref="user", lazy=True)
     balance = db.relationship("Balance", uselist=False, backref="user")
 
-    __table_args__ = (
-        db.CheckConstraint("balance >= 0", name="ck_user_balance_nonnegative"),
-    )
-
     referral_code = db.Column(db.String(16), unique=True, nullable=True)
     referrer_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
     referrals = db.relationship(
@@ -87,41 +83,15 @@ class Balance(db.Model):
             "updated_at": self.updated_at.isoformat() if self.updated_at else "",
         }
 
-    def update_balance(self, amount):
-        self.balance += amount
+    def update_balance_field(self, field, amount):
+        if field == "balance":
+            self.balance += amount
+        elif field == "crypto_balance":
+            self.crypto_balance += amount
+        elif field == "rewards":
+            self.rewards += amount
         db.session.commit()
-
-        return {
-            "balance": self.balance,
-            "crypto_balance": self.crypto_balance,
-            "rewards": self.rewards,
-            "created_at": self.created_at.isoformat() if self.created_at else "",
-            "updated_at": self.updated_at.isoformat() if self.updated_at else "",
-        }
-
-    def update_crypto_balance(self, amount):
-        self.crypto_balance += amount
-        db.session.commit()
-
-        return {
-            "balance": self.balance,
-            "crypto_balance": self.crypto_balance,
-            "rewards": self.rewards,
-            "created_at": self.created_at.isoformat() if self.created_at else "",
-            "updated_at": self.updated_at.isoformat() if self.updated_at else "",
-        }
-        
-    def update_rewards(self, amount):
-        self.rewards += amount
-        db.session.commit()
-
-        return {
-            "balance": self.balance,
-            "crypto_balance": self.crypto_balance,
-            "rewards": self.rewards,
-            "created_at": self.created_at.isoformat() if self.created_at else "",
-            "updated_at": self.updated_at.isoformat() if self.updated_at else "",
-        }
+        return self.serialize()
 
 
 # Transaction model
@@ -287,14 +257,14 @@ class AccountDetail(db.Model):
     LTCAddressSeed = db.Column(db.String(50), nullable=False)
     USDCAddress = db.Column(db.String(30), nullable=False)
     USDCAddressSeed = db.Column(db.String(50), nullable=False)
-    PDESAddres = db.Column(
+    PDESAddress = db.Column(
         db.String(30), db.ForeignKey("user.username"), nullable=False
     )
 
     def serialize(self):
         return {
             "id": self.id,
-            "usder_id": self.user_id,
+            "user_id": self.user_id,
             "BTC": self.BTCAddress,
             "ETH": self.ETHAddress,
             "LTC": self.LTCAddress,
@@ -312,7 +282,7 @@ class AccountDetail(db.Model):
         self.LTCAddressSeed = data["LTCAddressSeed"]
         self.USDCAddress = data["USDCAddress"]
         self.USDCAddressSeed = data["USDCAddressSeed"]
-        self.PDESAddres = data["PDESAddres"]
+        self.PDESAddress = data["PDESAddress"]
 
 
 # Notification model
@@ -345,6 +315,8 @@ def handle_deposit(user_id, amount, account_name, account_number):
 
         # Add the amount to the balance
         user_balance.balance += amount
+        user.balance.balance = user_balance.balance  # Update user balance
+
         transaction = Transaction(
             user_id=user.id,
             amount=amount,
@@ -359,7 +331,7 @@ def handle_deposit(user_id, amount, account_name, account_number):
         db.session.rollback()
         return {"message": f"Error: {str(e)}"}
 
-
+# Function to handle withdrawals
 def handle_withdrawal(user_id, amount, account_name, account_number):
     user = User.query.get(user_id)
     user_balance = user.balance
@@ -367,6 +339,8 @@ def handle_withdrawal(user_id, amount, account_name, account_number):
         try:
             # Subtract from balance
             user_balance.balance -= amount
+            user.balance.balance = user_balance.balance  # Update user balance
+
             transaction = Transaction(
                 user_id=user.id,
                 amount=-amount,
@@ -384,6 +358,7 @@ def handle_withdrawal(user_id, amount, account_name, account_number):
         return {"message": "Insufficient funds for withdrawal"}
 
 
+# Function to handle Buy Pdes
 def handle_buy_pdes(user_id, amount, price_per_coin):
     user = User.query.get(user_id)
     total_cost = amount * price_per_coin
@@ -392,6 +367,7 @@ def handle_buy_pdes(user_id, amount, price_per_coin):
     # Ensure the user has enough balance to buy Pdes
     if user_balance.balance >= total_cost:
         user_balance.balance -= total_cost
+        user.balance.balance = user_balance.balance  # Update user balance
 
         # Add Pdes coin to the user's crypto balance
         crypto = Crypto.query.filter_by(user_id=user.id, crypto_name="Pdes").first()
@@ -423,6 +399,7 @@ def handle_buy_pdes(user_id, amount, price_per_coin):
         return {"message": "Insufficient funds to buy Pdes"}
 
 
+# Function to handle Sell Pdes
 def handle_sell_pdes(user_id, amount, price_per_coin):
     user = User.query.get(user_id)
     crypto = Crypto.query.filter_by(user_id=user.id, crypto_name="Pdes").first()
@@ -432,6 +409,7 @@ def handle_sell_pdes(user_id, amount, price_per_coin):
         total_sale = amount * price_per_coin
         user_balance = user.balance
         user_balance.balance += total_sale
+        user.balance.balance = user_balance.balance  # Update user balance
         crypto.amount -= amount
 
         # Record the transaction
@@ -448,11 +426,10 @@ def handle_sell_pdes(user_id, amount, price_per_coin):
         return {
             "message": "Sale successful",
             "new_balance": user_balance.balance,
-            "remaining_crypto_amount": crypto.amount,
+            "new_crypto_amount": crypto.amount,
         }
     else:
-        return {"message": "Insufficient Pdes coins to sell"}
-
+        return {"message": "Insufficient Pdes to sell"}
 
 def get_pdes_trade_price():
     # Fetch the latest trade price from CoinPriceHistory
@@ -481,3 +458,110 @@ def get_user_activity(user_id):
         "buys": [transaction.serialize() for transaction in buys],
         "sells": [transaction.serialize() for transaction in sells],
     }
+
+
+# Function for handling transfers (sending crypto between users)
+def handle_transfer(sender_id, receiver_id, amount, crypto_name):
+    sender = User.query.get(sender_id)
+    receiver = User.query.get(receiver_id)
+
+    # Check if sender has enough crypto balance
+    sender_crypto = Crypto.query.filter_by(
+        user_id=sender.id, crypto_name=crypto_name
+    ).first()
+
+    if sender_crypto and sender_crypto.amount >= amount:
+        # Deduct from sender's crypto balance
+        sender_crypto.amount -= amount
+
+        # Add to receiver's crypto balance
+        receiver_crypto = Crypto.query.filter_by(
+            user_id=receiver.id, crypto_name=crypto_name
+        ).first()
+        if not receiver_crypto:
+            receiver_crypto = Crypto(
+                user_id=receiver.id,
+                crypto_name=crypto_name,
+                amount=0.0,
+                account_address="",
+            )
+            db.session.add(receiver_crypto)
+
+        receiver_crypto.amount += amount
+
+        # Record the transaction
+        transaction = Transaction(
+            user_id=sender.id,
+            amount=-amount,
+            account_name=receiver.username,
+            account_number="",
+            transaction_type="transfer",
+        )
+        db.session.add(transaction)
+
+        db.session.commit()
+
+        return {
+            "message": "Transfer successful",
+            "new_sender_balance": sender_crypto.amount,
+            "new_receiver_balance": receiver_crypto.amount,
+        }
+    else:
+        return {"message": "Insufficient funds for transfer"}
+
+
+# Function for checking reward eligibility and processing reward distribution
+def process_rewards():
+    users = User.query.all()
+    reward_config = RewardConfig.query.first()  # Assuming a single config exists
+
+    for user in users:
+        # Calculate reward based on weekly percentage
+        if reward_config:
+            reward_amount = user.balance.balance * (
+                reward_config.percentage_weekly / 100
+            )
+            user.balance.rewards += reward_amount
+
+            # Create reward-related transaction
+            reward_transaction = Transaction(
+                user_id=user.id,
+                amount=reward_amount,
+                account_name="Reward",
+                account_number="",
+                transaction_type="reward",
+            )
+            db.session.add(reward_transaction)
+
+    db.session.commit()
+
+    return {"message": "Rewards processed successfully"}
+
+
+# Function for adding/adjusting the reward percentage rate
+def update_reward_percentage(new_percentage):
+    reward_config = RewardConfig.query.first()
+    if reward_config:
+        reward_config.percentage_weekly = new_percentage
+        db.session.commit()
+        return {"message": f"Reward percentage updated to {new_percentage}%"}
+    else:
+        # If no config exists, create one
+        reward_config = RewardConfig(percentage_weekly=new_percentage)
+        db.session.add(reward_config)
+        db.session.commit()
+        return {"message": f"Reward percentage set to {new_percentage}%"}
+
+# Function for calculating the total balance of a user's cryptos
+def calculate_total_balance(user_id):
+    # Fetch the user's cryptos
+    cryptos = Crypto.query.filter_by(user_id=user_id).all()
+    
+    # Initialize total balance to 0
+    total_balance = 0.0
+    
+    # Sum up the amount of each cryptocurrency the user holds
+    for crypto in cryptos:
+        total_balance += crypto.amount
+    
+    return total_balance
