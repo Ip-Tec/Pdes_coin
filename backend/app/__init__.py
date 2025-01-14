@@ -45,7 +45,7 @@ def create_app():
     CORS(
         app,
         supports_credentials=True,
-        resources={r"/*": {"origins": "http://localhost:5173"}},
+        resources={r"/*": {"origins": ["http://localhost:5173", "https://pdes-coin.vercel.app"]}},
     )
 
     # Load configuration
