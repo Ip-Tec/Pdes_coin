@@ -11,6 +11,7 @@ export interface InputFieldProps {
 }
 export interface User {
   id: number;
+  role: string;
   email: string;
   full_name: string;
   username: string;
@@ -63,14 +64,14 @@ export interface CryptoHistory {
   highPrice?: number;
   lowPrice?: number;
   closePrice?: number;
-  
+
   id: number;
   user_id: number;
   amount: number;
   crypto_name: string;
   account_address: string;
   created_at: string; // ISO 8601 formatted string
-  data?: CandlestickChartProps
+  data?: CandlestickChartProps;
 }
 
 export interface TransactionHistory {

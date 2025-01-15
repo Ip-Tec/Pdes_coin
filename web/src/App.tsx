@@ -24,6 +24,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import SupportPage from "./pages/SupportPage";
 import HelpCenterPage from "./pages/HelpCenterPage";
 import WalletPage from "./pages/WalletPage";
+import AdminDashboard from "./pages/Admin/AdminDashboard";
 
 const App: React.FC = () => {
   const DisplayNavbar: React.FC = () => {
@@ -78,7 +79,10 @@ const App: React.FC = () => {
                 exit="exit"
                 variants={pageVariants}
               >
-                <ProtectedRoute isAuth={true}>
+                <ProtectedRoute
+                  isAuth={true}
+                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                >
                   <Deposit />
                 </ProtectedRoute>
               </motion.div>
@@ -93,7 +97,10 @@ const App: React.FC = () => {
                 exit="exit"
                 variants={pageVariants}
               >
-                <ProtectedRoute isAuth={true}>
+                <ProtectedRoute
+                  isAuth={true}
+                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                >
                   <BuySellCoin />
                 </ProtectedRoute>
               </motion.div>
@@ -108,7 +115,10 @@ const App: React.FC = () => {
                 exit="exit"
                 variants={pageVariants}
               >
-                <ProtectedRoute isAuth={true}>
+                <ProtectedRoute
+                  isAuth={true}
+                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                >
                   <Dashboard />
                 </ProtectedRoute>
               </motion.div>
@@ -123,7 +133,10 @@ const App: React.FC = () => {
                 exit="exit"
                 variants={pageVariants}
               >
-                <ProtectedRoute isAuth={true}>
+                <ProtectedRoute
+                  isAuth={true}
+                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                >
                   <Activity />
                 </ProtectedRoute>
               </motion.div>
@@ -138,7 +151,10 @@ const App: React.FC = () => {
                 exit="exit"
                 variants={pageVariants}
               >
-                <ProtectedRoute isAuth={true}>
+                <ProtectedRoute
+                  isAuth={true}
+                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                >
                   <Withdraw />
                 </ProtectedRoute>
               </motion.div>
@@ -153,7 +169,10 @@ const App: React.FC = () => {
                 exit="exit"
                 variants={pageVariants}
               >
-                <ProtectedRoute isAuth={true}>
+                <ProtectedRoute
+                  isAuth={true}
+                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                >
                   <Profile />
                 </ProtectedRoute>
               </motion.div>
@@ -246,7 +265,10 @@ const App: React.FC = () => {
                 exit="exit"
                 variants={pageVariants}
               >
-                <ProtectedRoute isAuth={true}>
+                <ProtectedRoute
+                  isAuth={true}
+                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                >
                   <AboutPage />
                 </ProtectedRoute>
               </motion.div>
@@ -261,7 +283,10 @@ const App: React.FC = () => {
                 exit="exit"
                 variants={pageVariants}
               >
-                <ProtectedRoute isAuth={true}>
+                <ProtectedRoute
+                  isAuth={true}
+                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                >
                   <WalletPage />
                 </ProtectedRoute>
               </motion.div>
@@ -276,7 +301,10 @@ const App: React.FC = () => {
                 exit="exit"
                 variants={pageVariants}
               >
-                <ProtectedRoute isAuth={true}>
+                <ProtectedRoute
+                  isAuth={true}
+                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                >
                   <SupportPage />
                 </ProtectedRoute>
               </motion.div>
@@ -291,8 +319,32 @@ const App: React.FC = () => {
                 exit="exit"
                 variants={pageVariants}
               >
-                <ProtectedRoute isAuth={true}>
+                <ProtectedRoute
+                  isAuth={true}
+                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                >
                   <HelpCenterPage />
+                </ProtectedRoute>
+              </motion.div>
+            }
+          />
+          {/* Admin routes */}
+
+          <Route
+            path="/a/dashboard"
+            element={
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <ProtectedRoute
+                  isAuth={true}
+                  user={JSON.parse(localStorage.getItem("user") || "{}")}
+                  requiredRoles={["admin", "super_admin", "developer"]}
+                >
+                  <AdminDashboard />
                 </ProtectedRoute>
               </motion.div>
             }

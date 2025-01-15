@@ -12,10 +12,15 @@ const Login: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const { login, isAuth } = useAuth();
+  const { login, isAuth, user } = useAuth();
 
-  if (isAuth) {
-    return <Navigate to="/dashboard" replace />;
+
+  if (isAuth && user) {
+    if (user?.role !== "user") {
+      return <Navigate to="/a/dashboard" replace />;
+    } else {
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   const validateForm = () => {
@@ -74,11 +79,7 @@ const Login: React.FC = () => {
       <ToastContainer />
       {loading && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <img
-            src={logo}
-            alt="Loading"
-            className="animate-bounce w-56 h-56"
-          />
+          <img src={logo} alt="Loading" className="animate-bounce w-56 h-56" />
         </div>
       )}
 
@@ -138,7 +139,10 @@ const Login: React.FC = () => {
         </div>
         {/* Forget Password */}
         <div className="mt-4 text-center">
-          <Link to={"/forgot-password"} className="text-textColor hover:underline">
+          <Link
+            to={"/forgot-password"}
+            className="text-textColor hover:underline"
+          >
             Forgot Password?
           </Link>
         </div>

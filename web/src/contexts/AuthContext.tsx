@@ -43,9 +43,9 @@ const isTokenExpired = (token: string): boolean => {
   }
 };
 
-const AuthContext = createContext<AuthContextType | null>(null);
+export const AuthContext = createContext<AuthContextType | null>(null);
 
-const socket = io(url+"/api/", {
+const socket = io(url + "/api/", {
   query: {
     token: localStorage.getItem("authToken"),
   },
@@ -63,6 +63,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const [user, setUser] = useState<User | null>(null);
   const [transactions, setTransactions] = useState<TransactionHistory[]>([]);
+  
+  // Fetch user data from localStorage or sessionStorage
+  useEffect(() => {
+    const userData = sessionStorage.getItem("user");
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
 
   // Handle WebSocket events for transactions
   useEffect(() => {
@@ -95,12 +103,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         email,
         password,
       });
+
       sessionStorage.setItem("user", JSON.stringify(user));
       localStorage.setItem("authToken", access_token);
       localStorage.setItem("refreshToken", refresh_token);
 
+      // Now set the user data after successful login
       setIsAuth(true);
       setUser(user);
+
       // Emit event to fetch transactions after login
       socket.emit("get_transaction_history");
       toast.info("Login successful", user);

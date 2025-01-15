@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import InputField from "../components/InputField";
 import { useNavigate, useParams } from "react-router-dom";
+import { toast, ToastContainer } from "react-toastify";
 
 const Register: React.FC = () => {
   const { isAuth } = useAuth();
@@ -17,7 +18,6 @@ const Register: React.FC = () => {
     referralCode,
     terms: false, // Changed to boolean for easier condition checking
   });
-  console.log({ formData });
 
   const [loading, setLoading] = useState(false); // Loading state
   const [errors, setErrors] = useState({
@@ -99,11 +99,13 @@ const Register: React.FC = () => {
         navigate("/login"); // Redirect to dashboard on success
       } catch (error: unknown) {
         if (error instanceof Error) {
-          console.log("Registration Error: ", { error });
-          console.log("Registration Error: ", error.stack);
+          console.error("Registration Error: ", { error });
+          console.error("Registration Error: ", error.stack);
 
           setErrorMessage(error.message || "Registration failed");
+          toast.error(error.message || "Registration failed");
         } else {
+          toast.error("An unexpected error occurred. Please try again.");
           setErrorMessage("An unexpected error occurred. Please try again.");
         }
       } finally {
@@ -114,6 +116,7 @@ const Register: React.FC = () => {
 
   return (
     <div className="h-screen flex items-center justify-center bg-[#FBF0EC]">
+      <ToastContainer />
       {loading && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <img

@@ -22,6 +22,8 @@ function Deposit() {
     async function fetchConversionRate() {
       try {
         const response = await API.get(apiUrl("/transactions/conversion-rate"));
+        console.log("Conversion Rate Response:", response.data);
+        
         const conversion_rate = response.data.conversion_rate;
         setConversionRate(conversion_rate.conversion_rate);
       } catch (error) {

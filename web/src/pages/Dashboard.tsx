@@ -7,7 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { toast, ToastContainer } from "react-toastify";
 
-const Dashboard = () => {
+const AdminDashboard = () => {
   const { user, getUser, setUser, transactions, logout, isAuth } = useAuth();
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const navigate = useNavigate();
@@ -88,7 +88,7 @@ const Dashboard = () => {
             total_referrals={user.total_referrals}
             referral_reward={user.referral_reward}
             created_at={user.created_at}
-          />
+            role={user.role}          />
           <QuickActions />
         </div>
 
@@ -110,4 +110,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default AdminDashboard;
