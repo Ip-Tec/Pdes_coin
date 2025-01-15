@@ -225,6 +225,19 @@ const App: React.FC = () => {
             }
           />
           <Route
+            path="/referral/re/:referralCode"
+            element={
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageVariants}
+              >
+                <Register />
+              </motion.div>
+            }
+          />
+          <Route
             path="/about"
             element={
               <motion.div

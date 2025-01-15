@@ -22,7 +22,7 @@ function Profile() {
   // const [isAccordionOpen, setIsAccordionOpen] = useState(false);
   // const [accountData, setAccountData] = useState<AccountDetail>();
   const navigate = useNavigate();
-  const referralLink = `${feURL}/referral/re=${user?.username}`;
+  const referralLink = `${feURL}referral/re/${user?.username}`;
   console.log({ referralLink, user });
 
   useEffect(() => {

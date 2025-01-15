@@ -1,20 +1,24 @@
 import logo from "../assets/pdes.png";
-import React, { useState } from "react";
-import { Link, Navigate } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { registerUser } from "../services/api";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import InputField from "../components/InputField";
+import { useNavigate, useParams } from "react-router-dom";
 
 const Register: React.FC = () => {
   const { isAuth } = useAuth();
+  const { referralCode } = useParams();
   const [formData, setFormData] = useState({
     email: "",
     fullName: "",
     password: "",
     confirmPassword: "",
+    referralCode,
     terms: false, // Changed to boolean for easier condition checking
   });
+  console.log({ formData });
+
   const [loading, setLoading] = useState(false); // Loading state
   const [errors, setErrors] = useState({
     fullName: "",
@@ -26,9 +30,11 @@ const Register: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const navigate = useNavigate(); // Initialize useNavigate
 
-  if (isAuth) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  useEffect(() => {
+    if (isAuth) {
+      navigate("/dashboard");
+    }
+  }, [isAuth, navigate]);
 
   const validateForm = () => {
     let isValid = true;
@@ -130,6 +136,14 @@ const Register: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit}>
+          <p className="text-gray-700 text-sm mt-1 mx-auto w-full">Referral Code: re/{referralCode}</p>
+          <input
+            type="text"
+            name="referralCode"
+            readOnly
+            defaultValue={referralCode}
+            hidden
+          />
           <InputField
             label="Full Name"
             type="text"
@@ -189,10 +203,7 @@ const Register: React.FC = () => {
             />
             <label className="text-gray-700">
               I agree to the{" "}
-              <Link
-                to="/about"
-                className="text-blue-500 hover:underline"
-              >
+              <Link to="/about" className="text-blue-500 hover:underline">
                 terms and conditions
               </Link>
             </label>

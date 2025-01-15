@@ -82,29 +82,28 @@ class UserController:
     @staticmethod
     def register():
         """
-        Register user
+        Register a new user with referral functionality integrated into the User model.
         """
         data = request.get_json()
 
-        # Extract required fields
+        # Extract and validate input fields
         name = data.get("fullName") or data.get("name")
         email = data.get("email")
-        username = data.get("username") or generate_key(4)
+        username = data.get("username") or generate_key(6)
         password = data.get("password")
         confirmPassword = data.get("confirmPassword")
+        referral_code = data.get("referralCode", None)
+        role = data.get("role", "user")  # Default to 'user'
 
-        valid_email = is_valid_email(email)
-        if not valid_email:
+        # Validate email format
+        if not is_valid_email(email):
             return jsonify({"message": "Invalid email format"}), 400
 
-        # Check if password and confirm password match
+        # Validate passwords
         if password != confirmPassword:
-            return (
-                jsonify({"message": "Password and confirm password do not match"}),
-                400,
-            )
+            return jsonify({"message": "Password and confirm password do not match"}), 400
 
-        # Validate required fields
+        # Check required fields
         for param, param_name in [
             (name, "Name"),
             (email, "Email"),
@@ -114,65 +113,57 @@ class UserController:
             if validation_error:
                 return validation_error
 
+        # Check for existing email
+        if User.query.filter_by(email=email).first():
+            return jsonify({"message": "Email is already registered"}), 400
+
+        # Check for existing username
+        if User.query.filter_by(username=username).first():
+            return jsonify({"message": "Username is already taken"}), 400
+
         # Validate referral code if provided
-        referral_code = data.get("referral_code", None)
         referrer = None
         if referral_code:
-            referrer = User.query.filter_by(referral_code=referral_code).first()
+            referrer = User.query.filter_by(username=referral_code).first()
             if not referrer:
                 return jsonify({"message": "Invalid referral code"}), 400
-
-        # Check if email is already registered
-        if User.query.filter_by(email=email).first():
-            return jsonify({"message": "Email already registered"}), 400
 
         # Hash the password
         hashed_password = generate_password_hash(password)
 
-        # Assign a default role if no role is provided
-        role = data.get("role", "user")  # Default role is 'user'
-
-        # Create a new user
+        # Create the new user
         user = User(
             name=name,
             email=email,
             username=username,
             password=hashed_password,
-            referral_code=referral_code,
-            role=role,  # Assign the role to the user
+            referral_code=username,  # Use the username as the referral code
+            referrer_id=referrer.id if referrer else None,  # Link the referrer
         )
 
+        # Add user to the database session
         db.session.add(user)
-        db.session.commit()
 
-        # Update referrer stats if referral_code was used
+        # Update referrer stats if a valid referral was used
         if referrer:
             referrer.total_referrals += 1
-            db.session.commit()
+            # Optionally, you can calculate rewards here
+            # referrer.referral_reward += REWARD_AMOUNT
 
-        # Optionally send a registration email
-        token = generate_password_reset_token(user.email)
+        # Commit all changes
+        db.session.commit()
+
+        # Send registration email
         try:
+            token = generate_password_reset_token(user.email)
             Email.send_register_email(user, token)
-            return (
-                jsonify(
-                    {
-                        "message": "User registered successfully. A confirmation email has been sent."
-                    }
-                ),
-                201,
-            )
+            return jsonify({"message": "User registered successfully. A confirmation email has been sent."}), 201
         except Exception as e:
-            return (
-                jsonify(
-                    {
-                        "message": "User registered successfully.",
-                        "email_error": "Error sending registration email. Please check your email configuration or try again later.",
-                        "error_details": str(e),
-                    }
-                ),
-                202,
-            )
+            return jsonify({
+                "message": "User registered successfully.",
+                "email_error": "Error sending registration email. Please check your email configuration or try again later.",
+                "error_details": str(e),
+            }), 202
 
     @staticmethod
     def update_user_info():
