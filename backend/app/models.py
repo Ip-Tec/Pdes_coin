@@ -259,6 +259,7 @@ class Utility(db.Model):
     pdes_market_cap = db.Column(db.Float, nullable=False)
     pdes_circulating_supply = db.Column(db.Float, nullable=False)
     conversion_rate = db.Column(db.Float, nullable=False, default=1980)
+    reward_percentage = db.Column(db.Float, nullable=False, default=25.0)  # default 25%
     referral_percentage = db.Column(db.Float, nullable=False, default=5.0)  # default 5%
     pdes_supply_left = db.Column(db.Float, nullable=False, default=8000000000.0)
     pdes_total_supply = db.Column(db.Float, nullable=False, default=8000000000.0)
@@ -271,6 +272,8 @@ class Utility(db.Model):
             "pdes_market_cap": self.pdes_market_cap,
             "pdes_supply_left": self.pdes_supply_left,
             "pdes_total_supply": self.pdes_total_supply,
+            "reward_percentage": self.reward_percentage,
+            "referral_percentage": self.referral_percentage,
             "pdes_circulating_supply": self.pdes_circulating_supply,
         }
 

@@ -1,57 +1,68 @@
 import datetime
 from app import app, db
-from models import User, RewardSetting, Utility, Transaction
+from models import User, RewardSetting, Utility, Transaction, Balance
 from apscheduler.schedulers.background import BackgroundScheduler
 
-def calculate_referral_rewards():
-    """Distribute referral rewards based on deposits."""
-    with app.app_context():
-        users = User.query.filter(User.referrer_id.isnot(None)).all()
-        for user in users:
-            # Fetch referrer
-            referrer = User.query.get(user.referrer_id)
-            if referrer:
-                # Fetch the deposit transactions for the user
-                deposits = Transaction.query.filter_by(
-                    user_id=user.id, transaction_type="deposit"
-                ).all()
-                for deposit in deposits:
-                    reward_percentage = Utility.query.first().conversion_rate / 100
-                    reward_amount = deposit.amount * reward_percentage
+def reward_pdes_holders():
+    """Calculate and distribute rewards to users who own PDES coins."""
+    try:
+        print(f"Reward job started at {datetime.utcnow()}")
 
-                    # Credit reward to referrer
-                    referrer.balance.balance += reward_amount
-                    referrer.referral_reward += reward_amount
-                    db.session.commit()
+        # Fetch users with a PDES balance
+        pdes_users = Balance.query.filter(Balance.crypto_symbol == "PDES", Balance.amount > 0).all()
+
+        #  Fetch the reward percentage from the Utility table
+        utility = Utility.query.first()
+        reward_percentage = utility.reward_percentage
+
+        for user_balance in pdes_users:
+            reward = user_balance.amount * reward_percentage
+            user_balance.amount += reward  # Update the user's PDES balance
+            print(f"Rewarded {reward} PDES to User ID: {user_balance.user_id}")
+
+        # Commit changes to the database
+        db.session.commit()
+        print("Reward job completed successfully.")
+    except Exception as e:
+        print(f"Error during reward distribution: {e}")
 
 
 def calculate_weekly_rewards():
     """Distribute weekly rewards for PDES purchases."""
     with app.app_context():
         reward_setting = RewardSetting.query.first()
-        if not reward_setting:
-            print("No reward setting configured!")
+        if not reward_setting or reward_setting.weekly_percentage <= 0:
+            print("No valid reward setting configured!")
             return
 
         # Calculate daily rate
-        daily_rate = reward_setting.weekly_percentage / 7
+        daily_rate = reward_setting.weekly_percentage / 7 / 100  # Convert to decimal
 
         # Fetch eligible users
         users = User.query.filter(User.last_reward_date.isnot(None)).all()
         for user in users:
-            days_since_reward = (datetime.utcnow() - user.last_reward_date).days
-            reward_amount = user.balance.balance * (daily_rate / 100) * days_since_reward
+            if user.balance and user.balance.balance > 0:
+                days_since_reward = (datetime.datetime.utcnow() - user.last_reward_date).days
+                reward_amount = user.balance.balance * daily_rate * days_since_reward
 
-            # Credit user balance
-            user.balance.balance += reward_amount
-            user.balance.rewards += reward_amount
-            user.last_reward_date = datetime.utcnow()
-            db.session.commit()
+                # Update user balance and rewards
+                user.balance.balance += reward_amount
+                user.balance.rewards += reward_amount
+                user.last_reward_date = datetime.datetime.utcnow()
+
+        # Commit all changes at once
+        db.session.commit()
+        print("Weekly rewards calculation completed.")
+
 
 
 def setup_scheduler():
     """Setup the task scheduler."""
     scheduler = BackgroundScheduler()
-    scheduler.add_job(calculate_referral_rewards, "interval", hours=1)  # Run hourly
-    scheduler.add_job(calculate_weekly_rewards, "interval", days=1)  # Run daily
-    return scheduler
+    
+    # Reward PDES holders once a month
+    # scheduler.add_job(reward_pdes_holders, "interval", weeks=4)  # Monthly reward for PDES holders
+    
+    scheduler.add_job(calculate_weekly_rewards, "interval", days=5)  # daly reward for activities
+    scheduler.start()
+    print("Scheduler started!")
