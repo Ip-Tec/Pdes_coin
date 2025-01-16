@@ -9,7 +9,7 @@ import InputField from "../../components/InputField";
 const AdminUser: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState("");
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUser] = useState<User | null>(null);
   const [isDraggable, setIsDraggable] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);

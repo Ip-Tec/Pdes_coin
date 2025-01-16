@@ -1,4 +1,4 @@
-import React from "react";
+
 import AdminWrapper from "../../components/Admin/AdminWrapper";
 
 function AdminTransaction() {

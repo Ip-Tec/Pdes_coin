@@ -1,17 +1,39 @@
 import { useState, useEffect } from "react";
+import { User } from "../../utils/type";
 
 const Referrals = () => {
-  const [referrals, setReferrals] = useState([]);
+  const [referrals, setReferrals] = useState<User[]>([]);
 
   useEffect(() => {
     // Fetch referral data (replace with actual API call)
     setReferrals([
-      { id: 1, user: "John Doe", referred_user: "James Lee", reward: "$5" },
-      { id: 2, user: "Jane Smith", referred_user: "Alice Brown", reward: "$3" },
+      {
+        id: 1,
+        full_name: "John Doe",
+        referral_code: "4",
+        referral_reward: 5,
+        role: "",
+        email: "",
+        username: "",
+        balance: 0,
+        total_referrals: 0,
+        created_at: "",
+      },
+      {
+        id: 2,
+        full_name: "Jane Smith",
+        referral_code: "4",
+        referral_reward: 3,
+        role: "",
+        email: "",
+        username: "",
+        balance: 0,
+        total_referrals: 0,
+        created_at: "",
+      },
       // More referrals...
     ]);
   }, []);
-
   return (
     <div className="referrals">
       <h2>Referrals</h2>
@@ -24,11 +46,12 @@ const Referrals = () => {
           </tr>
         </thead>
         <tbody>
-          {referrals.map((referral) => (
+          {referrals.map((referral: User) => (
             <tr key={referral.id}>
-              <td>{referral.user}</td>
-              <td>{referral.referred_user}</td>
-              <td>{referral.reward}</td>
+              <td>{referral.full_name}</td>
+              <td>{referral.email}</td>
+              <td>{referral.referral_code}</td>
+              <td>{referral.referral_reward}</td>
             </tr>
           ))}
         </tbody>
