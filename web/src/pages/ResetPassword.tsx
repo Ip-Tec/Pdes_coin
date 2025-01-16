@@ -45,7 +45,7 @@ function ResetPassword() {
   return (
     <div className="min-h-screen bg-mainBG flex flex-col items-center justify-center mx-4">
       <ToastContainer />
-      <img src={logo} alt="Logo" className="mx-auto h-64 w-64" />
+      <img src={logo} alt="Logo" className={`mx-auto h-64 w-64 ${isLoading ? "hidden" : "block"}`} />
       <div className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
           Reset Password

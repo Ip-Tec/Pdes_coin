@@ -58,6 +58,33 @@ class User(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else "",
         }
 
+    # Return a serialize info for admin
+    def serialize_admin(self):
+        # If no balance is found, default to 0.0
+        balance = self.balance.balance if self.balance else 0.0
+
+        # Calculate total crypto_balance (sum of all crypto balances)
+        total_crypto_balance = (
+            sum(crypto.amount for crypto in self.cryptos) if self.cryptos else 0.0
+        )
+
+        return {
+            "id": self.id,
+            "role": self.role,
+            "balance": balance,
+            "email": self.email,
+            "full_name": self.name,
+            "username": self.username,
+            "referrer_id": self.referrer_id,
+            "referral_code": self.referral_code,
+            "crypto_balance": total_crypto_balance,
+            "total_referrals": self.total_referrals,
+            "referral_reward": self.referral_reward,
+            "last_reward_date": self.last_reward_date,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "updated_at": self.updated_at.isoformat() if self.created_at else "",
+        }
+
 
 # Balance model
 class Balance(db.Model):
@@ -232,6 +259,7 @@ class Utility(db.Model):
     pdes_market_cap = db.Column(db.Float, nullable=False)
     pdes_circulating_supply = db.Column(db.Float, nullable=False)
     conversion_rate = db.Column(db.Float, nullable=False, default=1980)
+    referral_percentage = db.Column(db.Float, nullable=False, default=5.0)  # default 5%
     pdes_supply_left = db.Column(db.Float, nullable=False, default=8000000000.0)
     pdes_total_supply = db.Column(db.Float, nullable=False, default=8000000000.0)
 
@@ -332,6 +360,7 @@ def handle_deposit(user_id, amount, account_name, account_number):
         db.session.rollback()
         return {"message": f"Error: {str(e)}"}
 
+
 # Function to handle withdrawals
 def handle_withdrawal(user_id, amount, account_name, account_number):
     user = User.query.get(user_id)
@@ -431,6 +460,7 @@ def handle_sell_pdes(user_id, amount, price_per_coin):
         }
     else:
         return {"message": "Insufficient Pdes to sell"}
+
 
 def get_pdes_trade_price():
     # Fetch the latest trade price from CoinPriceHistory
@@ -553,16 +583,17 @@ def update_reward_percentage(new_percentage):
         db.session.commit()
         return {"message": f"Reward percentage set to {new_percentage}%"}
 
+
 # Function for calculating the total balance of a user's cryptos
 def calculate_total_balance(user_id):
     # Fetch the user's cryptos
     cryptos = Crypto.query.filter_by(user_id=user_id).all()
-    
+
     # Initialize total balance to 0
     total_balance = 0.0
-    
+
     # Sum up the amount of each cryptocurrency the user holds
     for crypto in cryptos:
         total_balance += crypto.amount
-    
+
     return total_balance

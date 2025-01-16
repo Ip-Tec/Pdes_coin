@@ -6,12 +6,14 @@ from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO, emit
 from werkzeug.exceptions import HTTPException
+from app.controller import scheduler
 
 db = SQLAlchemy()
 migrate = Migrate()
 socketio = SocketIO(cors_allowed_origins="*")  # Initialize globally
 load_dotenv()
 
+scheduler.setup_scheduler()
 
 def create_app():
     app = Flask(__name__)
@@ -75,9 +77,10 @@ def create_app():
         return jsonify({"message": "Welcome to the Pdes Wallet API!"}), 200
 
     # Register blueprints
-    from app.routes import auth, users, transactions, account, utility
+    from app.routes import admin, auth, users, transactions, account, utility
 
     app.register_blueprint(auth.auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(admin.admin_bp, url_prefix="/api/admin")
     app.register_blueprint(users.users_bp, url_prefix="/api/users")
     app.register_blueprint(account.account_bp, url_prefix="/api/account")
     app.register_blueprint(utility.utility_bp, url_prefix="/api/utility")

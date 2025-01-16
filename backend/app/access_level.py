@@ -11,6 +11,7 @@ load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 REFRESH_SECRET_KEY = os.getenv("SECRET_KEY")
 
+
 class AccessLevel:
     # Define access levels
     USER = 1
@@ -60,10 +61,16 @@ class AccessLevel:
             raise ValueError(str(e))
 
     @staticmethod
-    def role_required(required_role):
+    def role_required(required_roles):
         """
-        Decorator to restrict access to users with the specified role.
+        Decorator to restrict access to users with any of the specified roles.
+        `required_roles` can be a string or a list of roles.
         """
+
+        if isinstance(required_roles, str):
+            required_roles = [required_roles]
+
+        required_roles = [role.upper() for role in required_roles]
 
         def decorator(f):
             @wraps(f)
@@ -78,11 +85,13 @@ class AccessLevel:
                 except ValueError as e:
                     return jsonify({"message": str(e)}), 401
 
-                if current_user.role != required_role:
+                userRole = current_user.role.upper()
+                print(f"User Role: {userRole}")
+                if userRole not in required_roles:
                     return (
                         jsonify(
                             {
-                                "message": f"Access denied. {required_role.capitalize()} role required!"
+                                "message": f"Access denied. One of the following roles is required: {', '.join(required_roles)}"
                             }
                         ),
                         403,
@@ -95,5 +104,7 @@ class AccessLevel:
         return decorator
 
     # Define specific decorators for roles
-    admin_required = role_required("admin")
-    super_admin_required = role_required("developer")
+    # admin_required = role_required(["admin"])
+    # super_admin_required = role_required(["super_admin"])
+    # dev_required = role_required(["developer"])
+

@@ -128,7 +128,11 @@ const Register: React.FC = () => {
       )}
       <div className="w-full max-w-md p-8">
         <div className="text-center mb-6">
-          <img src={logo} alt="Logo" className="mx-auto h-56 w-56" />
+          <img
+            src={logo}
+            alt="Logo"
+            className={`mx-auto h-56 w-56 ${loading ? "hidden" : "block"}`}
+          />
         </div>
         <h2 className="text-xl font-semibold text-center mb-4 text-gray-800">
           Create an Account
@@ -139,7 +143,9 @@ const Register: React.FC = () => {
         )}
 
         <form onSubmit={handleSubmit}>
-          <p className="text-gray-700 text-sm mt-1 mx-auto w-full">Referral Code: re/{referralCode}</p>
+          <p className="text-gray-700 text-sm mt-1 mx-auto w-full">
+            Referral Code: re/{referralCode}
+          </p>
           <input
             type="text"
             name="referralCode"

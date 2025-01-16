@@ -88,7 +88,7 @@ const Login: React.FC = () => {
 
       <div className="w-full max-w-md p-8">
         <div className="text-center mb-6">
-          <img src={logo} alt="Logo" className="mx-auto h-56 w-56" />
+        <img src={logo} alt="Logo" className={`mx-auto h-56 w-56 ${loading ? "hidden" : "block"}`} />
         </div>
         <h2 className="text-xl font-semibold text-center mb-4 text-gray-800">
           Login to Your Account
