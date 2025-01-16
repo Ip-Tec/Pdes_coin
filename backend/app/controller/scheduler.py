@@ -1,17 +1,20 @@
 import datetime
-from app import app, db
-from models import User, RewardSetting, Utility, Transaction, Balance
+from app import db
+from app.models import User, RewardSetting, Utility, Transaction, Balance
 from apscheduler.schedulers.background import BackgroundScheduler
+
 
 def reward_pdes_holders():
     """Calculate and distribute rewards to users who own PDES coins."""
     try:
-        print(f"Reward job started at {datetime.utcnow()}")
+        print(f"Reward job started at {datetime.datetime.utcnow()}")
 
         # Fetch users with a PDES balance
-        pdes_users = Balance.query.filter(Balance.crypto_symbol == "PDES", Balance.amount > 0).all()
+        pdes_users = Balance.query.filter(
+            Balance.crypto_symbol == "PDES", Balance.amount > 0
+        ).all()
 
-        #  Fetch the reward percentage from the Utility table
+        # Fetch the reward percentage from the Utility table
         utility = Utility.query.first()
         reward_percentage = utility.reward_percentage
 
@@ -27,7 +30,7 @@ def reward_pdes_holders():
         print(f"Error during reward distribution: {e}")
 
 
-def calculate_weekly_rewards():
+def calculate_weekly_rewards(app):
     """Distribute weekly rewards for PDES purchases."""
     with app.app_context():
         reward_setting = RewardSetting.query.first()
@@ -42,7 +45,9 @@ def calculate_weekly_rewards():
         users = User.query.filter(User.last_reward_date.isnot(None)).all()
         for user in users:
             if user.balance and user.balance.balance > 0:
-                days_since_reward = (datetime.datetime.utcnow() - user.last_reward_date).days
+                days_since_reward = (
+                    datetime.datetime.utcnow() - user.last_reward_date
+                ).days
                 reward_amount = user.balance.balance * daily_rate * days_since_reward
 
                 # Update user balance and rewards
@@ -55,14 +60,15 @@ def calculate_weekly_rewards():
         print("Weekly rewards calculation completed.")
 
 
-
-def setup_scheduler():
+def setup_scheduler(app):
     """Setup the task scheduler."""
     scheduler = BackgroundScheduler()
-    
+
     # Reward PDES holders once a month
-    # scheduler.add_job(reward_pdes_holders, "interval", weeks=4)  # Monthly reward for PDES holders
-    
-    scheduler.add_job(calculate_weekly_rewards, "interval", days=5)  # daly reward for activities
+    # scheduler.add_job(reward_pdes_holders, "interval", weeks=4, args=[app])  # Monthly reward for PDES holders
+
+    scheduler.add_job(
+        calculate_weekly_rewards, "interval", days=5, args=[app]
+    )  # Passing app to the function
     scheduler.start()
     print("Scheduler started!")

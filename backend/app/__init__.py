@@ -6,14 +6,12 @@ from flask_sqlalchemy import SQLAlchemy
 from flask import Flask, jsonify, request
 from flask_socketio import SocketIO, emit
 from werkzeug.exceptions import HTTPException
-from app.controller import scheduler
 
 db = SQLAlchemy()
 migrate = Migrate()
 socketio = SocketIO(cors_allowed_origins="*")  # Initialize globally
 load_dotenv()
 
-scheduler.setup_scheduler()
 
 def create_app():
     app = Flask(__name__)
@@ -100,21 +98,9 @@ def create_app():
             "Account": AccountDetail,
         }
 
+    # Import scheduler after app is created to avoid circular import
+    # from app.controller import scheduler
+    # scheduler.setup_scheduler(app)
+
     return app
 
-    # Handle preflight requests
-    # @app.before_request
-    # def handle_options():
-    #     if request.method == "OPTIONS":
-    #         response = app.make_response("")
-    #         response.headers["Access-Control-Allow-Origin"] = "http://localhost:5173"
-    #         response.headers["Access-Control-Allow-Methods"] = (
-    #             "GET, POST, PUT, DELETE, OPTIONS"
-    #         )
-    #         response.headers["Access-Control-Allow-Headers"] = (
-    #             "Content-Type, Authorization, X-Requested-With"
-    #         )
-    #         response.headers["Access-Control-Allow-Credentials"] = "true"
-    #         return response, 200
-
-    # Load configuration

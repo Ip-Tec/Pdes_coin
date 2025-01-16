@@ -28,6 +28,9 @@ export default {
           DEFAULT: "#00687E",
         },
       },
+      width: {
+        "45%": "45%",
+      },
     },
   },
   plugins: [],

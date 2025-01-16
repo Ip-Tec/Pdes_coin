@@ -97,7 +97,7 @@ class UserTransactionsController:
 
     @staticmethod
     @token_required
-    @AccessLevel.role_required("super_admin")
+    @AccessLevel.role_required(["ADMIN", "DEVELOPER", "SUPER_ADMIN"])
     def add_money():
         user_id = request.user_id
         data = request.get_json()
