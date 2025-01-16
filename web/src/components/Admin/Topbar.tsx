@@ -1,18 +1,30 @@
 import { FaUserCircle, FaBell } from "react-icons/fa";
 
-const AdminTopbar = () => {
+interface AdminTopbarProps {
+  isSidebarCollapsed: boolean;
+}
+
+const AdminTopbar: React.FC<AdminTopbarProps> = ({ isSidebarCollapsed }) => {
   return (
-    <div className="topbar">
-      <div className="topbar-left">
-        <h2>Pdes Coin Admin</h2>
-      </div>
-      <div className="topbar-right">
-        <div className="notifications">
-          <FaBell />
+    <div
+      className={`fixed top-0 left-0 h-16 flex items-center z-10 justify-end bg-gray-800
+         text-white shadow-md transition-all duration-300 ${
+        isSidebarCollapsed ? "pl-16" : "pl-64"
+      } pr-4 w-full`}
+    >
+      {/* Notifications and Profile */}
+      <div className="flex items-left gap-6">
+        {/* Notifications */}
+        <div className="relative">
+          <FaBell size={24} className="cursor-pointer hover:text-gray-300" />
+          {/* Notification Badge */}
+          <span className="absolute top-0 right-0 block h-3 w-3 bg-red-500 rounded-full"></span>
         </div>
-        <div className="user-profile">
-          <FaUserCircle />
-          <span>Admin</span>
+
+        {/* Profile */}
+        <div className="flex items-center gap-2 cursor-pointer hover:text-gray-300">
+          <FaUserCircle size={30} />
+          <span className="hidden sm:inline-block">Admin</span>
         </div>
       </div>
     </div>

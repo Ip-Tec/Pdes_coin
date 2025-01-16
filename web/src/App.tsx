@@ -25,6 +25,8 @@ import SupportPage from "./pages/SupportPage";
 import HelpCenterPage from "./pages/HelpCenterPage";
 import WalletPage from "./pages/WalletPage";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
+import AdminTransaction from "./pages/Admin/AdminTransaction";
+import AdminUser from "./pages/Admin/AdminUser";
 
 const App: React.FC = () => {
   const DisplayNavbar: React.FC = () => {
@@ -333,20 +335,34 @@ const App: React.FC = () => {
           <Route
             path="/a/dashboard"
             element={
-              <motion.div
-                initial="initial"
-                animate="animate"
-                exit="exit"
-                variants={pageVariants}
+              <ProtectedRoute
+                isAuth={true}
+                requiredRoles={["admin", "super_admin", "developer"]}
               >
-                <ProtectedRoute
-                  isAuth={true}
-                  user={JSON.parse(localStorage.getItem("user") || "{}")}
-                  requiredRoles={["admin", "super_admin", "developer"]}
-                >
-                  <AdminDashboard />
-                </ProtectedRoute>
-              </motion.div>
+                <AdminDashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/a/user"
+            element={
+              <ProtectedRoute
+                isAuth={true}
+                requiredRoles={["admin", "super_admin", "developer"]}
+              >
+                <AdminUser />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/a/transactions"
+            element={
+              <ProtectedRoute
+                isAuth={true}
+                requiredRoles={["admin", "super_admin", "developer"]}
+              >
+                <AdminTransaction />
+              </ProtectedRoute>
             }
           />
         </Routes>

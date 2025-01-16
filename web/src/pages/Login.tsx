@@ -14,7 +14,6 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login, isAuth, user } = useAuth();
 
-
   if (isAuth && user) {
     if (user?.role !== "user") {
       return <Navigate to="/a/dashboard" replace />;
@@ -59,7 +58,11 @@ const Login: React.FC = () => {
     if (validateForm()) {
       try {
         await login(formData.email, formData.password);
-        navigate("/dashboard");
+        if (user?.role !== "user") {
+          navigate("/a/dashboard");
+        } else {
+          navigate("/dashboard");
+        }
       } catch (error: unknown) {
         if (error instanceof Error) {
           toast.error(error.message || "Login failed");
