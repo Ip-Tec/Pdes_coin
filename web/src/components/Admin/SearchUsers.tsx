@@ -1,22 +1,48 @@
-import { useState } from "react";
-import { searchUser } from "../../services/adminAPI";
+import { ReactNode, useState } from "react";
+import { searchUser } from "../../services/adminAPI"; // Adjust based on your API calls
 import { toast } from "react-toastify";
 import { User } from "../../utils/type";
 
-// Destructure the props correctly in the function argument
-const SearchUsers = ({ title, setUsers }: { title: string; setUsers: React.Dispatch<React.SetStateAction<User[]>> }) => {
+const SearchUsers = ({
+  title,
+  setUsers,
+  component,
+}: {
+  title: string;
+  // to be pass to the UserCard component
+  setUsers: React.Dispatch<React.SetStateAction<User[]>>;
+
+  component?: ReactNode;
+}) => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchType, setSearchType] = useState("user");
 
   const handleSearchChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
 
     try {
-      const response = await searchUser(searchQuery);
+      let response;
+      if (e.target.value.trim() === "") {
+        setUsers([]); // If search query is empty, reset users
+        return;
+      }
+
+      // Handle different search types
+      if (searchType === "user") {
+        response = await searchUser(e.target.value, "search");
+      } else if (searchType === "transaction") {
+        response = await searchUser(e.target.value, "transaction"); // Adjust API for transaction
+      } else if (searchType === "crypto") {
+        response = await searchUser(e.target.value, "crypto"); // Adjust API for crypto
+      }
+
+      console.log({ response, searchQuery, searchType });
+
       if (response && response.length > 0) {
         setUsers(response);
       } else {
         setUsers([]);
-        toast.error("No users found");
+        toast.error("No results found");
       }
     } catch (error) {
       if (error instanceof Error) {
@@ -29,20 +55,31 @@ const SearchUsers = ({ title, setUsers }: { title: string; setUsers: React.Dispa
   };
 
   return (
-    <div className="mb-6 fixed m-auto w-[50%] top-20 left-[30%] z-10">
+    <div className="mb-6 contents fixed m-auto w-[80%] md:w-[50%] top-20 left-[30%] z-10">
       <h1 className="text-center text-3xl font-semibold mb-6 text-gray-800">
-        {title || "Search Users"}
+        {title || "Search Users or Transactions"}
       </h1>
-      <input
-        type="text"
-        placeholder="Search for user..."
-        value={searchQuery}
-        onChange={handleSearchChange}
-        className="w-full px-4 py-2 border border-[#D9D9D9] rounded-3xl 
-        bg-slate-300 text-textColor placeholder-gray-500 shadow-[#b9b9b9] 
-        shadow-md focus:outline-none focus:ring-2 focus:ring-bgColor"
-      
-      />
+      <div className="flex shadow-md justify-between bg-slate-300 mb-4 border-[#D9D9D9] rounded-3xl">
+        <input
+          type="text"
+          placeholder="Search..."
+          value={searchQuery}
+          onChange={handleSearchChange}
+          className="w-3/4 px-4 py-2 border-none bg-transparent text-textColor placeholder-gray-500
+           shadow-[#b9b9b9] focus:outline-none focus:ring-0 focus:ring-transparent"
+        />
+        <select
+          value={searchType}
+          onChange={(e) => setSearchType(e.target.value)}
+          className="p-3 bg-transparent rounded-lg ml-4 text-textColor placeholder-gray-500 
+          focus:outline-none focus:ring-0 focus:ring-transparent mr-2"
+        >
+          <option value="user">User</option>
+          <option value="transaction">Transaction</option>
+          <option value="crypto">Crypto</option>
+        </select>
+      </div>
+      <div className="flex justify-center mt-8 container">{component && component}</div>
     </div>
   );
 };

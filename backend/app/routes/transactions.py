@@ -13,10 +13,12 @@ from flask_socketio import SocketIO, emit
 
 # Transactions API
 txn_bp = Blueprint("transactions", __name__)
-    
-@socketio.on('disconnect')
+
+
+@socketio.on("disconnect")
 def handle_disconnect():
-    print('Client disconnected')
+    print("Client disconnected")
+
 
 # Transaction History router
 @socketio.on("get_transaction_history")
@@ -35,12 +37,23 @@ def transaction_history():
 
 
 # Transaction Deposit router
-@txn_bp.route("/deposit", methods=["POST"])
+# @txn_bp.route("/deposit", methods=["POST"])
+# @token_required
+# def deposit_funds(current_user):
+#     data = request.get_json()
+#     # Call the controller method to add money to the wallet
+#     return UserTransactionsController.add_money(current_user)
+
+
+# Deposit for user
+
+
+@txn_bp.route("/naira-deposit", methods=["POST"])
 @token_required
 def deposit_funds(current_user):
     data = request.get_json()
     # Call the controller method to add money to the wallet
-    return UserTransactionsController.add_money(current_user)
+    return UserTransactionsController.user_add_deposit(current_user)
 
 
 # Transaction Withdrawal router
@@ -171,3 +184,19 @@ def get_conversion_rate():
 def get_account_details():
     # Fetch the latest Utility data
     return AccountService.get_account_details()
+
+
+# PDES Chart router
+@txn_bp.route("/price-history", methods=["GET"])
+@token_required
+def get_price_history(current_user):
+    return PdesService.get_pdes_price_history()
+
+
+# get account detail for user to deposit to
+@txn_bp.route("/random_deposit_account", methods=["GET"])
+@token_required
+def get_random_deposit_account(current_user):
+    data = AccountService.get_random_deposit_account()
+    print(f"random_deposit_account: {data}")
+    return data

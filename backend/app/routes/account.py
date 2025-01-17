@@ -36,25 +36,26 @@ def generate_address_and_seed(coin: str):
 
 
 # Route to create a new account detail
-@account_bp.route("/create_account", methods=["POST"])
-# @token_required
-def create_account(user_id):
+@account_bp.route("/create-account", methods=["POST"])
+@token_required
+def create_account(current_user, *args, **kwargs):
     # print(f"User:::{user_id}")
-    print(f"User ID:::{user_id.id}")
-    print(f"User username=:::{user_id.username}")
-    user_id = user_id.id
+    user_id = current_user.id
+    print(f"User ID:::{user_id}")
+    print(f"User username=:::{current_user.username}")
+
     user = User.query.get(user_id)
     username = user.username
-    
-    if not user_id or not username:
-        return jsonify({"error": "Missing user id or username"}), 400
+
+    if not user_id:
+        return jsonify({"error": "Missing user information"}), 400
 
     try:
         # Generate addresses and seeds for each coin
         btc_address, btc_seed = generate_address_and_seed("BITCOIN")
         eth_address, eth_seed = generate_address_and_seed("ETHEREUM")
         ltc_address, ltc_seed = generate_address_and_seed("LITECOIN")
-        usdc_address, usdc_seed = generate_address_and_seed("ETHEREUM")  # USDC uses ETH network
+        usdc_address, usdc_seed = generate_address_and_seed("ETHEREUM")
 
         # Create a new account detail record
         account_detail = AccountDetail(
@@ -67,7 +68,7 @@ def create_account(user_id):
             LTCAddressSeed=ltc_seed,
             USDCAddress=usdc_address,
             USDCAddressSeed=usdc_seed,
-            PDESAddres=username,
+            PDESAddress=username,
         )
         db.session.add(account_detail)
         db.session.commit()
@@ -80,16 +81,36 @@ def create_account(user_id):
 
 
 # Route to retrieve account details by user_id
-@account_bp.route("/get_account", methods=["GET"])
+@account_bp.route("/get-all-crypto-address", methods=["GET"])
 @token_required
-def get_account(user_id):
-    print(f"user_id::: {user_id.id}")
-    print(f"username::: {user_id.username}")
+def get_all_account(current_user, *args, **kwargs):
+    print(f"user_id::: {current_user.id}")
+    print(f"username::: {current_user.username}")
+
     try:
-        account_detail = AccountDetail.query.filter_by(user_id=user_id.id).first()
+        account_detail = AccountDetail.query.filter_by(user_id=current_user.id).all()
         if not account_detail:
-            new_user_id = user_id
-            account = create_account(new_user_id)
+            account = create_account(current_user)
+            return account
+        return (
+            jsonify([account.serialize() for account in account_detail]),
+            200,
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Route to retrieve account details by user_id
+@account_bp.route("/get-crypto-address", methods=["GET"])
+@token_required
+def get_account(current_user, *args, **kwargs):
+    print(f"user_id::: {current_user.id}")
+    print(f"username::: {current_user.username}")
+
+    try:
+        account_detail = AccountDetail.query.filter_by(user_id=current_user.id).first()
+        if not account_detail:
+            account = create_account(current_user)
             return account
         return jsonify(account_detail.serialize()), 200
     except Exception as e:

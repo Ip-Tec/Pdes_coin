@@ -5,6 +5,7 @@ import {
   ResetPassword,
   User,
 } from "../utils/type";
+import { toast } from "react-toastify";
 
 // Create API instance
 const prod = import.meta.env.PROD;
@@ -18,7 +19,7 @@ export const feURL = prod
 console.log({ url, feURL });
 // Create API instance
 const API = axios.create({
-  baseURL: url || "https://pdes-coin.onrender.com/api",
+  baseURL: url,
   headers: {
     "Content-Type": "application/json",
     Accept: "application/json",
@@ -411,9 +412,8 @@ export const AccountAPI = {
   getAccount: async (): Promise<AccountDetail> => {
     try {
       const response = await API.get<AccountDetail>(
-        apiUrl(`/account/get_account`)
+        apiUrl(`/account/get-crypto-address?crypto=${crypto}`)
       );
-      console.log(response);
 
       return response.data;
     } catch (error) {
@@ -425,6 +425,36 @@ export const AccountAPI = {
           error.response?.data || error.message;
 
         console.error("Error retrieving account:", errorData);
+        throw new Error(
+          typeof errorData === "string"
+            ? errorData
+            : errorData?.message || "Error retrieving account"
+        );
+      }
+      throw new Error("Failed to retrieve account");
+    }
+  },
+  getAllCryptoAccount: async (): Promise<AccountDetail> => {
+    try {
+      const response = await API.get<AccountDetail>(
+        apiUrl(`/account/get-all-crypto-address`)
+      );
+
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.status === 401) {
+          window.location.href = "/login";
+        }
+        const errorData: ErrorResponse | string | undefined =
+          error.response?.data || error.message;
+
+        console.error("Error retrieving account:", errorData);
+        toast.error(
+          typeof errorData === "string"
+            ? errorData
+            : errorData?.error || "Error retrieving account"
+        );
         throw new Error(
           typeof errorData === "string"
             ? errorData
@@ -453,7 +483,7 @@ export const AccountAPI = {
 
   generateNewWallet: async () => {
     try {
-      const response = await API.post(apiUrl("/account/generate_new_wallet"));
+      const response = await API.post(apiUrl("/account/create-account"));
       return response.data;
     } catch (error) {
       if (axios.isAxiosError(error)) {
@@ -492,6 +522,28 @@ export const resetPassword = async ({
         window.location.href = "/login";
       }
       const errorData: ErrorResponse = error.response?.data;
+      throw new Error(errorData?.message || "Failed to reset password");
+    }
+    throw new Error("Failed to reset password.");
+  }
+};
+
+// Get Depost accoun detail
+export const getDepositAccountDetail = async () => {
+  try {
+    const response = await API.get(
+      apiUrl("/transactions/random_deposit_account")
+    );
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
+      const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.message);
+
       throw new Error(errorData?.message || "Failed to reset password");
     }
     throw new Error("Failed to reset password.");

@@ -5,6 +5,7 @@ export interface InputFieldProps {
   value: string;
   disabled?: boolean;
   placeholder?: string;
+  error?: string;
   required?: boolean;
   icon?: React.ReactNode;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -117,11 +118,12 @@ export interface AccountDetail {
 }
 
 export interface DepositType {
-  bank: string | number;
-  accountName: string;
-  accountNumber: string;
+  id: number;
+  bank_name: string | number;
+  account_name: string;
+  account_number: string;
   amount: number;
-  accountType: string;
+  account_type: string;
 }
 
 export interface ResetPassword {
@@ -148,4 +150,14 @@ export interface CandlestickChartProps {
     low: number;
     close: number;
   }[];
+}
+export interface DepositAccountProps {
+  id?: number;
+  user_id?: User["id"];
+  bank_name?: string;
+  account_name: string;
+  account_number: string;
+  amount: number;
+  account_type: string;
+  max_deposit_amount:  number;
 }

@@ -1,42 +1,19 @@
 import React, { useState } from "react";
-import { searchUser } from "../../services/adminAPI";
 import { User } from "../../utils/type";
-import AdminWrapper from "../../components/Admin/AdminWrapper";
 import Draggable from "react-draggable";
-import { toast, ToastContainer } from "react-toastify";
 import InputField from "../../components/InputField";
+import SearchUsers from "../../components/Admin/SearchUsers";
+import AdminWrapper from "../../components/Admin/AdminWrapper";
+import SlideInPanel from "../../components/Admin/SlideInPanel";
 
 const AdminUser: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
-  const [search, setSearch] = useState("");
   const [selectedUser] = useState<User | null>(null);
   const [isDraggable, setIsDraggable] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [supportVisible, setSupportVisible] = useState(false);
-
-  // Handle search
-  const handleSearch = async (searchTerm: string) => {
-    try {
-      const response = await searchUser(searchTerm);
-      if (response && response.length > 0) {
-        setUsers(response);
-      } else {
-        setUsers([]);
-        toast.error(response.message);
-        console.error("No users found");
-      }
-    } catch (error) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      } else {
-        toast.error("An unknown error occurred");
-      }
-      console.error("Error searching user:", error);
-      setUsers([]);
-    }
-  };
 
   // Open edit modal
   const handleEditClick = (user: User) => {
@@ -62,27 +39,13 @@ const AdminUser: React.FC = () => {
 
   return (
     <AdminWrapper>
-      <ToastContainer />
-      <div className="p-4 md:p-8 min-h-screen my-16 text-gray-800 relative z-0">
-        {/* Search Bar */}
-        <div className="mb-4 fixed top-16 w-3/5 p-4 z-10">
-          <input
-            type="text"
-            placeholder="Search user..."
-            className="w-full p-2 border bg-slate-300 rounded-lg shadow-md"
-            value={search}
-            onChange={(e) => {
-              const value = e.target.value;
-              setSearch(value);
-              handleSearch(value);
-            }}
-          />
-        </div>
+      <div className="p-4 md:p-8 min-h-screen my-16 text-gray-800 relative">
+        {/* Search Bar with Suggestions */}
+        <SearchUsers title="Admin User Page" setUsers={setUsers} />
 
         {/* Floating Search Results */}
         {users.length > 0 && (
-          <div
-            className="p-4 mb-4 absolute top-16 left-0 right-0 h-auto flex flex-wrap gap-2 w-lg m-auto">
+          <div className="my-24 w-auto text-gray-600 mx-auto px-6">
             {users.map((user: User, index: number) => (
               <div
                 key={user.id}
@@ -146,51 +109,60 @@ const AdminUser: React.FC = () => {
 
         {/* Edit User Modal */}
         {isEditing && editingUser && (
-          <div className="fixed inset-0 flex justify-center items-center z-50 bg-black bg-opacity-50">
-            <div className="bg-white p-6 rounded-lg shadow-md flex flex-col w-md m-auto">
-              <h2 className="text-xl font-semibold mb-4">Edit User Info</h2>
-              <InputField
-                label="Full Name"
-                type="text"
-                name="name"
-                value={editingUser.full_name}
-                onChange={(e) =>
-                  setEditingUser({ ...editingUser, full_name: e.target.value })
-                }
-              />
+          <SlideInPanel
+            title="Edit User Info"
+            onClose={closeEditModal}
+            children={
+              <div className="flex flex-col justify-center items-center bg-white">
+                <div className="p-2 flex flex-col w-full m-auto">
+                  <InputField
+                    label="Full Name"
+                    type="text"
+                    name="name"
+                    value={editingUser.full_name}
+                    onChange={(e) =>
+                      setEditingUser({
+                        ...editingUser,
+                        full_name: e.target.value,
+                      })
+                    }
+                  />
 
-              <InputField
-                label="Email"
-                type="Email"
-                name="email"
-                value={editingUser.email}
-                onChange={(e) =>
-                  setEditingUser({
-                    ...editingUser,
-                    email: e.target.value,
-                  })
-                }
-              />
-              <label className="block mb-1">Role</label>
-              <select>
-                <option value="user">User</option>
-                <option value="admin">Admin</option>
-                <option value="super admin">Super Admin</option>
-                <option value="developer">Super Admin</option>
-              </select>
-            </div>
-            <div className="flex justify-between">
-              <button
-                onClick={closeEditModal}
-                className="bg-gray-500 text-white px-4 py-2 rounded"
-              >
-                Cancel
-              </button>
-              <button className="bg-blue-500 text-white px-4 py-2 rounded">
-                Save Changes
-              </button>
-            </div>
-          </div>
+                  <InputField
+                    label="Email"
+                    type="Email"
+                    name="email"
+                    value={editingUser.email}
+                    onChange={(e) =>
+                      setEditingUser({
+                        ...editingUser,
+                        email: e.target.value,
+                      })
+                    }
+                  />
+                  <label className="block mb-1">Role</label>
+                  <select className="p-3 bg-slate-400 rounded-lg ml-4 text-textColor placeholder-gray-500 
+          focus:outline-none focus:ring-0 focus:ring-transparent">
+                    <option value="user">User</option>
+                    <option value="admin">Admin</option>
+                    <option value="super admin">Super Admin</option>
+                    <option value="developer">Super Admin</option>
+                  </select>
+                </div>
+                <div className="flex gap-2 justify-between">
+                  <button
+                    onClick={closeEditModal}
+                    className="bg-gray-500 text-white px-4 py-2 rounded"
+                  >
+                    Cancel
+                  </button>
+                  <button className="bg-blue-500 text-white px-4 py-2 rounded">
+                    Save Changes
+                  </button>
+                </div>
+              </div>
+            }
+          />
         )}
 
         {/* Draggable Support Panel */}

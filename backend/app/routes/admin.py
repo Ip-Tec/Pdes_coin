@@ -1,4 +1,6 @@
+from io import StringIO
 import os
+import csv
 import jwt
 import datetime
 from app import db, socketio
@@ -8,15 +10,18 @@ from dotenv import load_dotenv
 from sqlalchemy import func, desc
 from sqlalchemy.orm import joinedload
 from app.controller import user_controller
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, Response
 from app.models import (
+    DepositAccount,
     PdesTransaction,
+    RewardConfig,
     User,
     Transaction,
     Crypto,
     Balance,
     AccountDetail,
 )
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.exc import SQLAlchemyError
 
 load_dotenv()
@@ -251,3 +256,194 @@ def search_user(current_user):
             ),
             500,
         )
+
+# Add a deposit account
+@admin_bp.route("/add-account", methods=["POST"])
+@token_required
+@AccessLevel.role_required(["ADMIN", "DEVELOPER", "SUPER_ADMIN"])
+def add_account(current_user, *args, **kwargs):
+    """
+    Admin route to add a deposit account.
+    Expects JSON input:
+    {
+        "account_name": str,
+        "account_number": str,
+        "account_type": str,  # optional, defaults to "savings"
+        "max_deposit_amount": float  # optional, defaults to 98999.00
+    }
+    """
+    data = request.get_json()
+
+    # Validate required fields
+    required_fields = ["bank_name", "account_name", "account_number", "account_type", "max_deposit_amount"]
+    missing_fields = [field for field in required_fields if field not in data]
+    if missing_fields:
+        return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+
+    try:
+        # Extract data and set defaults
+        user_id = current_user.id
+        bank_name = data.get("bank_name", "Opay")
+        account_name = data["account_name"]
+        account_number = data["account_number"]
+        account_type = data.get("account_type", "savings")  # Default to "savings"
+        max_deposit_amount = data.get("max_deposit_amount", 98999.00)  # Default to 98999.00
+
+        # Create a new DepositAccount instance
+        new_account = DepositAccount(
+            user_id=user_id,
+            bank_name=bank_name,
+            account_name=account_name,
+            account_number=account_number,
+            account_type=account_type,
+            max_deposit_amount=max_deposit_amount,
+        )
+
+        # Add the new account to the database
+        db.session.add(new_account)
+        db.session.commit()
+
+        return jsonify({"message": "Account added successfully"
+                        # , "account": new_account.serialize()
+                        }), 201
+
+    except IntegrityError:
+        db.session.rollback()
+        return jsonify({"error": "Account number must be unique"}), 400
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+    
+# Confirm user deposit and add it to Transaction, Balance, and Crypto tables
+@admin_bp.route("/add-money", methods=["POST"])
+@staticmethod
+@token_required
+@AccessLevel.role_required(["ADMIN", "DEVELOPER", "SUPER_ADMIN"])
+def add_money():
+    # Get the user_id from the request data (admin confirms the deposit for a specific user)
+    data = request.get_json()
+    user_id = data.get("user_id")  # Ensure the admin sends the user_id in the request
+
+    # Ensure the user_id is provided
+    if not user_id:
+        return jsonify({"message": "User ID is required"}), 400
+
+    # Add deposit transaction to the Transaction table
+    transaction = Transaction(
+        user_id=user_id,
+        amount=data["amount"],
+        account_name=data["account_name"],
+        account_number=data["account_number"],
+        transaction_type=data["transaction_type"],
+    )
+    db.session.add(transaction)
+    db.session.commit()
+
+    # Update the user's balance in the Balance table
+    balance = Balance.query.filter_by(user_id=user_id).first()
+    if not balance:
+        return jsonify({"message": "Balance record not found for user"}), 404
+    balance.balance += data["amount"]
+    db.session.commit()
+
+    # Update the user's crypto balance if applicable (for example, depositing in Pdes)
+    crypto = Crypto.query.filter_by(user_id=user_id, crypto_name="Pdes").first()
+    if not crypto:
+        # If no record for Pdes, create it
+        crypto = Crypto(
+            user_id=user_id,
+            crypto_name="Pdes",
+            amount=0.0,  # No amount initially
+            account_address="",  # Assuming no address is needed
+        )
+        db.session.add(crypto)
+
+    # If the deposit involves adding to crypto, adjust accordingly (assuming deposit amount is in crypto)
+    if data["transaction_type"] == "deposit":
+        crypto.amount += data["amount"]
+    
+    db.session.commit()
+
+    # Optionally, add any rewards for the deposit
+    reward_config = RewardConfig.query.first()  # Assuming a global reward config
+    if reward_config:
+        reward_amount = data["amount"] * (reward_config.percentage_weekly / 100)
+        # Add the reward to the balance
+        balance.rewards += reward_amount
+
+        # Create a reward transaction
+        reward_transaction = Transaction(
+            user_id=user_id,
+            amount=reward_amount,
+            account_name="Reward",
+            account_number="",
+            transaction_type="reward",
+        )
+        db.session.add(reward_transaction)
+        db.session.commit()
+
+    return jsonify({"message": transaction.serialize()}), 201
+
+# Downloading Transaction CSV
+@admin_bp.route("/download-transaction-csv", methods=["GET"])
+@staticmethod
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN"])
+def download_transaction_csv():
+    transactions = Transaction.query.all()  # Fetch all transactions
+    # Generate the CSV response
+    def generate():
+        fieldnames = ['User ID', 'Amount', 'Account Name', 'Account Number', 'Transaction Type', 'Date']
+        writer = csv.DictWriter(Response(), fieldnames=fieldnames)
+        writer.writeheader()
+        for transaction in transactions:
+            yield writer.writerow({
+                'User ID': transaction.user_id,
+                'Amount': transaction.amount,
+                'Account Name': transaction.account_name,
+                'Account Number': transaction.account_number,
+                'Transaction Type': transaction.transaction_type,
+                'Date': transaction.timestamp,
+            })
+    
+    return Response(generate(), mimetype='text/csv', headers={'Content-Disposition': 'attachment; filename=transactions.csv'})
+
+# Uploading Transaction CSV
+@admin_bp.route("/upload-transaction-csv", methods=["POST"])
+@staticmethod
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN"])
+def upload_transaction_csv():
+    file = request.files.get('file')
+    if not file:
+        return jsonify({"message": "No file uploaded"}), 400
+
+    try:
+        # Read CSV file
+        file_content = StringIO(file.read().decode("utf-8"))
+        csv_reader = csv.DictReader(file_content)
+        
+        for row in csv_reader:
+            user_id = row.get('User ID')
+            amount = float(row.get('Amount'))
+            account_name = row.get('Account Name')
+            account_number = row.get('Account Number')
+            transaction_type = row.get('Transaction Type')
+            # Add transaction to the database
+            transaction = Transaction(
+                user_id=user_id,
+                amount=amount,
+                account_name=account_name,
+                account_number=account_number,
+                transaction_type=transaction_type,
+            )
+            db.session.add(transaction)
+        
+        db.session.commit()
+        return jsonify({"message": "Transactions uploaded successfully!"}), 201
+    except Exception as e:
+        return jsonify({"message": str(e)}), 500
+
+
+

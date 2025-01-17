@@ -18,6 +18,7 @@ import {
   getTransactionTrends,
   getTopUsersByBalance,
 } from "../../services/adminAPI";
+import PriceChart from "../../components/PriceChart";
 
 // Register chart.js components
 ChartJS.register(
@@ -219,6 +220,10 @@ const AdminDashboard = () => {
                 {totalDashboard?.total_users ?? "Loading..."}
               </p>
             </div>
+          </div>
+          
+          <div className="flex m-auto justify-center items-center mt-4 w-full p-2">
+            <PriceChart />
           </div>
 
           <div className="flex w-full flex-wrap justify-evenly items-center">

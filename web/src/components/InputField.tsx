@@ -10,6 +10,7 @@ const InputField: React.FC<InputFieldProps> = ({
   value,
   required,
   icon,
+  error,
   onChange,
 }) => {
   const [showPassword, setShowPassword] = useState(false); // State for password visibility
@@ -34,32 +35,40 @@ const InputField: React.FC<InputFieldProps> = ({
       </label>
     </div>
   ) : (
-    <div className="mb-4 relative w-full">
-      <label className="block text-gray-700 text-sm mb-2">{label}:</label>
-      {icon && <span className="absolute left-3 top-1/2 mt-3 transform -translate-y-1/2">{icon}</span>}
-      <input
-        type={type === "password" && !showPassword ? "password" : "text"} // Toggle input type based on visibility
-        name={name}
-        placeholder={label}
-        required={required}
-        value={value}
-        onChange={onChange}
-        className="w-full px-4 py-2 border border-[#D9D9D9] rounded-3xl 
-        bg-slate-300 text-textColor placeholder-gray-500 shadow-[#b9b9b9] shadow-md focus:outline-none focus:ring-2 focus:ring-bgColor"
-      />
-      {type === "password" && (
-        <span
-          onClick={togglePasswordVisibility}
-          className="absolute right-3 top-1/2 mt-3 transform -translate-y-1/2 cursor-pointer"
-        >
-          {showPassword ? (
-            <AiFillEyeInvisible size={24} className="text-bgColor" /> // Invisible eye icon
-          ) : (
-            <AiFillEye size={24} className="text-bgColor" /> // Visible eye icon
-          )}
-        </span>
-      )}
-    </div>
+    <>
+      {" "}
+      <div className="mb-4 relative w-full">
+        <label className="block text-gray-700 text-sm mb-2">{label}:</label>
+        {icon && (
+          <span className="absolute left-3 top-1/2 mt-3 transform -translate-y-1/2">
+            {icon}
+          </span>
+        )}
+        <input
+          type={type === "password" && !showPassword ? "password" : "text"} // Toggle input type based on visibility
+          name={name}
+          placeholder={label}
+          required={required}
+          value={value}
+          onChange={onChange}
+          className="w-full px-4 py-2 border border-[#D9D9D9] rounded-3xl 
+     bg-slate-300 text-textColor placeholder-gray-500 shadow-[#b9b9b9] shadow-md focus:outline-none focus:ring-2 focus:ring-bgColor"
+        />
+        {type === "password" && (
+          <span
+            onClick={togglePasswordVisibility}
+            className="absolute right-3 top-1/2 mt-3 transform -translate-y-1/2 cursor-pointer"
+          >
+            {showPassword ? (
+              <AiFillEyeInvisible size={24} className="text-bgColor" /> // Invisible eye icon
+            ) : (
+              <AiFillEye size={24} className="text-bgColor" /> // Visible eye icon
+            )}
+          </span>
+        )}
+      </div>
+      {error && <span className="mt-2 text-sm text-red-500">{error}</span>}
+    </>
   );
 };
 

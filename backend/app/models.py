@@ -122,6 +122,52 @@ class Balance(db.Model):
         return self.serialize()
 
 
+# Deposit model to track deposits
+class Deposit(db.Model):
+    
+    __tablename__ = "Deposit"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    admin_id = db.Column(db.Integer, db.ForeignKey("DepositAccount.id"), nullable=False)
+    amount = db.Column(db.Float, nullable=False)  # Amount deposited
+    currency = db.Column(
+        db.String(10), nullable=False, default="naira"
+    )  # 'naira' or 'crypto'
+    transaction_id = db.Column(
+        db.String(100), unique=True, nullable=False
+    )  # Unique transaction ID
+    session_id = db.Column(
+        db.String(100), unique=True, nullable=True
+    )  # Optional session ID
+    deposit_method = db.Column(
+        db.String(50), nullable=False
+    )  # Method (e.g., 'bank transfer', 'wallet')
+    status = db.Column(
+        db.String(20), nullable=False, default="pending"
+    )  # 'pending', 'completed', 'failed'
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(
+        db.DateTime,
+        default=db.func.current_timestamp(),
+        onupdate=db.func.current_timestamp(),
+    )
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "amount": self.amount,
+            "currency": self.currency,
+            "transaction_id": self.transaction_id,
+            "session_id": self.session_id,
+            "deposit_method": self.deposit_method,
+            "status": self.status,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "updated_at": self.updated_at.isoformat() if self.updated_at else "",
+        }
+
+
 # Transaction model
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -278,6 +324,7 @@ class Utility(db.Model):
         }
 
 
+# To hold the user's crypto addresses
 class AccountDetail(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
@@ -333,6 +380,34 @@ class Notification(db.Model):
             "is_read": self.is_read,
             "created_at": self.created_at.isoformat(),
         }
+
+
+# List of account user's can deposit in
+class DepositAccount(db.Model):
+    __tablename__ = "DepositAccount"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    bank_name = db.Column(db.String(50), nullable=False)
+    account_name = db.Column(db.String(50), nullable=False)
+    account_number = db.Column(db.String(50), nullable=False)
+    account_type = db.Column(db.String(50), nullable=True, default="savings")
+    max_deposit_amount = db.Column(db.Float, nullable=False, default=98999.00)
+
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "bank_name": self.bank_name,
+            "account_name": self.account_name,
+            "account_number": self.account_number,
+            "account_type": self.account_type,
+            "max_deposit_amount": self.max_deposit_amount,
+        }
+
+    # Get Maxsimum Deposit Amount
+    def get_max_deposit_amount(self):
+        return self.max_deposit_amount
+
 
 
 # Functions to handle deposits, withdrawals, and transactions

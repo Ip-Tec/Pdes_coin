@@ -1,21 +1,24 @@
-import API, { apiUrl } from "../services/api";
+import API, { apiUrl, getDepositAccountDetail } from "../services/api";
 import logo from "../assets/pdes.png";
 import { useState, useEffect } from "react";
-import { DepositType } from "../utils/type";
+import { AccountDetail, DepositType } from "../utils/type";
 import { FaArrowLeft } from "react-icons/fa";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
+import { useAuth } from "../contexts/AuthContext";
 
 function Deposit() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [depositType, setDepositType] = useState<"Naira" | "Crypto" | "">("");
   const [conversionRate, setConversionRate] = useState<number>(2000);
   const [selectedAmount, setSelectedAmount] = useState<number | null>(null);
   const [selectedCrypto, setSelectedCrypto] = useState<string | null>(null);
   const [cryptoAmount, setCryptoAmount] = useState<string>("");
   const [accountDetails, setAccountDetails] = useState<DepositType>();
-  const [cryptoAddress, setCryptoAddress] = useState<string | null>(null);
+  const [cryptoAddress, setCryptoAddress] = useState<AccountDetail[]>([]);
+  const [transactionId, setTransactionId] = useState<string>("");
 
   // Fetch conversion rate from API
   useEffect(() => {
@@ -23,7 +26,6 @@ function Deposit() {
       try {
         const response = await API.get(apiUrl("/transactions/conversion-rate"));
         console.log("Conversion Rate Response:", response.data);
-        
         const conversion_rate = response.data.conversion_rate;
         setConversionRate(conversion_rate.conversion_rate);
       } catch (error) {
@@ -32,28 +34,31 @@ function Deposit() {
       }
     }
 
+    // if (!user) {
+    //   navigate("/login");
+    // }
+
     fetchConversionRate();
   }, []);
 
   // Fetch account details for Naira deposits
   const fetchAccountDetails = async () => {
-    try {
-      const response = await API.get(apiUrl("/account-details"));
-      setAccountDetails(response.data);
-    } catch (error) {
-      toast.error("Failed to fetch account details. Please try again.");
-      console.error("Account Details Error:", error);
-    }
+    const response = await getDepositAccountDetail();
+    console.log(response);
+
+    setAccountDetails(response);
   };
 
   // Fetch crypto address
   const fetchCryptoAddress = async (crypto: string) => {
     try {
       const response = await API.get(
-        apiUrl(`/crypto-address?crypto=${crypto}`)
+        apiUrl(`/account/get-crypto-address?crypto=${crypto}`)
       );
-      const { address } = response.data;
-      setCryptoAddress(address);
+      console.log({ response });
+
+      const address = response.data;
+      setCryptoAddress([address]);
     } catch (error) {
       toast.error("Failed to fetch crypto address. Please try again.");
       console.error("Crypto Address Error:", error);
@@ -69,16 +74,44 @@ function Deposit() {
   // Handle proceed action
   const handleProceed = async () => {
     if (depositType === "Naira" && selectedAmount) {
-      toast.info(`Please pay ₦${selectedAmount} to the following account.`);
-      if (accountDetails) {
-        toast.success(
-          `Bank: ${accountDetails.bank}\nAccount Name: ${accountDetails.accountName}\nAccount Number: ${accountDetails.accountNumber}`
-        );
+      if (!transactionId.trim()) {
+        toast.error("Please enter the transaction ID/Session ID.");
+        return;
+      }
+
+      try {
+        await API.post(apiUrl("/transactions/naira-deposit"), {
+          amount: selectedAmount,
+          transactionId,
+          user_id: user.id,
+          admin_id: accountDetails.id,
+          currency: "naira",
+          transaction_id: transactionId,
+          deposit_method: "bank transfer",
+        });
+        toast.success("Naira deposit recorded successfully.");
+        navigate("/home");
+      } catch (error) {
+        toast.error("Failed to record deposit. Please try again.");
+        console.error("Deposit Error:", error);
       }
     } else if (depositType === "Crypto" && selectedCrypto && cryptoAmount) {
-      toast.info(`Deposit ${cryptoAmount} ${selectedCrypto} to the address.`);
-      if (cryptoAddress) {
-        toast.success(`Public Address: ${cryptoAddress}`);
+      if (!transactionId.trim()) {
+        toast.error("Please enter the transaction ID/Session ID.");
+        return;
+      }
+
+      try {
+        await API.post(apiUrl("/transactions/crypto-deposit"), {
+          crypto: selectedCrypto,
+          amount: cryptoAmount,
+          transactionId,
+        });
+        toast.success("Crypto deposit recorded successfully.");
+        navigate("/home");
+      } catch (error) {
+        toast.error("Failed to record deposit. Please try again.");
+        console.error("Deposit Error:", error);
       }
     } else {
       toast.error("Please complete all fields.");
@@ -102,12 +135,10 @@ function Deposit() {
         </div>
         <div className="bg-white shadow-lg rounded-lg p-6 w-full max-w-md z-20">
           <h1 className="text-2xl font-bold mb-4 text-center">Deposit Funds</h1>
-
           <p className="text-center text-gray-600 mb-4">
             Current Conversion Rate:{" "}
             <span className="font-bold">1 USD = ₦{conversionRate}</span>
           </p>
-
           <div className="flex justify-around mb-6">
             <button
               className={`px-4 py-2 rounded-lg font-medium ${
@@ -134,6 +165,7 @@ function Deposit() {
             </button>
           </div>
 
+          {/* Updated Deposit Naira Section */}
           {depositType === "Naira" && (
             <div>
               <h2 className="text-lg font-medium mb-4">Select Amount</h2>
@@ -152,9 +184,40 @@ function Deposit() {
                   </button>
                 ))}
               </div>
+
+              {/* Display Account Details */}
+              {accountDetails ? (
+                <div className="mt-6 bg-gray-100 p-4 rounded-lg">
+                  <h3 className="font-bold mb-2">Bank Details:</h3>
+                  <p className="text-sm">
+                    <span className="font-medium">Bank Name:</span>{" "}
+                    {accountDetails.bank_name}
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-medium">Account Number:</span>{" "}
+                    {accountDetails.account_number}
+                  </p>
+                  <p className="text-sm">
+                    <span className="font-medium">Account Name:</span>{" "}
+                    {accountDetails.account_name}
+                  </p>
+                  <p
+                    className="p-2 bg-secondary text-gray-50 m-2"
+                    aria-label="transactionId"
+                  >
+                    After successfully transfer/deposit copy and pasit the
+                    Transaction ID/Session ID below
+                  </p>
+
+                  {/* an arrow pointing down to the */}
+                </div>
+              ) : (
+                <p className="mt-4 text-red-500">
+                  Unable to fetch account details. Please try again.
+                </p>
+              )}
             </div>
           )}
-
           {depositType === "Crypto" && (
             <div>
               <h2 className="text-lg font-medium mb-4">
@@ -191,17 +254,42 @@ function Deposit() {
                     placeholder={`Enter amount in ${selectedCrypto}`}
                     className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-bgColor bg-transparent"
                   />
+
                   {cryptoAddress && (
                     <div className="mt-4 bg-gray-100 p-4 rounded-lg">
                       <h3 className="font-bold mb-2">Public Address:</h3>
-                      <p className="text-sm break-words">{cryptoAddress}</p>
+                      {/* Display the public address */}
+                      {cryptoAddress.map((cryptoAddress, index) => (
+                        <p key={index} className="text-sm">
+                          BTC: {cryptoAddress.BTC}
+                          <br /> ETH: {cryptoAddress.ETH} <br />
+                          BCH: {cryptoAddress.BTC}
+                        </p>
+                      ))}
                     </div>
                   )}
                 </div>
               )}
             </div>
           )}
-
+          {(selectedAmount || cryptoAmount) && (
+            <div className="mt-6">
+              <label
+                htmlFor="transactionId"
+                className="block text-sm font-medium mb-2"
+              >
+                Enter Transaction ID/Session ID
+              </label>
+              <input
+                type="text"
+                id="transactionId"
+                value={transactionId}
+                onChange={(e) => setTransactionId(e.target.value)}
+                placeholder="Transaction ID/Session ID"
+                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-bgColor bg-transparent"
+              />
+            </div>
+          )}
           {depositType && (
             <button
               className="w-full mt-6 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600"
@@ -210,7 +298,6 @@ function Deposit() {
               Proceed
             </button>
           )}
-
           {!depositType && (
             <p className="text-center text-gray-600 mt-4">
               Please select a deposit type to proceed.

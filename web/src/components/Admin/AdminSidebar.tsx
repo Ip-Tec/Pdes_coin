@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import {
   FaUser,
   FaCoins,
@@ -15,7 +15,18 @@ interface AdminSidebarProps {
   isCollapsed: boolean;
   onToggle: () => void;
 }
+
+const menuItems = [
+  { to: "/a/dashboard", icon: FaChartLine, label: "Dashboard" },
+  { to: "/a/user", icon: FaUser, label: "Manage Users" },
+  { to: "/a/transactions", icon: FaExchangeAlt, label: "Transactions" },
+  { to: "/a/referrals", icon: FaCoins, label: "Referrals" },
+  { to: "/a/settings", icon: FaCog, label: "Settings" },
+  { to: "/a/utility", icon: FaToolbox, label: "Utility" },
+];
+
 const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
+  const location = useLocation();
   const { logout } = useAuth();
 
   return (
@@ -34,60 +45,21 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
 
       {/* Menu Items */}
       <ul className="mt-4 space-y-2">
-        <li>
-          <Link
-            to="/a/dashboard"
-            className="flex items-center gap-4 px-4 py-2 hover:bg-gray-700 rounded-md"
-          >
-            <FaChartLine size={20} />
-            {!isCollapsed && <span>Dashboard</span>}
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/a/user"
-            className="flex items-center gap-4 px-4 py-2 hover:bg-gray-700 rounded-md"
-          >
-            <FaUser size={20} />
-            {!isCollapsed && <span>Manage Users</span>}
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/a/transactions"
-            className="flex items-center gap-4 px-4 py-2 hover:bg-gray-700 rounded-md"
-          >
-            <FaExchangeAlt size={20} />
-            {!isCollapsed && <span>Transactions</span>}
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/a/referrals"
-            className="flex items-center gap-4 px-4 py-2 hover:bg-gray-700 rounded-md"
-          >
-            <FaCoins size={20} />
-            {!isCollapsed && <span>Referrals</span>}
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/a/settings"
-            className="flex items-center gap-4 px-4 py-2 hover:bg-gray-700 rounded-md"
-          >
-            <FaCog size={20} />
-            {!isCollapsed && <span>Settings</span>}
-          </Link>
-        </li>
-        <li>
-          <Link
-            to="/a/utility"
-            className="flex items-center gap-4 px-4 py-2 hover:bg-gray-700 rounded-md"
-          >
-            <FaToolbox size={20} />
-            {!isCollapsed && <span>Utility</span>}
-          </Link>
-        </li>
+        {menuItems.map(({ to, icon: Icon, label }) => (
+          <li key={to}>
+            <Link
+              to={to}
+              className={`flex items-center gap-4 px-4 py-2 hover:bg-gray-700 rounded-md ${
+                location.pathname === to ? "bg-gray-700" : ""
+              }`}
+            >
+              <Icon size={20} />
+              {!isCollapsed && <span>{label}</span>}
+            </Link>
+          </li>
+        ))}
+
+        {/* Logout */}
         <li>
           <p
             onClick={logout}
@@ -101,4 +73,5 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
     </div>
   );
 };
+
 export default AdminSidebar;

@@ -1,6 +1,7 @@
 import axios from "axios";
 import API, { apiUrl } from "./api";
 import { ErrorResponse } from "../utils/type";
+import { toast } from "react-toastify";
 
 // Transfer Funds
 export const getDashboardTotal = async () => {
@@ -80,9 +81,20 @@ export const getTopUsersByBalance = async () => {
 };
 
 // Search for a user
-export const searchUser = async (query: string) => {
+export const searchUser = async (
+  query: string,
+  path: "search" | "crypto" | "transaction"
+) => {
+  const url: Record<typeof path, string> = {
+    search: "search-user",
+    crypto: "search-crypto-user",
+    transaction: "search-transaction-user",
+  };
+
   try {
-    const response = await API.get(apiUrl(`/admin/search-user?query=${query}`));
+    const response = await API.get(
+      apiUrl(`/admin/${url[path]}?query=${query}`)
+    );
     console.log({ response });
     return response.data;
   } catch (error) {
@@ -90,7 +102,29 @@ export const searchUser = async (query: string) => {
       const errorData: ErrorResponse = error.response?.data;
       console.error(errorData);
       return errorData;
-    //   throw new Error(errorData?.message || "Transfer failed");
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// Add account user will deposit to
+export const addAccount = async (data: {
+  account_name: string;
+  account_number: string;
+  account_type: string;
+  max_deposit_amount: number;
+}) => {
+  try {
+    const response = await API.post(apiUrl("/admin/add-account"), data);
+    console.log({ response });
+    toast.success(response.data.message);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.error);
+      console.error(errorData);
+      return errorData;
     }
     throw new Error("Network error. Please try again.");
   }
