@@ -34,10 +34,19 @@ const BulkUpdateTransactions: React.FC = () => {
         }
       );
 
+      if (response.status === 200 || response.status === 201) {
+        toast.success("Transactions updated successfully!");
+      } else {
+        toast.error("Error updating transactions.");
+      }
+
       toast.success("Transactions updated successfully!");
     } catch (error) {
-      toast.error(error?.message);
-      toast.error("Error updating transactions.");
+      if (error instanceof Error) {
+        toast.error(error.message || "Something went wrong. Try again.");
+      } else {
+        toast.error((error as Error).toString());
+      }
     }
   };
 

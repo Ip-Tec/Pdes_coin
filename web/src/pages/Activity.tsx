@@ -96,7 +96,7 @@ function Activity() {
                   >
                     <span className="flex justify-between">
                       {item.account_name.toUpperCase()}{" "}
-                      {new Date(item.created_at).toDateString()}
+                      {new Date(item.created_at ?? '').toDateString()}
                     </span>
                     <span className="flex">
                       Transaction Type: {item.transaction_type}
