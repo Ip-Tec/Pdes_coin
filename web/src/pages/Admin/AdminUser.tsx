@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { User } from "../../utils/type";
+import { DepositPropsWithUser, User } from "../../utils/type";
 import Draggable from "react-draggable";
 import InputField from "../../components/InputField";
 import SearchUsers from "../../components/Admin/SearchUsers";
@@ -7,7 +7,7 @@ import AdminWrapper from "../../components/Admin/AdminWrapper";
 import SlideInPanel from "../../components/Admin/SlideInPanel";
 
 const AdminUser: React.FC = () => {
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<User[] | DepositPropsWithUser[]>([]);
   const [selectedUser] = useState<User | null>(null);
   const [isDraggable, setIsDraggable] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -16,8 +16,12 @@ const AdminUser: React.FC = () => {
   const [supportVisible, setSupportVisible] = useState(false);
 
   // Open edit modal
-  const handleEditClick = (user: User) => {
-    setEditingUser(user);
+  const handleEditClick = (user: User | DepositPropsWithUser) => {
+    if ("full_name" in user) {
+      setEditingUser(user);
+    } else {
+      setEditingUser(user.user);
+    }
     setIsEditing(true);
   };
 
@@ -46,26 +50,31 @@ const AdminUser: React.FC = () => {
         {/* Floating Search Results */}
         {users.length > 0 && (
           <div className="my-24 w-auto text-gray-600 mx-auto px-6">
-            {users.map((user: User, index: number) => (
+            {users.map((user: User | DepositPropsWithUser, index: number) => (
               <div
                 key={user.id}
                 className="cursor-pointer mb-4 p-4 border rounded-lg shadow bg-gray-50 hover:bg-gray-100"
               >
                 <div onClick={() => toggleAccordion(index)}>
                   <p>
-                    <strong>Name:</strong> {user.full_name}
+                    <strong>Name:</strong>{" "}
+                    {"full_name" in user ? user.full_name : user.user.full_name}
                   </p>
                   <p>
-                    <strong>Email:</strong> {user.email}
+                    <strong>Email:</strong>{" "}
+                    {"email" in user ? user.email : user.user.email}
                   </p>
                   <p>
-                    <strong>Username:</strong> {user.username}
+                    <strong>Username:</strong>{" "}
+                    {"username" in user ? user.username : user.user.username}
                   </p>
                   <p>
-                    <strong>Role:</strong> {user.role}
+                    <strong>Role:</strong>{" "}
+                    {"role" in user ? user.role : user.user.role}
                   </p>
                   <p>
-                    <strong>Balance:</strong> {user.balance}
+                    <strong>Balance:</strong>{" "}
+                    {"balance" in user ? user.balance : user.user.balance}
                   </p>
                 </div>
 
@@ -141,8 +150,10 @@ const AdminUser: React.FC = () => {
                     }
                   />
                   <label className="block mb-1">Role</label>
-                  <select className="p-3 bg-slate-400 rounded-lg ml-4 text-textColor placeholder-gray-500 
-          focus:outline-none focus:ring-0 focus:ring-transparent">
+                  <select
+                    className="p-3 bg-slate-400 rounded-lg ml-4 text-textColor placeholder-gray-500 
+          focus:outline-none focus:ring-0 focus:ring-transparent"
+                  >
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
                     <option value="super admin">Super Admin</option>
