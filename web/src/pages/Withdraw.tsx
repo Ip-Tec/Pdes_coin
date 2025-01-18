@@ -12,7 +12,7 @@ function Withdraw() {
   const userBalance = user?.balance || 0;
   const withdrawalLimit = 50;
   const [selectedOption, setSelectedOption] = useState("");
-  const [btcAddress, setBtcAddress] = useState("");
+  const [cryptoAddress, setCryptoAddress] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [accountType, setAccountType] = useState("Opay");
   const [accountName, setAccountName] = useState(user?.full_name || "");
@@ -64,7 +64,7 @@ function Withdraw() {
       amount: withdrawalAmount,
       type: selectedOption,
       accountName: accountName,
-      btcAddress: selectedOption === "BTC" ? btcAddress : undefined,
+      cryptoAddress: selectedOption === "BTC" ? cryptoAddress : undefined,
       accountNumber: selectedOption === "Naira" ? accountNumber : undefined,
       accountType: selectedOption === "Naira" ? accountType : "BTC",
     };
@@ -78,7 +78,7 @@ function Withdraw() {
         }
         setAmount("");
         setSelectedOption("");
-        setBtcAddress("");
+        setCryptoAddress("");
         setAccountNumber("");
         setAccountType("Opay");
         setAccountName(user?.full_name || "");
@@ -162,10 +162,10 @@ function Withdraw() {
           {selectedOption === "BTC" && (
             <InputField
               label="Enter BTC Address"
-              name="btcAddress"
+              name="cryptoAddress"
               type="text"
-              value={btcAddress}
-              onChange={(e) => setBtcAddress(e.target.value)}
+              value={cryptoAddress}
+              onChange={(e) => setCryptoAddress(e.target.value)}
               placeholder="e.g., 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
             />
           )}

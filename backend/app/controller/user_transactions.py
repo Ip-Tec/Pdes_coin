@@ -1,3 +1,4 @@
+from sqlite3 import IntegrityError
 import jwt
 import logging
 import traceback
@@ -102,7 +103,7 @@ class UserTransactionsController:
     # User add deposit record
     @staticmethod
     @token_required
-    def user_add_deposit(current_user):
+    def user_add_deposit(current_user, *args, **kwargs):
         """
         User route to add a deposit record.
         Expects JSON input:
@@ -197,73 +198,75 @@ class UserTransactionsController:
     @staticmethod
     @token_required
     def withdraw_money(user):
-        user_id = user.id
-        data = request.get_json()
-
-        required_fields = {
-            "Amount": "amount",
-            "Account Name": "accountName",
-            "Account Type": "accountType",
-        }
-        for field, field_name in required_fields.items():
-            if field_name not in data or not data[field_name]:
-                return jsonify({"error": f"'{field_name}' field is required."}), 400
-
-        if not data.get("accountNumber") and not data.get("btcAddress"):
-            return (
-                jsonify({"error": "Provide either 'accountNumber' or 'btcAddress'."}),
-                400,
-            )
-
-        if data.get("accountNumber") and data.get("btcAddress"):
-            return (
-                jsonify(
-                    {
-                        "error": "Provide either 'accountNumber' or 'btcAddress', not both."
-                    }
-                ),
-                400,
-            )
-
         try:
-            data["amount"] = float(data["amount"])
-        except (ValueError, TypeError):
-            return jsonify({"error": "'amount' must be a number"}), 400
+            user_id = user.id
+            data = request.get_json()
 
-        balance = Balance.query.filter_by(user_id=user_id).first()
-        if not balance:
-            return jsonify({"error": "Balance record not found."}), 400
-        if balance.balance < data["amount"]:
-            return jsonify({"error": "Insufficient balance."}), 400
+            # Extract accountDetails from the input payload
+            account_details = data
+            if not account_details:
+                return jsonify({"error": "Account details are missing."}), 400
 
-        try:
+            # Validate required fields in accountDetails
+            required_fields = ["accountName", "accountType", "amount"]
+            for field in required_fields:
+                if field not in account_details or not account_details[field]:
+                    return jsonify({"error": f"'{field}' field is required."}), 400
+
+            # Validate accountNumber or cryptoAddress
+            if not account_details.get("accountNumber") and not account_details.get("cryptoAddress"):
+                return jsonify({"error": "Provide either 'accountNumber' or 'cryptoAddress'."}), 400
+
+            if account_details.get("accountNumber") and account_details.get("cryptoAddress"):
+                return jsonify({"error": "Provide either 'accountNumber' or 'cryptoAddress', not both."}), 400
+
+            # Parse and validate the amount
+            try:
+                amount = float(account_details["amount"])
+                if amount <= 0:
+                    return jsonify({"error": "'amount' must be greater than zero."}), 400
+            except (ValueError, TypeError):
+                return jsonify({"error": "'amount' must be a number."}), 400
+
+            # Retrieve the user's balance
+            balance = Balance.query.filter_by(user_id=user_id).first()
+            if not balance:
+                return jsonify({"error": "Balance record not found."}), 400
+            if balance.balance < amount:
+                return jsonify({"error": "Insufficient balance."}), 400
+
+            # Create a new transaction record
             transaction = Transaction(
                 user_id=user_id,
-                amount=-data["amount"],
-                account_name=data["accountName"],
-                btc_address=data.get("btcAddress"),
-                account_number=data.get("accountNumber"),
-                transaction_type=f"withdraw + {data['accountType']}",
+                amount=-amount,
+                currency=account_details.get("type", "naira"),  # Default to "naira"
+                transaction_completed=False,
+                account_name=account_details["accountName"],
+                crypto_address=account_details.get("cryptoAddress", ""),  # Default to empty string
+                account_number=account_details.get("accountNumber", ""),
+                transaction_type=f"withdraw + {account_details['accountType']}",
             )
             db.session.add(transaction)
-            balance.balance -= data["amount"]
+
+            # Deduct the amount from the user's balance
+            balance.balance -= amount
+
+            # Commit the transaction
             db.session.commit()
 
-            return (
-                jsonify(
-                    {
-                        "message": "Withdrawal in Progress",
-                        "data": transaction.serialize(),
-                    }
-                ),
-                201,
-            )
+            # Return success response
+            return jsonify(
+                {
+                    "message": "Withdrawal in Progress",
+                    "data": transaction.serialize(),
+                }
+            ), 201
+
         except Exception as e:
             db.session.rollback()
-            return (
-                jsonify({"error": "Transaction failed due to an unexpected error."}),
-                500,
-            )
+            # Log the exception for debugging purposes
+            print(f"Error during withdrawal: {e}")
+            return jsonify({"error": "Transaction failed due to an unexpected error."}), 500
 
 
 def get_pdes_coin_details():

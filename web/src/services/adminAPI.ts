@@ -80,22 +80,24 @@ export const getTopUsersByBalance = async () => {
   }
 };
 
-// Search for a user
+// Search for user's
 export const searchUser = async (
   query: string,
-  path: "search" | "crypto" | "transaction"
+  path: "search" | "crypto" | "transaction" | "deposits"
 ) => {
   const url: Record<typeof path, string> = {
     search: "search-user",
     crypto: "search-crypto-user",
     transaction: "search-transaction-user",
+    deposits: "search-deposits",
   };
 
   try {
     const response = await API.get(
       apiUrl(`/admin/${url[path]}?query=${query}`)
     );
-    console.log({ response });
+    console.log(response);
+    console.log(response.data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -150,6 +152,8 @@ export const addUtility = async (data: UtilityProps) => {
 
 // Add utility data
 export const confirmUserDeposit = async (data: any) => {
+  console.log({ data });
+
   try {
     const response = await API.post(apiUrl("/admin/add-money"), data);
     console.log({ response });
@@ -160,6 +164,10 @@ export const confirmUserDeposit = async (data: any) => {
       const errorData: ErrorResponse = error.response?.data;
       toast.error(errorData?.error);
       toast.error(errorData?.message);
+      if (errorData?.message === "Token has expired!") {
+        window.location.href = "/login";
+      }
+      console.error(error);
       console.error(errorData);
       return errorData;
     }

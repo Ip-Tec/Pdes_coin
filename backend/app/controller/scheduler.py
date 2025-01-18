@@ -68,7 +68,7 @@ def setup_scheduler(app):
     # scheduler.add_job(reward_pdes_holders, "interval", weeks=4, args=[app])  # Monthly reward for PDES holders
 
     scheduler.add_job(
-        calculate_weekly_rewards, "interval", days=5, args=[app]
+        calculate_weekly_rewards, "interval", hours=0.02, args=[app]
     )  # Passing app to the function
     scheduler.start()
     print("Scheduler started!")

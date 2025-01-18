@@ -106,7 +106,6 @@ function Deposit() {
           deposit_method: "bank transfer",
         });
         toast.success("Naira deposit recorded successfully.");
-        navigate("/home");
       } catch (error) {
         toast.error("Failed to record deposit. Please try again.");
         console.error("Deposit Error:", error);

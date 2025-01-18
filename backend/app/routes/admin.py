@@ -12,6 +12,7 @@ from sqlalchemy.orm import joinedload
 from app.controller import user_controller
 from flask import Blueprint, request, jsonify, Response
 from app.models import (
+    Deposit,
     DepositAccount,
     PdesTransaction,
     RewardConfig,
@@ -337,78 +338,175 @@ def add_account(current_user, *args, **kwargs):
 
 # Confirm user deposit and add it to Transaction, Balance, and Crypto tables
 @admin_bp.route("/add-money", methods=["POST"])
-@staticmethod
 @token_required
 @AccessLevel.role_required(["ADMIN", "DEVELOPER", "SUPER_ADMIN"])
-def add_money(current_user, *args, **kwargs):
-    # Get the user_id from the request data (admin confirms the deposit for a specific user)
-    data = request.get_json()
-    user_id = data.get("id")  # Ensure the admin sends the user_id in the requestprint
-    
-    print(f"User_ID: {current_user}")
+def confirm_user_deposit(current_user, *args, **kwargs):
+    try:
+        # Get the user_id from the request data
+        data = request.get_json()
+        user_id = data.get("id")
+        print(f"data:: {data}")
 
-    # Ensure the user_id is provided
-    if not user_id:
-        return jsonify({"message": "User ID is required"}), 400
+        # Validate user_id
+        if not user_id:
+            return jsonify({"error": "User ID is required"}), 400
 
-    # Add deposit transaction to the Transaction table
-    transaction = Transaction(
-        user_id=user_id,
-        amount=data["amount"],
-        account_name=data["account_name"],
-        btc_address = data["btc_address"],
-        account_number=data["account_number"],
-        transaction_type=data["transaction_type"],
-        transaction_completed = True,
-        confirm_by = current_user.id
-    )
-    db.session.add(transaction)
-    db.session.commit()
+        # Ensure the user exists
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
 
-    # Update the user's balance in the Balance table
-    balance = Balance.query.filter_by(user_id=user_id).first()
-    if not balance:
-        return jsonify({"message": "Balance record not found for user"}), 404
-    balance.balance += data["amount"]
-    db.session.commit()
+        # Ensure required fields are present
+        required_fields = [
+            "amount",
+            "account_name",
+            "account_number",
+            "transaction_type",
+        ]
+        missing_fields = [field for field in required_fields if field not in data]
+        if missing_fields:
+            return (
+                jsonify(
+                    {"error": f"Missing required fields: {', '.join(missing_fields)}"}
+                ),
+                400,
+            )
 
-    # Update the user's crypto balance if applicable (for example, depositing in Pdes)
-    crypto = Crypto.query.filter_by(user_id=user_id, crypto_name="Pdes").first()
-    if not crypto:
-        # If no record for Pdes, create it
-        crypto = Crypto(
+        # Validate transaction_type
+        if data["transaction_type"] not in ["deposit", "withdrawal"]:
+            return (
+                jsonify(
+                    {
+                        "error": "Invalid transaction_type. Allowed values are 'deposit' or 'withdrawal'"
+                    }
+                ),
+                400,
+            )
+
+        # Validate amounts (if provided)
+        if "amount" in data:
+            try:
+                data["amount"] = float(data["amount"])
+                if data["amount"] <= 0:
+                    raise ValueError("Amount must be a positive number")
+            except ValueError as e:
+                return jsonify({"error": f"Invalid amount: {e}"}), 400
+
+        if "crypto_balance" in data:
+            try:
+                data["crypto_balance"] = float(data["crypto_balance"])
+                if data["crypto_balance"] <= 0:
+                    raise ValueError("Crypto balance must be a positive number")
+            except ValueError as e:
+                return jsonify({"error": f"Invalid crypto_balance: {e}"}), 400
+
+        # Prevent conflicting deposit types
+        if "amount" in data and "crypto_balance" in data:
+            return (
+                jsonify(
+                    {
+                        "error": "Cannot deposit both fiat and cryptocurrency in a single transaction"
+                    }
+                ),
+                400,
+            )
+
+        # Changet the Deposit status to completed
+        deposit = Deposit.query.filter_by(
+            id=data["id"],
             user_id=user_id,
-            crypto_name="Pdes",
-            amount=0.0,  # No amount initially
-            account_address="",  # Assuming no address is needed
-        )
-        db.session.add(crypto)
+            session_id=data["session_id"],
+            transaction_id=data["transaction_id"],
+        ).first()
 
-    # If the deposit involves adding to crypto, adjust accordingly (assuming deposit amount is in crypto)
-    if data["transaction_type"] == "deposit":
-        crypto.amount += data["amount"]
+        if deposit:
+            if deposit.status == "completed":
+                return jsonify({"error": "Deposit already confirmed"}), 400
 
-    db.session.commit()
+            deposit.status = "completed"
+            deposit.updated_at = db.func.current_timestamp()
+            db.session.add(deposit)
 
-    # Optionally, add any rewards for the deposit
-    reward_config = RewardConfig.query.first()  # Assuming a global reward config
-    if reward_config:
-        reward_amount = data["amount"] * (reward_config.percentage_weekly / 100)
-        # Add the reward to the balance
-        balance.rewards += reward_amount
+        # Fetch conversion rate and convert fiat to dollars
+        conversion_rate_entry = Utility.query.filter_by(key="conversion_rate").first()
+        if not conversion_rate_entry:
+            return jsonify({"error": "Conversion rate not found in Utility table"}), 500
 
-        # Create a reward transaction
-        reward_transaction = Transaction(
+        conversion_rate = float(conversion_rate_entry.value)
+        amount_in_dollars = data["amount"] / conversion_rate
+        print(f"Converted amount: {amount_in_dollars} USD")
+
+        # Add deposit transaction to the Transaction table
+        transaction = Transaction(
             user_id=user_id,
-            amount=reward_amount,
-            account_name="Reward",
-            account_number="",
-            transaction_type="reward",
+            confirm_by=current_user.id,
+            transaction_completed=True,
+            account_name=data["account_name"],
+            account_number=data["account_number"],
+            crypto_address=data.get("crypto_address", ""),
+            transaction_type=data["transaction_type"],
+            amount=amount_in_dollars,
+            currency=data.get("currency", "naira"),
         )
-        db.session.add(reward_transaction)
+        db.session.add(transaction)
+
+        # Handle fiat deposit
+        if "amount" in data:
+            balance = Balance.query.filter_by(user_id=user_id).first()
+            if not balance:
+                balance = Balance(
+                    user_id=user_id,
+                    balance=amount_in_dollars,
+                    crypto_balance=0.0,
+                    rewards=0.0,
+                )
+                db.session.add(balance)
+            else:
+                balance.balance += amount_in_dollars
+
+        # Handle crypto deposit
+        elif "crypto_balance" in data:
+            crypto = Crypto.query.filter_by(user_id=user_id, crypto_name="Pdes").first()
+            if not crypto:
+                crypto = Crypto(
+                    user_id=user_id,
+                    crypto_name="Pdes",
+                    amount=0.0,
+                    account_address="",
+                )
+                db.session.add(crypto)
+
+            crypto.amount += data["crypto_balance"]
+
+        # Commit all changes
         db.session.commit()
 
-    return jsonify({"transaction": transaction.serialize()}), 201
+        # Return the created transaction as a response
+        return (
+            jsonify(
+                {
+                    # "transaction": transaction.serialize(),
+                    "message": "Transaction confirmed successfully!",
+                }
+            ),
+            201,
+        )
+
+    except IntegrityError as e:
+        db.session.rollback()
+        return (
+            jsonify({"error": "Database integrity error", "details": str(e.orig)}),
+            400,
+        )
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({"error": "Database error", "details": str(e)}), 500
+    except Exception as e:
+        db.session.rollback()
+        return (
+            jsonify({"error": "An unexpected error occurred", "details": str(e)}),
+            500,
+        )
 
 
 # Downloading Transaction CSV
@@ -522,3 +620,36 @@ def add_utility(current_user, *args, **kwargs):
         return jsonify({"message": "Utility data added successfully!"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+# Search the Deposit table
+@admin_bp.route("/search-deposits", methods=["GET"])
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+def search_deposits(current_user, *args, **kwargs):
+    try:
+        # Extract query parameters
+        query = request.args.get("query", "").strip()
+        # Build the query dynamically
+        query = Deposit.query.filter(
+            (Deposit.user_id.ilike(f"%{query}%"))
+            | (Deposit.amount.ilike(f"%{query}%"))
+            | (Deposit.status.ilike(f"%{query}%"))
+            | (Deposit.currency.ilike(f"%{query}%"))
+            | (Deposit.deposit_method.ilike(f"%{query}%"))
+            | (Deposit.admin_id.ilike(f"%{query}%"))
+        )
+
+        if not query:
+            return jsonify({"message": "No Deposit found"}), 404
+
+        # Execute the query and serialize the results
+        deposits = query.all()
+        result = [deposit.serialize_with_user() for deposit in deposits]
+
+        print(f"Result: {result}")
+
+        return jsonify(result), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500

@@ -10,6 +10,7 @@ const InputField: React.FC<InputFieldProps> = ({
   value,
   required,
   icon,
+  readOnly,
   error,
   onChange,
   placeholder,
@@ -52,6 +53,7 @@ const InputField: React.FC<InputFieldProps> = ({
           required={required}
           value={value}
           onChange={onChange}
+          readOnly={readOnly}
           className="w-full px-4 py-2 border border-[#D9D9D9] rounded-3xl 
      bg-slate-300 text-textColor placeholder-gray-600 shadow-[#b9b9b9] shadow-md focus:outline-none focus:ring-2 focus:ring-bgColor"
         />

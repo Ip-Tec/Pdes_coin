@@ -192,6 +192,8 @@ export const depositFunds = async (amount: number) => {
 
 // Withdraw Funds
 export const withdrawFunds = async (accountDetails: AccountDetails) => {
+  console.log({ accountDetails });
+
   try {
     const response = await API.post(apiUrl("/transactions/withdraw"), {
       ...accountDetails,

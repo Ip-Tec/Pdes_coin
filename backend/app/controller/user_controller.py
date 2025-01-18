@@ -101,7 +101,10 @@ class UserController:
 
         # Validate passwords
         if password != confirmPassword:
-            return jsonify({"message": "Password and confirm password do not match"}), 400
+            return (
+                jsonify({"message": "Password and confirm password do not match"}),
+                400,
+            )
 
         # Check required fields
         for param, param_name in [
@@ -115,6 +118,7 @@ class UserController:
 
         # Check for existing email
         if User.query.filter_by(email=email).first():
+            print("email::::", email)
             return jsonify({"message": "Email is already registered"}), 400
 
         # Check for existing username
@@ -157,13 +161,25 @@ class UserController:
         try:
             token = generate_password_reset_token(user.email)
             Email.send_register_email(user, token)
-            return jsonify({"message": "User registered successfully. A confirmation email has been sent."}), 201
+            return (
+                jsonify(
+                    {
+                        "message": "User registered successfully. A confirmation email has been sent."
+                    }
+                ),
+                201,
+            )
         except Exception as e:
-            return jsonify({
-                "message": "User registered successfully.",
-                "email_error": "Error sending registration email. Please check your email configuration or try again later.",
-                "error_details": str(e),
-            }), 202
+            return (
+                jsonify(
+                    {
+                        "message": "User registered successfully.",
+                        "email_error": "Error sending registration email. Please check your email configuration or try again later.",
+                        "error_details": str(e),
+                    }
+                ),
+                202,
+            )
 
     @staticmethod
     def update_user_info():

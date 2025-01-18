@@ -3,28 +3,28 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 
 interface ProtectedRouteProps {
-  isAuth: boolean;
   children: React.ReactElement;
-  requiredRoles?: string[]; // This prop defines the required roles
+  requiredRoles?: string[]; // Defines the required roles
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  isAuth,
   children,
   requiredRoles = [],
 }) => {
   const { user } = useAuth(); // Get the current user from context
 
-  if (!isAuth || !user) {
+  if (!user) {
+    // If no user is logged in, redirect to the login page
     return <Navigate to="/login" />;
   }
 
-  // Check if the user has the necessary role
   if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
-    return <Navigate to="/" />; // Redirect to home if user does not have access
+    // If the user's role is not allowed, redirect to the home page
+    return <Navigate to="/" />;
   }
 
-  return <>{children}</>; // Show the protected content if user has valid role
+  // If authenticated and authorized, render the children
+  return <>{children}</>;
 };
 
 export default ProtectedRoute;

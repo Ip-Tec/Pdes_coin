@@ -4,6 +4,7 @@ export interface InputFieldProps {
   name: string;
   value: string | number; // Adjusted to allow numbers as well
   disabled?: boolean | undefined;
+  readOnly?: boolean | undefined;
   placeholder?: string;
   error?: string;
   required?: boolean | undefined;
@@ -90,8 +91,8 @@ export interface TransactionHistory {
   account_name: string;
   account_number: string;
   transaction_type: string;
-  created_at: string; // ISO 8601 formatted string
-  updated_at: string; // ISO 8601 formatted string
+  created_at?: string; // ISO 8601 formatted string
+  updated_at?: string; // ISO 8601 formatted string
 }
 
 export interface DashboardData {
@@ -179,4 +180,18 @@ export interface UtilityProps {
   referral_percentage: string;
   pdes_supply_left: string;
   pdes_total_supply: string;
+}
+
+export interface DepositPropsWithUser {
+  id: number;
+  user: User;
+  amount: number;
+  status: string;
+  user_id: number;
+  currency: string;
+  updated_at: string;
+  created_at: string;
+  transaction_id: string;
+  deposit_method: string;
+  session_id: string | null;
 }

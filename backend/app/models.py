@@ -33,6 +33,18 @@ class User(db.Model):
         default=db.func.current_timestamp(),
         onupdate=db.func.current_timestamp(),
     )
+    
+    # Relationships
+    transactions = db.relationship(
+        "Transaction",
+        foreign_keys="Transaction.user_id",  # Specify the foreign key for user transactions
+        back_populates="user",
+    )
+    confirmed_transactions = db.relationship(
+        "Transaction",
+        foreign_keys="Transaction.confirm_by",  # Specify the foreign key for admin confirmations
+        back_populates="admin",
+    )
 
     # Return a serialize info
     def serialize(self):
@@ -166,6 +178,41 @@ class Deposit(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else "",
             "updated_at": self.updated_at.isoformat() if self.updated_at else "",
         }
+    
+    # Return serialized info for admin
+    def serialize_admin(self):
+        user = User.query.get(self.admin_id)
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "amount": self.amount,
+            "currency": self.currency,
+            "transaction_id": self.transaction_id,
+            "session_id": self.session_id,
+            "deposit_method": self.deposit_method,
+            "status": self.status,
+            "user": user.serialize() if user else None,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "updated_at": self.updated_at.isoformat() if self.updated_at else "",
+        }
+    
+    # Return serialized info with the user
+    def serialize_with_user(self):
+        user = User.query.get(self.user_id)
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "amount": self.amount,
+            "currency": self.currency,
+            "transaction_id": self.transaction_id,
+            "session_id": self.session_id,
+            "deposit_method": self.deposit_method,
+            "status": self.status,
+            "user": user.serialize() if user else None,
+            "created_at": self.created_at.isoformat() if self.created_at else "",
+            "updated_at": self.updated_at.isoformat() if self.updated_at else "",
+        }
+    
 
 
 # Transaction model
@@ -175,9 +222,10 @@ class Transaction(db.Model):
     confirm_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)  # Admin user
 
     amount = db.Column(db.Float, nullable=False)
+    currency = db.Column(db.String(10), nullable=True)
     account_name = db.Column(db.String(100), nullable=False)
     account_number = db.Column(db.String(20), nullable=True)
-    btc_address = db.Column(db.String(20), nullable=True)
+    crypto_address = db.Column(db.String(20), nullable=True)
     transaction_type = db.Column(db.String(20), nullable=False)
     transaction_completed = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
@@ -188,18 +236,27 @@ class Transaction(db.Model):
     )
 
     # Relationships
-    user = db.relationship("User", foreign_keys=[user_id], backref="user_transactions")
-    admin = db.relationship("User", foreign_keys=[confirm_by], backref="confirmed_transactions")
+    user = db.relationship(
+        "User",
+        foreign_keys=[user_id],  # Specify the foreign key for user
+        back_populates="transactions",
+    )
+    admin = db.relationship(
+        "User",
+        foreign_keys=[confirm_by],  # Specify the foreign key for admin
+        back_populates="confirmed_transactions",
+    )
 
-    # Return a serialize info
+    # Return a serialized info
     def serialize(self):
         return {
             "id": self.id,
             "user_id": self.user_id,
             "amount": self.amount,
+            "currency": self.currency,
             "account_name": self.account_name,
             "account_number": self.account_number,
-            "btc_address": self.btc_address,
+            "crypto_address": self.crypto_address,
             "transaction_type": self.transaction_type,
             "transaction_completed": self.transaction_completed,
             "confirm_by": self.confirm_by,
@@ -214,9 +271,10 @@ class Transaction(db.Model):
             return {
                 "id": self.id,
                 "amount": self.amount,
+                "currency": self.currency,
                 "user_id": self.user_id,
                 "confirm_by": self.confirm_by,
-                "btc_address": self.btc_address,
+                "crypto_address": self.crypto_address,
                 "account_name": self.account_name,
                 "account_number": self.account_number,
                 "transaction_type": self.transaction_type,

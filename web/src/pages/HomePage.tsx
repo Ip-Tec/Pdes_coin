@@ -1,10 +1,10 @@
-
 import React, { useEffect } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import AboutContent from "../components/AboutContent";
 import ParallaxEffect from "../components/ParallaxEffect";
 import { FaUser, FaGraduationCap, FaMoneyBillWave } from "react-icons/fa";
+import { FaGlobe, FaBolt, FaWallet, FaGlobeAmericas } from "react-icons/fa";
 import HeroSection from "../components/HeroSection";
 import Header from "../components/Header";
 
@@ -22,28 +22,27 @@ const HomePage: React.FC = () => {
       title: "Decentralized Trading",
       description:
         "Experience trading without the need for intermediaries. Pdes empowers users by eliminating centralized authorities, allowing for peer-to-peer transactions that prioritize transparency and trust.",
-      icon: "🌐", // Placeholder for an actual icon
+      icon: <FaGlobe />, // React Icon for a globe
     },
     {
       title: "Fast and Secure Transactions",
       description:
         "Enjoy lightning-fast transaction speeds powered by our advanced network infrastructure. Security is at the heart of every transaction, ensuring your funds are always safe.",
-      icon: "⚡", // Placeholder for an actual icon
+      icon: <FaBolt />, // React Icon for a lightning bolt
     },
     {
       title: "Low Transaction Fees",
       description:
         "Save more with minimal transaction fees compared to traditional financial systems and other cryptocurrencies. Pdes ensures affordability for users across the globe.",
-      icon: "💰", // Placeholder for an actual icon
+      icon: <FaWallet />, // React Icon for a wallet
     },
     {
       title: "Global Accessibility",
       description:
         "Pdes is accessible to anyone, anywhere in the world. Whether you're sending funds to a neighboring city or across continents, Pdes connects people with ease.",
-      icon: "🌍", // Placeholder for an actual icon
+      icon: <FaGlobeAmericas />, // React Icon for a globe with Americas
     },
   ];
-
   const partners = [
     {
       icon: <FaUser className="text-blue-500 text-9xl mb-4" />,
