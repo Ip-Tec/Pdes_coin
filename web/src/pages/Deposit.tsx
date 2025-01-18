@@ -47,6 +47,7 @@ function Deposit() {
     console.log(response);
 
     setAccountDetails(response);
+    sessionStorage.setItem("accountDetails", JSON.stringify(response));
   };
 
   // Fetch crypto address
@@ -76,6 +77,21 @@ function Deposit() {
     if (depositType === "Naira" && selectedAmount) {
       if (!transactionId.trim()) {
         toast.error("Please enter the transaction ID/Session ID.");
+        return;
+      }
+
+      if (!user) {
+        toast.error("You must be logged in to make a deposit.");
+        return;
+      }
+
+      if (!accountDetails) {
+        setAccountDetails(
+          JSON.parse(sessionStorage.getItem("accountDetails") || "{}").id
+        );
+        if (!accountDetails) {
+          return;
+        }
         return;
       }
 

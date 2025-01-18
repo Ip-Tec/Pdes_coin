@@ -1,6 +1,6 @@
 import axios from "axios";
 import API, { apiUrl } from "./api";
-import { ErrorResponse } from "../utils/type";
+import { ErrorResponse, UtilityProps } from "../utils/type";
 import { toast } from "react-toastify";
 
 // Transfer Funds
@@ -123,6 +123,43 @@ export const addAccount = async (data: {
     if (axios.isAxiosError(error)) {
       const errorData: ErrorResponse = error.response?.data;
       toast.error(errorData?.error);
+      console.error(errorData);
+      return errorData;
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// Add utility data
+export const addUtility = async (data: UtilityProps) => {
+  try {
+    const response = await API.post(apiUrl("/admin/utility"), data);
+    console.log({ response });
+    toast.success(response.data.message);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.error);
+      console.error(errorData);
+      return errorData;
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// Add utility data
+export const confirmUserDeposit = async (data: any) => {
+  try {
+    const response = await API.post(apiUrl("/admin/add-money"), data);
+    console.log({ response });
+    toast.success(response.data.message);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.error);
+      toast.error(errorData?.message);
       console.error(errorData);
       return errorData;
     }

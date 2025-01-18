@@ -124,9 +124,9 @@ class Balance(db.Model):
 
 # Deposit model to track deposits
 class Deposit(db.Model):
-    
+
     __tablename__ = "Deposit"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     admin_id = db.Column(db.Integer, db.ForeignKey("DepositAccount.id"), nullable=False)
@@ -171,7 +171,9 @@ class Deposit(db.Model):
 # Transaction model
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)  # Normal user
+    confirm_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)  # Admin user
+
     amount = db.Column(db.Float, nullable=False)
     account_name = db.Column(db.String(100), nullable=False)
     account_number = db.Column(db.String(20), nullable=True)
@@ -185,6 +187,10 @@ class Transaction(db.Model):
         onupdate=db.func.current_timestamp(),
     )
 
+    # Relationships
+    user = db.relationship("User", foreign_keys=[user_id], backref="user_transactions")
+    admin = db.relationship("User", foreign_keys=[confirm_by], backref="confirmed_transactions")
+
     # Return a serialize info
     def serialize(self):
         return {
@@ -193,10 +199,32 @@ class Transaction(db.Model):
             "amount": self.amount,
             "account_name": self.account_name,
             "account_number": self.account_number,
+            "btc_address": self.btc_address,
             "transaction_type": self.transaction_type,
+            "transaction_completed": self.transaction_completed,
+            "confirm_by": self.confirm_by,
             "created_at": self.created_at.isoformat() if self.created_at else "",
             "updated_at": self.updated_at.isoformat() if self.updated_at else "",
         }
+
+    # Return the info of the user who confirmed the transaction
+    def serialize_confirm_by(self):
+        if self.confirm_by:
+            user = User.query.get(self.confirm_by)
+            return {
+                "id": self.id,
+                "amount": self.amount,
+                "user_id": self.user_id,
+                "confirm_by": self.confirm_by,
+                "btc_address": self.btc_address,
+                "account_name": self.account_name,
+                "account_number": self.account_number,
+                "transaction_type": self.transaction_type,
+                "user": user.serialize() if user else None,
+                "transaction_completed": self.transaction_completed,
+                "created_at": self.created_at.isoformat() if self.created_at else "",
+                "updated_at": self.updated_at.isoformat() if self.updated_at else "",
+            }
 
 
 # Crypto model
@@ -407,7 +435,6 @@ class DepositAccount(db.Model):
     # Get Maxsimum Deposit Amount
     def get_max_deposit_amount(self):
         return self.max_deposit_amount
-
 
 
 # Functions to handle deposits, withdrawals, and transactions

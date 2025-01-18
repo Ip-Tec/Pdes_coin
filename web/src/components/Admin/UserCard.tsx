@@ -1,7 +1,7 @@
 import { User } from "../../utils/type";
 
 interface UserCardProps {
-  user: User
+  user: User;
   onSelect: (user: User) => void; // Callback for when a user is selected
 }
 
@@ -12,7 +12,12 @@ const UserCard = ({ user, onSelect }: UserCardProps) => {
       className="p-4 bg-white border border-gray-300 rounded-lg shadow-md mb-4 hover:bg-gray-50 cursor-pointer"
     >
       <h3 className="text-lg font-semibold">{user.full_name}</h3>
-      <p className="text-sm text-gray-500">{user.email}</p>
+      <p className="text-sm text-gray-500"><strong>Email: </strong>{user.email}</p>
+      <p className="text-sm text-gray-500"><strong>Balance: </strong>{user.balance}</p>
+      <p className="text-sm text-gray-500"><strong>Crypto Balance: </strong> {user.crypto_balance}</p>
+      <p className="text-sm text-gray-500">Join: 
+        {new Date(user.created_at).toLocaleString()}
+      </p>
       <p className="mt-2 text-sm">
         <span className="font-semibold">Role:</span> {user.role}
       </p>

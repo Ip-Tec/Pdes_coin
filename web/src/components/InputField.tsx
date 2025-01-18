@@ -12,6 +12,7 @@ const InputField: React.FC<InputFieldProps> = ({
   icon,
   error,
   onChange,
+  placeholder,
 }) => {
   const [showPassword, setShowPassword] = useState(false); // State for password visibility
 
@@ -47,12 +48,12 @@ const InputField: React.FC<InputFieldProps> = ({
         <input
           type={type === "password" && !showPassword ? "password" : "text"} // Toggle input type based on visibility
           name={name}
-          placeholder={label}
+          placeholder={placeholder && label}
           required={required}
           value={value}
           onChange={onChange}
           className="w-full px-4 py-2 border border-[#D9D9D9] rounded-3xl 
-     bg-slate-300 text-textColor placeholder-gray-500 shadow-[#b9b9b9] shadow-md focus:outline-none focus:ring-2 focus:ring-bgColor"
+     bg-slate-300 text-textColor placeholder-gray-600 shadow-[#b9b9b9] shadow-md focus:outline-none focus:ring-2 focus:ring-bgColor"
         />
         {type === "password" && (
           <span

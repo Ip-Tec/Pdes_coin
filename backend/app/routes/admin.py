@@ -20,6 +20,7 @@ from app.models import (
     Crypto,
     Balance,
     AccountDetail,
+    Utility,
 )
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.exc import SQLAlchemyError
@@ -257,6 +258,7 @@ def search_user(current_user):
             500,
         )
 
+
 # Add a deposit account
 @admin_bp.route("/add-account", methods=["POST"])
 @token_required
@@ -275,10 +277,19 @@ def add_account(current_user, *args, **kwargs):
     data = request.get_json()
 
     # Validate required fields
-    required_fields = ["bank_name", "account_name", "account_number", "account_type", "max_deposit_amount"]
+    required_fields = [
+        "bank_name",
+        "account_name",
+        "account_number",
+        "account_type",
+        "max_deposit_amount",
+    ]
     missing_fields = [field for field in required_fields if field not in data]
     if missing_fields:
-        return jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}), 400
+        return (
+            jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}),
+            400,
+        )
 
     try:
         # Extract data and set defaults
@@ -287,7 +298,9 @@ def add_account(current_user, *args, **kwargs):
         account_name = data["account_name"]
         account_number = data["account_number"]
         account_type = data.get("account_type", "savings")  # Default to "savings"
-        max_deposit_amount = data.get("max_deposit_amount", 98999.00)  # Default to 98999.00
+        max_deposit_amount = data.get(
+            "max_deposit_amount", 98999.00
+        )  # Default to 98999.00
 
         # Create a new DepositAccount instance
         new_account = DepositAccount(
@@ -303,9 +316,15 @@ def add_account(current_user, *args, **kwargs):
         db.session.add(new_account)
         db.session.commit()
 
-        return jsonify({"message": "Account added successfully"
-                        # , "account": new_account.serialize()
-                        }), 201
+        return (
+            jsonify(
+                {
+                    "message": "Account added successfully"
+                    # , "account": new_account.serialize()
+                }
+            ),
+            201,
+        )
 
     except IntegrityError:
         db.session.rollback()
@@ -314,16 +333,19 @@ def add_account(current_user, *args, **kwargs):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-    
+
+
 # Confirm user deposit and add it to Transaction, Balance, and Crypto tables
 @admin_bp.route("/add-money", methods=["POST"])
 @staticmethod
 @token_required
 @AccessLevel.role_required(["ADMIN", "DEVELOPER", "SUPER_ADMIN"])
-def add_money():
+def add_money(current_user, *args, **kwargs):
     # Get the user_id from the request data (admin confirms the deposit for a specific user)
     data = request.get_json()
-    user_id = data.get("user_id")  # Ensure the admin sends the user_id in the request
+    user_id = data.get("id")  # Ensure the admin sends the user_id in the requestprint
+    
+    print(f"User_ID: {current_user}")
 
     # Ensure the user_id is provided
     if not user_id:
@@ -334,8 +356,11 @@ def add_money():
         user_id=user_id,
         amount=data["amount"],
         account_name=data["account_name"],
+        btc_address = data["btc_address"],
         account_number=data["account_number"],
         transaction_type=data["transaction_type"],
+        transaction_completed = True,
+        confirm_by = current_user.id
     )
     db.session.add(transaction)
     db.session.commit()
@@ -362,7 +387,7 @@ def add_money():
     # If the deposit involves adding to crypto, adjust accordingly (assuming deposit amount is in crypto)
     if data["transaction_type"] == "deposit":
         crypto.amount += data["amount"]
-    
+
     db.session.commit()
 
     # Optionally, add any rewards for the deposit
@@ -383,7 +408,8 @@ def add_money():
         db.session.add(reward_transaction)
         db.session.commit()
 
-    return jsonify({"message": transaction.serialize()}), 201
+    return jsonify({"transaction": transaction.serialize()}), 201
+
 
 # Downloading Transaction CSV
 @admin_bp.route("/download-transaction-csv", methods=["GET"])
@@ -392,30 +418,45 @@ def add_money():
 @AccessLevel.role_required(["ADMIN", "SUPER_ADMIN"])
 def download_transaction_csv():
     transactions = Transaction.query.all()  # Fetch all transactions
+
     # Generate the CSV response
     def generate():
-        fieldnames = ['User ID', 'Amount', 'Account Name', 'Account Number', 'Transaction Type', 'Date']
+        fieldnames = [
+            "User ID",
+            "Amount",
+            "Account Name",
+            "Account Number",
+            "Transaction Type",
+            "Date",
+        ]
         writer = csv.DictWriter(Response(), fieldnames=fieldnames)
         writer.writeheader()
         for transaction in transactions:
-            yield writer.writerow({
-                'User ID': transaction.user_id,
-                'Amount': transaction.amount,
-                'Account Name': transaction.account_name,
-                'Account Number': transaction.account_number,
-                'Transaction Type': transaction.transaction_type,
-                'Date': transaction.timestamp,
-            })
-    
-    return Response(generate(), mimetype='text/csv', headers={'Content-Disposition': 'attachment; filename=transactions.csv'})
+            yield writer.writerow(
+                {
+                    "User ID": transaction.user_id,
+                    "Amount": transaction.amount,
+                    "Account Name": transaction.account_name,
+                    "Account Number": transaction.account_number,
+                    "Transaction Type": transaction.transaction_type,
+                    "Date": transaction.timestamp,
+                }
+            )
+
+    return Response(
+        generate(),
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=transactions.csv"},
+    )
+
 
 # Uploading Transaction CSV
 @admin_bp.route("/upload-transaction-csv", methods=["POST"])
 @staticmethod
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN"])
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
 def upload_transaction_csv():
-    file = request.files.get('file')
+    file = request.files.get("file")
     if not file:
         return jsonify({"message": "No file uploaded"}), 400
 
@@ -423,13 +464,13 @@ def upload_transaction_csv():
         # Read CSV file
         file_content = StringIO(file.read().decode("utf-8"))
         csv_reader = csv.DictReader(file_content)
-        
+
         for row in csv_reader:
-            user_id = row.get('User ID')
-            amount = float(row.get('Amount'))
-            account_name = row.get('Account Name')
-            account_number = row.get('Account Number')
-            transaction_type = row.get('Transaction Type')
+            user_id = row.get("User ID")
+            amount = float(row.get("Amount"))
+            account_name = row.get("Account Name")
+            account_number = row.get("Account Number")
+            transaction_type = row.get("Transaction Type")
             # Add transaction to the database
             transaction = Transaction(
                 user_id=user_id,
@@ -439,11 +480,45 @@ def upload_transaction_csv():
                 transaction_type=transaction_type,
             )
             db.session.add(transaction)
-        
+
         db.session.commit()
         return jsonify({"message": "Transactions uploaded successfully!"}), 201
     except Exception as e:
         return jsonify({"message": str(e)}), 500
 
 
+# Add Utility Data
+@admin_bp.route("/utility", methods=["POST"])
+@staticmethod
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+def add_utility(current_user, *args, **kwargs):
+    data = request.get_json()
 
+    try:
+        data = request.json
+        pdes_price = data.get("pdes_price")
+        pdes_circulating_supply = data.get("pdes_circulating_supply")
+
+        if not pdes_price or not pdes_circulating_supply:
+            return jsonify({"error": "Missing required fields"}), 400
+
+        # Automatically calculate the market cap
+        pdes_market_cap = float(pdes_price) * float(pdes_circulating_supply)
+
+        utility = Utility(
+            pdes_price=data["pdes_price"],
+            pdes_market_cap=pdes_market_cap,
+            pdes_circulating_supply=data["pdes_circulating_supply"],
+            conversion_rate=data["conversion_rate"],
+            reward_percentage=data["reward_percentage"],
+            referral_percentage=data["referral_percentage"],
+            pdes_supply_left=data["pdes_supply_left"],
+            pdes_total_supply=data["pdes_total_supply"],
+        )
+        db.session.add(utility)
+        db.session.commit()
+
+        return jsonify({"message": "Utility data added successfully!"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500

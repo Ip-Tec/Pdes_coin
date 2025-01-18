@@ -1,16 +1,18 @@
 import { FaUserCircle, FaBell } from "react-icons/fa";
+import { useAuth } from "../../contexts/AuthContext";
 
 interface AdminTopbarProps {
   isSidebarCollapsed: boolean;
 }
 
 const AdminTopbar: React.FC<AdminTopbarProps> = ({ isSidebarCollapsed }) => {
+  const { user } = useAuth();
   return (
     <div
       className={`fixed top-0 left-0 h-16 flex items-center z-10 justify-end bg-gray-800
          text-white shadow-md transition-all duration-300 ${
-        isSidebarCollapsed ? "pl-16" : "pl-64"
-      } pr-4 w-full`}
+           isSidebarCollapsed ? "pl-16" : "pl-64"
+         } pr-4 w-full`}
     >
       {/* Notifications and Profile */}
       <div className="flex items-left gap-6">
@@ -24,7 +26,13 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ isSidebarCollapsed }) => {
         {/* Profile */}
         <div className="flex items-center gap-2 cursor-pointer hover:text-gray-300">
           <FaUserCircle size={30} />
-          <span className="hidden sm:inline-block">Admin</span>
+          <span className="hidden sm:inline-block">
+            {user?.role == "admin "
+              ? "Admin"
+              : user?.role == "super_admin"
+              ? "Super Admin"
+              : user?.role == "developer" && "Ip"}
+          </span>
         </div>
       </div>
     </div>

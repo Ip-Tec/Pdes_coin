@@ -2,14 +2,22 @@ export interface InputFieldProps {
   label: string;
   type: string;
   name: string;
-  value: string;
-  disabled?: boolean;
+  value: string | number; // Adjusted to allow numbers as well
+  disabled?: boolean | undefined;
   placeholder?: string;
   error?: string;
-  required?: boolean;
+  required?: boolean | undefined;
   icon?: React.ReactNode;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  [key: string]:
+    | string
+    | number
+    | undefined
+    | boolean
+    | React.ReactNode
+    | ((e: React.ChangeEvent<HTMLInputElement>) => void);
 }
+
 export interface User {
   id: number;
   role: string;
@@ -159,5 +167,16 @@ export interface DepositAccountProps {
   account_number: string;
   amount: number;
   account_type: string;
-  max_deposit_amount:  number;
+  max_deposit_amount: number;
+}
+
+export interface UtilityProps {
+  pdes_price: string;
+  pdes_market_cap?: string;
+  pdes_circulating_supply: string;
+  conversion_rate: string;
+  reward_percentage: string;
+  referral_percentage: string;
+  pdes_supply_left: string;
+  pdes_total_supply: string;
 }

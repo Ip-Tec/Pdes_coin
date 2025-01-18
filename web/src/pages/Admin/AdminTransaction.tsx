@@ -22,6 +22,8 @@ const AdminTransaction = () => {
 
   const handleSelectUser = (user: User) => {
     setSelectedUser(user);
+    console.log("the Selected User", user.full_name);
+    
     setActiveComponent("EditTransaction");
   };
 
@@ -33,7 +35,7 @@ const AdminTransaction = () => {
             title="Edit Confirm Transaction"
             onClose={() => setActiveComponent(null)}
           >
-            <ConfirmTransaction />
+            <ConfirmTransaction user={selectedUser} />
           </SlideInPanel>
         );
       case "AddDepositAccount":
@@ -100,7 +102,7 @@ const AdminTransaction = () => {
         {renderActiveComponent()}
 
         {/* User Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 mt-[23rem] md:mt-64 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {users.map((user) => (
             <UserCard key={user.id} user={user} onSelect={handleSelectUser} />
           ))}

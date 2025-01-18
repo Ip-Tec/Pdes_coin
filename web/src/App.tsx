@@ -27,6 +27,7 @@ import WalletPage from "./pages/WalletPage";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import AdminTransaction from "./pages/Admin/AdminTransaction";
 import AdminUser from "./pages/Admin/AdminUser";
+import Utility from "./pages/Admin/Utility";
 
 const App: React.FC = () => {
   const DisplayNavbar: React.FC = () => {
@@ -331,7 +332,6 @@ const App: React.FC = () => {
             }
           />
           {/* Admin routes */}
-
           <Route
             path="/a/dashboard"
             element={
@@ -362,6 +362,18 @@ const App: React.FC = () => {
                 requiredRoles={["admin", "super_admin", "developer"]}
               >
                 <AdminTransaction />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/a/utility"
+            element={
+              <ProtectedRoute
+                isAuth={true}
+                requiredRoles={["super_admin", "developer"]}
+              >
+                <Utility />
               </ProtectedRoute>
             }
           />
