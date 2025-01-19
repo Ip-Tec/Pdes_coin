@@ -17,6 +17,7 @@ import { CryptoHistory } from "../utils/type";
 import InputField from "../components/InputField";
 import CandlestickChart from "../components/CandlestickChart";
 import { FaArrowLeft } from "react-icons/fa";
+import { formattedMoneyUSD } from "../utils/helpers";
 
 // Register chart components
 ChartJS.register(
@@ -30,11 +31,12 @@ ChartJS.register(
 );
 
 function BuySellCoin() {
-  const { isAuth } = useAuth();
+  const { isAuth, user } = useAuth();
   const [price, setPrice] = useState<number | null>(null);
   const [amount, setAmount] = useState<string>("");
   const [action, setAction] = useState<"buy" | "sell">("buy");
   const [isLoading, setIsLoading] = useState(true);
+  const [total, setTotal] = useState<string>("");
   const [chartType, setChartType] = useState<"line" | "candlestick">("line");
   const [priceHistory, setPriceHistory] = useState<CryptoHistory[]>([]);
   const navigate = useNavigate();
@@ -94,6 +96,15 @@ function BuySellCoin() {
       alert("Please enter a valid amount.");
     }
   };
+
+  useEffect(() => {
+    if (amount && price) {
+      const calculatedTotal = (parseFloat(amount) * price).toFixed(2);
+      setTotal(calculatedTotal);
+    } else {
+      setTotal("");
+    }
+  }, [amount, price]);
 
   const handleChartTypeChange = () => {
     setChartType(chartType === "line" ? "candlestick" : "line");
@@ -162,14 +173,49 @@ function BuySellCoin() {
           </button>
         </div>
 
-        <div className="flex justify-between items-center mt-8">
-          <div className="text-xl">Current Price: ${price?.toFixed(2)}</div>
-          <div className="text-lg">
-            {action === "buy" ? "Buying" : "Selling"} Pdes
+        <div className="flex my-4 flex-row justify-evenly items-center gap-6 p-4 bg-gray-100 rounded-lg shadow-md">
+          {/* PDES Price Section */}
+          <div className="text-center flex flex-col items-center border-r border-green-500 pr-6">
+            <span className="text-sm font-medium text-gray-700">
+              PDES Price:
+            </span>
+            <span className="text-green-500 text-lg font-semibold">
+              {formattedMoneyUSD(Number(price))}
+            </span>
+          </div>
+          {/* Balance Section */}
+          <div className="text-center flex flex-col items-center border-r border-blue-500 pr-6">
+            <span className="text-sm font-medium text-gray-700">Balance:</span>
+            <span className="text-blue-500 text-lg font-semibold">
+              {formattedMoneyUSD(Number(user?.balance))}
+            </span>
+          </div>
+          {/* Action Section */}
+          <div className="text-center flex flex-col items-center">
+            <span className="text-sm font-medium text-gray-700">
+              {action === "buy" ? "Buy at:" : "Sale at:"}
+            </span>
+            <span
+              className={`text-lg font-semibold ${
+                action === "buy" ? "text-green-500" : "text-red-500"
+              }`}
+            >
+              {formattedMoneyUSD(Number(price))}
+            </span>
           </div>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="text-justify my-4">
+            {total && (
+              <p className="text-sm text-gray-700">
+                {action === "buy"
+                  ? `You will pay: ${formattedMoneyUSD(parseFloat(total))}`
+                  : `You will receive: ${formattedMoneyUSD(parseFloat(total))}`}
+              </p>
+            )}
+          </div>
+
           <div className="flex justify-between items-center">
             <InputField
               required
@@ -210,7 +256,9 @@ function BuySellCoin() {
           <div className="mt-4">
             <button
               type="submit"
-              className="w-full py-2 bg-primary text-white rounded-lg hover:bg-primary-dark"
+              className={`w-full py-2 bg-primary text-white rounded-lg hover:bg-primary-dark" ${
+                action === "sell" && "bg-red-600 text-white"
+              }`}
             >
               {action.charAt(0).toUpperCase() + action.slice(1)} Pdes
             </button>

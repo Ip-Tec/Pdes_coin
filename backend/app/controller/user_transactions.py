@@ -8,6 +8,7 @@ from app.models import (
     AccountDetail,
     Deposit,
     DepositAccount,
+    RewardConfig,
     User,
     Transaction,
     Crypto,
@@ -402,15 +403,9 @@ class AccountService:
 
 # PDES service
 class PdesService:
-    """_summary_
-    PDES service for buying and selling PDES coin
-
-    Returns:
-        _type_: _description_
-    """
+    """PDES service for buying and selling PDES coins"""
 
     # Buy PDES coin
-
     @staticmethod
     @token_required
     def buy_pdes():
@@ -453,7 +448,7 @@ class PdesService:
             )
             db.session.add(pdes_transaction)
 
-            # Update coin price history
+            # Update coin price history for buy action
             coin_price_history = CoinPriceHistory(
                 crypto_name="PDES",
                 price=price,
@@ -462,6 +457,23 @@ class PdesService:
             )
             db.session.add(coin_price_history)
 
+            # Adjust price due to increased demand (increase price by 1%)
+            utility = Utility.query.first()
+            if utility:
+                new_price = price * 1.01  # Increase by 1% for demand
+                utility.update_price(new_price)  # Assuming there's a method for updating price
+                db.session.commit()
+
+            # Apply rewards if configured
+            reward_config = RewardConfig.query.first()
+            if reward_config and reward_config.percentage_weekly > 0:
+                reward_earned = total_cost * reward_config.percentage_weekly / 100
+                balance.rewards += reward_earned
+                db.session.commit()
+                pdes_transaction.reward_earned = reward_earned
+                db.session.commit()
+
+            # Commit transaction
             db.session.commit()
 
             return (
@@ -500,9 +512,7 @@ class PdesService:
 
         try:
             # Fetch user's PDES balance
-            crypto_balance = Crypto.query.filter_by(
-                user_id=user_id, crypto_name="PDES"
-            ).first()
+            crypto_balance = Crypto.query.filter_by(user_id=user_id, crypto_name="PDES").first()
             if not crypto_balance or crypto_balance.amount < amount:
                 return jsonify({"error": "Insufficient PDES balance"}), 400
 
@@ -527,7 +537,7 @@ class PdesService:
                 return jsonify({"error": "User balance not found"}), 404
             balance.balance += total_income
 
-            # Update coin price history
+            # Update coin price history for sell action
             coin_price_history = CoinPriceHistory(
                 crypto_name="PDES",
                 price=price,
@@ -535,6 +545,27 @@ class PdesService:
                 timestamp=datetime.datetime.utcnow(),
             )
             db.session.add(coin_price_history)
+
+            # Adjust price due to selling pressure (decrease price by 1%)
+            utility = Utility.query.first()
+            if utility:
+                new_price = price * 0.99  # Decrease by 1% for selling pressure
+                utility.update_price(new_price)  # Assuming there's a method for updating price
+                db.session.commit()
+
+            # Apply rewards if configured
+            reward_config = RewardConfig.query.first()
+            if reward_config and reward_config.percentage_weekly > 0:
+                reward_earned = total_income * reward_config.percentage_weekly / 100
+                balance.rewards += reward_earned
+                db.session.commit()
+                pdes_transaction.reward_earned = reward_earned
+                db.session.commit()
+
+            # Check if user sold all PDES, reset rewards if needed
+            if crypto_balance.amount == 0:
+                balance.rewards = 0  # Reset rewards if all coins are sold
+                db.session.commit()
 
             db.session.commit()
 

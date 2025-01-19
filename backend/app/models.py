@@ -33,7 +33,7 @@ class User(db.Model):
         default=db.func.current_timestamp(),
         onupdate=db.func.current_timestamp(),
     )
-    
+
     # Relationships
     transactions = db.relationship(
         "Transaction",
@@ -178,7 +178,7 @@ class Deposit(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else "",
             "updated_at": self.updated_at.isoformat() if self.updated_at else "",
         }
-    
+
     # Return serialized info for admin
     def serialize_admin(self):
         user = User.query.get(self.admin_id)
@@ -195,7 +195,7 @@ class Deposit(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else "",
             "updated_at": self.updated_at.isoformat() if self.updated_at else "",
         }
-    
+
     # Return serialized info with the user
     def serialize_with_user(self):
         user = User.query.get(self.user_id)
@@ -212,14 +212,17 @@ class Deposit(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else "",
             "updated_at": self.updated_at.isoformat() if self.updated_at else "",
         }
-    
 
 
 # Transaction model
 class Transaction(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)  # Normal user
-    confirm_by = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)  # Admin user
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("user.id"), nullable=False
+    )  # Normal user
+    confirm_by = db.Column(
+        db.Integer, db.ForeignKey("user.id"), nullable=True
+    )  # Admin user
 
     amount = db.Column(db.Float, nullable=False)
     currency = db.Column(db.String(10), nullable=True)
@@ -348,6 +351,9 @@ class PdesTransaction(db.Model):
     price = db.Column(db.Float, nullable=False)
     total = db.Column(db.Float, nullable=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    reward_earned = db.Column(
+        db.Float, default=0.0
+    )  # Store reward earned from transaction
 
     def serialize(self):
         return {
@@ -357,6 +363,7 @@ class PdesTransaction(db.Model):
             "amount": self.amount,
             "price": self.price,
             "total": self.total,
+            "reward_earned": self.reward_earned,
             "created_at": self.created_at.isoformat(),
         }
 
@@ -382,6 +389,15 @@ class CoinPriceHistory(db.Model):
             "volume": self.volume,
         }
 
+    def record_price(self, open_price, close_price, volume):
+        self.open_price = open_price
+        self.close_price = close_price
+        self.high_price = max(open_price, close_price)
+        self.low_price = min(open_price, close_price)
+        self.volume = volume
+        db.session.add(self)
+        db.session.commit()
+
 
 class Utility(db.Model):
     __tablename__ = "utility"
@@ -391,8 +407,8 @@ class Utility(db.Model):
     pdes_market_cap = db.Column(db.Float, nullable=False)
     pdes_circulating_supply = db.Column(db.Float, nullable=False)
     conversion_rate = db.Column(db.Float, nullable=False, default=1980)
-    reward_percentage = db.Column(db.Float, nullable=False, default=25.0)  # default 25%
-    referral_percentage = db.Column(db.Float, nullable=False, default=5.0)  # default 5%
+    reward_percentage = db.Column(db.Float, nullable=False, default=25.0)  # Default 25%
+    referral_percentage = db.Column(db.Float, nullable=False, default=5.0)  # Default 5%
     pdes_supply_left = db.Column(db.Float, nullable=False, default=8000000000.0)
     pdes_total_supply = db.Column(db.Float, nullable=False, default=8000000000.0)
 
@@ -408,6 +424,10 @@ class Utility(db.Model):
             "referral_percentage": self.referral_percentage,
             "pdes_circulating_supply": self.pdes_circulating_supply,
         }
+
+    def update_price(self, price_change_factor: float):
+        self.pdes_price *= price_change_factor
+        db.session.commit()
 
 
 # To hold the user's crypto addresses
@@ -559,20 +579,20 @@ def handle_buy_pdes(user_id, amount, price_per_coin):
 
     # Ensure the user has enough balance to buy Pdes
     if user_balance.balance >= total_cost:
+        # Deduct the balance from the user's account
         user_balance.balance -= total_cost
-        user.balance.balance = user_balance.balance  # Update user balance
+        db.session.commit()
 
-        # Add Pdes coin to the user's crypto balance
+        # Add PDES to user's crypto balance
         crypto = Crypto.query.filter_by(user_id=user.id, crypto_name="Pdes").first()
         if not crypto:
-            crypto = Crypto(
-                user_id=user.id, crypto_name="Pdes", amount=0.0, account_address=""
-            )  # No address required yet
+            crypto = Crypto(user_id=user.id, crypto_name="Pdes", amount=0.0, account_address="")
             db.session.add(crypto)
 
         crypto.amount += amount
+        db.session.commit()
 
-        # Record the transaction
+        # Record the buy transaction
         pdes_transaction = PdesTransaction(
             user_id=user.id,
             action="buy",
@@ -581,6 +601,30 @@ def handle_buy_pdes(user_id, amount, price_per_coin):
             total=total_cost,
         )
         db.session.add(pdes_transaction)
+
+        # Adjust the price based on demand (increase price slightly due to higher buying demand)
+        utility = Utility.query.first()
+        if utility:
+            # Increase price by 1% (or another suitable factor)
+            utility.update_price(price_change_factor=1.01)  # Increase by 1%
+            db.session.commit()
+
+        # Apply rewards if configured in RewardConfig
+        reward_config = RewardConfig.query.first()
+        if reward_config and reward_config.percentage_weekly > 0:
+            reward_earned = total_cost * reward_config.percentage_weekly / 100
+            user_balance.rewards += reward_earned
+            db.session.commit()
+            pdes_transaction.reward_earned = reward_earned
+            db.session.commit()
+
+        # Record price history after the transaction
+        coin_price_history = CoinPriceHistory(
+            open_price=price_per_coin,
+            close_price=utility.pdes_price,
+            volume=amount,
+        )
+        db.session.add(coin_price_history)
         db.session.commit()
 
         return {
@@ -602,10 +646,13 @@ def handle_sell_pdes(user_id, amount, price_per_coin):
         total_sale = amount * price_per_coin
         user_balance = user.balance
         user_balance.balance += total_sale
-        user.balance.balance = user_balance.balance  # Update user balance
-        crypto.amount -= amount
+        db.session.commit()
 
-        # Record the transaction
+        # Deduct the sold amount from the crypto balance
+        crypto.amount -= amount
+        db.session.commit()
+
+        # Record the sell transaction
         pdes_transaction = PdesTransaction(
             user_id=user.id,
             action="sell",
@@ -614,7 +661,36 @@ def handle_sell_pdes(user_id, amount, price_per_coin):
             total=total_sale,
         )
         db.session.add(pdes_transaction)
+
+        # Adjust the price based on supply (decrease price slightly due to higher selling pressure)
+        utility = Utility.query.first()
+        if utility:
+            # Decrease price by 1% (or another suitable factor)
+            utility.update_price(price_change_factor=0.99)  # Decrease by 1%
+            db.session.commit()
+
+        # Apply rewards if configured
+        reward_config = RewardConfig.query.first()
+        if reward_config and reward_config.percentage_weekly > 0:
+            reward_earned = total_sale * reward_config.percentage_weekly / 100
+            user_balance.rewards += reward_earned
+            db.session.commit()
+            pdes_transaction.reward_earned = reward_earned
+            db.session.commit()
+
+        # Record price history after the transaction
+        coin_price_history = CoinPriceHistory(
+            open_price=price_per_coin,
+            close_price=utility.pdes_price,
+            volume=amount,
+        )
+        db.session.add(coin_price_history)
         db.session.commit()
+
+        # Check if user sold all PDES, in that case, reset their reward status
+        if crypto.amount == 0:
+            user.referral_reward = 0.0  # Reset referral rewards if they sold all
+            db.session.commit()
 
         return {
             "message": "Sale successful",

@@ -13,6 +13,17 @@ def get_current_price():
         Utility.query.first()
     )  # Assuming there's only one row for the price details
     if utility:
+
+        print(
+            {
+                "pdes_price": utility.pdes_price,
+                "pdes_market_cap": utility.pdes_market_cap,
+                "pdes_circulating_supply": utility.pdes_circulating_supply,
+                "pdes_supply_left": utility.pdes_supply_left,
+                "pdes_total_supply": utility.pdes_total_supply,
+            }
+        )
+
         return (
             jsonify(
                 {

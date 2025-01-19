@@ -321,7 +321,7 @@ export const updatePriceHistory = async (priceData: {
 export const fetchCurrentPrice = async () => {
   try {
     const response = await API.get(apiUrl("/utility/current-price"));
-    return response.data.current_price;
+    return response.data.pdes_price;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response && error.response.status === 401) {
