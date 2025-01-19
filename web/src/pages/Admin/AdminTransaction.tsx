@@ -9,6 +9,7 @@ import DownloadComponent from "../../components/Admin/DownloadComponent";
 import SlideInPanel from "../../components/Admin/SlideInPanel"; // Reusable slide-in panel
 import { DepositPropsWithUser, User } from "../../utils/type";
 import { ToastContainer } from "react-toastify";
+import ChartWithToggle from "../../components/Admin/ChartWithToggle";
 
 const AdminTransaction = () => {
   const [users, setUsers] = useState<User[] | DepositPropsWithUser[]>([]);
@@ -144,6 +145,9 @@ const AdminTransaction = () => {
           {users.map((user) => (
             <UserCard key={user.id} user={user} onSelect={handleSelectUser} />
           ))}
+        </div>
+        <div className="flex">
+          <ChartWithToggle />
         </div>
       </div>
     </AdminWrapper>

@@ -17,8 +17,11 @@ from app.models import (
     CoinPriceHistory,
     Utility,
     PdesTransaction,
+    handle_buy_pdes,
+    handle_sell_pdes,
 )
 from app.access_level import AccessLevel
+
 # from sqlalchemy.sql.expression import case
 from flask import request, jsonify
 from app.key_gen import generate_key
@@ -348,15 +351,17 @@ class AccountService:
             "USDCAddressSeed": account_details.USDCAddressSeed,
         }
 
-    
-
     # Get admin account details
     @staticmethod
     @token_required
     def get_random_deposit_account(current_user, *args, **kwargs):
         # Get the start and end of the current day in UTC
-        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
-        today_end = datetime.now(timezone.utc).replace(hour=23, minute=59, second=59, microsecond=999999)
+        today_start = datetime.now(timezone.utc).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        today_end = datetime.now(timezone.utc).replace(
+            hour=23, minute=59, second=59, microsecond=999999
+        )
 
         # Query eligible accounts directly from the database
         try:
@@ -369,11 +374,14 @@ class AccountService:
                     func.coalesce(
                         func.sum(
                             case(
-                                (Deposit.created_at.between(today_start, today_end), Deposit.amount),  # Corrected condition
-                                else_=0  # Provide default value for the case statement
+                                (
+                                    Deposit.created_at.between(today_start, today_end),
+                                    Deposit.amount,
+                                ),  # Corrected condition
+                                else_=0,  # Provide default value for the case statement
                             )
                         ),
-                        0  # Default value for coalesce if no rows match
+                        0,  # Default value for coalesce if no rows match
                     )
                     < DepositAccount.max_deposit_amount
                 )
@@ -394,7 +402,7 @@ class AccountService:
         except Exception as e:
             print(f"Error occurred: {str(e)}")  # Log the error for debugging
             return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
-    
+
 
 # # Setting up logging
 # logging.basicConfig(level=logging.INFO)
@@ -408,8 +416,8 @@ class PdesService:
     # Buy PDES coin
     @staticmethod
     @token_required
-    def buy_pdes():
-        user_id = request.user_id
+    def buy_pdes(current_user, *args, **kwargs):
+        user_id = current_user.id
         data = request.get_json()
 
         # Validate required fields
@@ -424,72 +432,77 @@ class PdesService:
         if amount <= 0 or price <= 0:
             return jsonify({"error": "Amount and price must be positive numbers"}), 400
 
-        try:
-            # Fetch user's balance
-            balance = Balance.query.filter_by(user_id=user_id).first()
-            if not balance:
-                return jsonify({"error": "User balance not found"}), 404
+        pdes_price = Utility.pdes_price()
+        return handle_buy_pdes(
+            user_id=user_id, amount=amount, price_per_coin=pdes_price
+        )
 
-            total_cost = amount * price
+        # try:
+        #     # Fetch user's balance
+        #     balance = Balance.query.filter_by(user_id=user_id).first()
+        #     if not balance:
+        #         return jsonify({"error": "User balance not found"}), 404
 
-            if balance.balance < total_cost:
-                return jsonify({"error": "Insufficient balance"}), 400
+        #     total_cost = amount * price
 
-            # Deduct balance
-            balance.balance -= total_cost
+        #     if balance.balance < total_cost:
+        #         return jsonify({"error": "Insufficient balance"}), 400
 
-            # Create buy transaction
-            pdes_transaction = PdesTransaction(
-                user_id=user_id,
-                action="buy",
-                amount=amount,
-                price=price,
-                total=total_cost,
-            )
-            db.session.add(pdes_transaction)
+        #     # Deduct balance
+        #     balance.balance -= total_cost
 
-            # Update coin price history for buy action
-            coin_price_history = CoinPriceHistory(
-                crypto_name="PDES",
-                price=price,
-                action="buy",
-                timestamp=datetime.datetime.utcnow(),
-            )
-            db.session.add(coin_price_history)
+        #     # Create buy transaction
+        #     pdes_transaction = PdesTransaction(
+        #         user_id=user_id,
+        #         action="buy",
+        #         amount=amount,
+        #         price=price,
+        #         total=total_cost,
+        #     )
+        #     db.session.add(pdes_transaction)
 
-            # Adjust price due to increased demand (increase price by 1%)
-            utility = Utility.query.first()
-            if utility:
-                new_price = price * 1.01  # Increase by 1% for demand
-                utility.update_price(new_price)  # Assuming there's a method for updating price
-                db.session.commit()
+        #     # Update coin price history for buy action
+        #     coin_price_history = CoinPriceHistory(
+        #         crypto_name="PDES",
+        #         price=price,
+        #         action="buy",
+        #         timestamp=datetime.utcnow(),
+        #     )
+        #     db.session.add(coin_price_history)
 
-            # Apply rewards if configured
-            reward_config = RewardConfig.query.first()
-            if reward_config and reward_config.percentage_weekly > 0:
-                reward_earned = total_cost * reward_config.percentage_weekly / 100
-                balance.rewards += reward_earned
-                db.session.commit()
-                pdes_transaction.reward_earned = reward_earned
-                db.session.commit()
+        #     # Adjust price due to increased demand (increase price by 1%)
+        #     utility = Utility.query.first()
+        #     if utility:
+        #         new_price = price * 1.01  # Increase by 1% for demand
+        #         utility.update_price(new_price)  # Assuming there's a method for updating price
+        #         db.session.commit()
 
-            # Commit transaction
-            db.session.commit()
+        #     # Apply rewards if configured
+        #     reward_config = RewardConfig.query.first()
+        #     if reward_config and reward_config.percentage_weekly > 0:
+        #         reward_earned = total_cost * reward_config.percentage_weekly / 100
+        #         balance.rewards += reward_earned
+        #         db.session.commit()
+        #         pdes_transaction.reward_earned = reward_earned
+        #         db.session.commit()
 
-            return (
-                jsonify(
-                    {
-                        "status": "success",
-                        "message": "PDES coins purchased successfully",
-                        "transaction": pdes_transaction.serialize(),
-                        "balance": {"remaining_balance": balance.balance},
-                    }
-                ),
-                201,
-            )
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            return jsonify({"error": "Transaction failed"}), 500
+        #     # Commit transaction
+        #     db.session.commit()
+
+        #     return (
+        #         jsonify(
+        #             {
+        #                 "status": "success",
+        #                 "message": "PDES coins purchased successfully",
+        #                 "transaction": pdes_transaction.serialize(),
+        #                 "balance": {"remaining_balance": balance.balance},
+        #             }
+        #         ),
+        #         201,
+        #     )
+        # except SQLAlchemyError as e:
+        #     db.session.rollback()
+        #     return jsonify({"error": "Transaction failed"}), 500
 
     # Sell PDES coin
     @staticmethod
@@ -510,82 +523,87 @@ class PdesService:
         if amount <= 0 or price <= 0:
             return jsonify({"error": "Amount and price must be positive numbers"}), 400
 
-        try:
-            # Fetch user's PDES balance
-            crypto_balance = Crypto.query.filter_by(user_id=user_id, crypto_name="PDES").first()
-            if not crypto_balance or crypto_balance.amount < amount:
-                return jsonify({"error": "Insufficient PDES balance"}), 400
+        pdes_price = Utility.pdes_price()
+        return handle_sell_pdes(
+            user_id=user_id, amount=amount, price_per_coin=pdes_price
+        )
 
-            total_income = amount * price
+        # try:
+        #     # Fetch user's PDES balance
+        #     crypto_balance = Crypto.query.filter_by(user_id=user_id, crypto_name="PDES").first()
+        #     if not crypto_balance or crypto_balance.amount < amount:
+        #         return jsonify({"error": "Insufficient PDES balance"}), 400
 
-            # Deduct PDES balance
-            crypto_balance.amount -= amount
+        #     total_income = amount * price
 
-            # Create sell transaction
-            pdes_transaction = PdesTransaction(
-                user_id=user_id,
-                action="sell",
-                amount=amount,
-                price=price,
-                total=total_income,
-            )
-            db.session.add(pdes_transaction)
+        #     # Deduct PDES balance
+        #     crypto_balance.amount -= amount
 
-            # Update user's balance
-            balance = Balance.query.filter_by(user_id=user_id).first()
-            if not balance:
-                return jsonify({"error": "User balance not found"}), 404
-            balance.balance += total_income
+        #     # Create sell transaction
+        #     pdes_transaction = PdesTransaction(
+        #         user_id=user_id,
+        #         action="sell",
+        #         amount=amount,
+        #         price=price,
+        #         total=total_income,
+        #     )
+        #     db.session.add(pdes_transaction)
 
-            # Update coin price history for sell action
-            coin_price_history = CoinPriceHistory(
-                crypto_name="PDES",
-                price=price,
-                action="sell",
-                timestamp=datetime.datetime.utcnow(),
-            )
-            db.session.add(coin_price_history)
+        #     # Update user's balance
+        #     balance = Balance.query.filter_by(user_id=user_id).first()
+        #     if not balance:
+        #         return jsonify({"error": "User balance not found"}), 404
+        #     balance.balance += total_income
 
-            # Adjust price due to selling pressure (decrease price by 1%)
-            utility = Utility.query.first()
-            if utility:
-                new_price = price * 0.99  # Decrease by 1% for selling pressure
-                utility.update_price(new_price)  # Assuming there's a method for updating price
-                db.session.commit()
+        #     # Update coin price history for sell action
+        #     coin_price_history = CoinPriceHistory(
+        #         crypto_name="PDES",
+        #         price=price,
+        #         action="sell",
+        #         timestamp=datetime.datetime.utcnow(),
+        #     )
+        #     db.session.add(coin_price_history)
 
-            # Apply rewards if configured
-            reward_config = RewardConfig.query.first()
-            if reward_config and reward_config.percentage_weekly > 0:
-                reward_earned = total_income * reward_config.percentage_weekly / 100
-                balance.rewards += reward_earned
-                db.session.commit()
-                pdes_transaction.reward_earned = reward_earned
-                db.session.commit()
+        #     # Adjust price due to selling pressure (decrease price by 1%)
+        #     utility = Utility.query.first()
+        #     if utility:
+        #         new_price = price * 0.99  # Decrease by 1% for selling pressure
+        #         utility.update_price(new_price)  # Assuming there's a method for updating price
+        #         db.session.commit()
 
-            # Check if user sold all PDES, reset rewards if needed
-            if crypto_balance.amount == 0:
-                balance.rewards = 0  # Reset rewards if all coins are sold
-                db.session.commit()
+        #     # Apply rewards if configured
+        #     reward_config = RewardConfig.query.first()
+        #     if reward_config and reward_config.percentage_weekly > 0:
+        #         reward_earned = total_income * reward_config.percentage_weekly / 100
+        #         balance.rewards += reward_earned
+        #         db.session.commit()
+        #         pdes_transaction.reward_earned = reward_earned
+        #         db.session.commit()
 
-            db.session.commit()
+        #     # Check if user sold all PDES, reset rewards if needed
+        #     if crypto_balance.amount == 0:
+        #         balance.rewards = 0  # Reset rewards if all coins are sold
+        #         db.session.commit()
 
-            return (
-                jsonify(
-                    {
-                        "status": "success",
-                        "message": "PDES coins sold successfully",
-                        "transaction": pdes_transaction.serialize(),
-                        "balance": {
-                            "remaining_balance": balance.balance,
-                            "crypto_balance": crypto_balance.amount,
-                        },
-                    }
-                ),
-                201,
-            )
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            return jsonify({"error": "Transaction failed"}), 500
+        #     db.session.commit()
+
+        #     return (
+        #         jsonify(
+        #             {
+        #                 "status": "success",
+        #                 "message": "PDES coins sold successfully",
+        #                 "transaction": pdes_transaction.serialize(),
+        #                 "balance": {
+        #                     "remaining_balance": balance.balance,
+        #                     "crypto_balance": crypto_balance.amount,
+        #                 },
+        #             }
+        #         ),
+        #         201,
+        #     )
+        # except SQLAlchemyError as e:
+        #     db.session.rollback()
+        #     return jsonify({"error": "Transaction failed"}), 500
 
     # Get PDES price history for ChartJS
     @staticmethod

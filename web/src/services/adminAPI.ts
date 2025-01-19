@@ -1,7 +1,7 @@
 import axios from "axios";
 import API, { apiUrl } from "./api";
-import { ErrorResponse, UtilityProps } from "../utils/type";
 import { toast } from "react-toastify";
+import { ErrorResponse, UtilityProps } from "../utils/type";
 
 // Transfer Funds
 export const getDashboardTotal = async () => {
@@ -170,6 +170,40 @@ export const confirmUserDeposit = async (data: any) => {
       console.error(error);
       console.error(errorData);
       return errorData;
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// get_transaction_proportions
+export const getProportionChart = async (type: string) => {
+  try {
+    const response = await API.get(apiUrl(`/admin/proportions?type=${type}`));
+    console.log({ response });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      console.error(errorData);
+
+      throw new Error(errorData?.message || "Transfer failed");
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// distribution-over-time
+export const distributionOverTime = async () => {
+  try {
+    const response = await API.get(apiUrl("/admin/distribution-over-time"));
+    console.log({ response });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      console.error(errorData);
+
+      throw new Error(errorData?.message || "Transfer failed");
     }
     throw new Error("Network error. Please try again.");
   }

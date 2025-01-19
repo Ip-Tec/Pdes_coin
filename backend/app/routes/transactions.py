@@ -85,16 +85,16 @@ def buy_sell(current_user):
 
     # Validate price (you can fetch this from an external API or use static)
     current_price = 50  # Example static price, replace with dynamic price if needed
-    if price != current_price:
-        return (
-            jsonify(
-                {
-                    "error": "INVALID_PRICE",
-                    "message": "Price doesn't match the current market price",
-                }
-            ),
-            400,
-        )
+    # if price != current_price:
+    #     return (
+    #         jsonify(
+    #             {
+    #                 "error": "INVALID_PRICE",
+    #                 "message": "Price doesn't match the current market price",
+    #             }
+    #         ),
+    #         400,
+    #     )
 
     # Call the controller method for buying or selling PDES coins
     if action == "buy":

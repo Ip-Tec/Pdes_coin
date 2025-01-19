@@ -4,11 +4,11 @@ import csv
 import jwt
 import datetime
 from app import db, socketio
+from dotenv import load_dotenv
+from sqlalchemy.orm import joinedload
 from app.services import token_required
 from app.access_level import AccessLevel
-from dotenv import load_dotenv
-from sqlalchemy import func, desc
-from sqlalchemy.orm import joinedload
+from sqlalchemy import func, desc, case
 from app.controller import user_controller
 from flask import Blueprint, request, jsonify, Response
 from app.models import (
@@ -23,8 +23,7 @@ from app.models import (
     AccountDetail,
     Utility,
 )
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 load_dotenv()
 
@@ -167,7 +166,9 @@ def get_top_users_by_balance():
                 "id": user.id,
                 "name": user.name,
                 "username": user.username,
-                "balance": user.balance.balance if user.balance else 0,  # Extract balance
+                "balance": (
+                    user.balance.balance if user.balance else 0
+                ),  # Extract balance
             }
             for user in top_users_by_balance
         ]
@@ -177,7 +178,9 @@ def get_top_users_by_balance():
                 "id": user.id,
                 "name": user.name,
                 "username": user.username,
-                "crypto_balance": user.balance.crypto_balance if user.balance else 0,  # Extract crypto balance
+                "crypto_balance": (
+                    user.balance.crypto_balance if user.balance else 0
+                ),  # Extract crypto balance
             }
             for user in top_users_by_crypto_balance
         ]
@@ -653,3 +656,104 @@ def search_deposits(current_user, *args, **kwargs):
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+# Function to get transaction proportions by type or currency
+@admin_bp.route("/proportions", methods=["GET"])
+@staticmethod
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+def get_transaction_proportions(current_user, *args, **kwargs):
+    type = request.args.get("type", "transaction_type").strip()
+
+    # If 'type' is 'transaction_type', group by transaction_type
+    if type == "transaction_type":
+        proportions = (
+            db.session.query(
+                # Use a conditional case to handle the presence or absence of ' + '
+                case(
+                    (
+                        func.instr(Transaction.transaction_type, " + ") > 0,
+                        func.substr(
+                            Transaction.transaction_type,
+                            1,
+                            func.instr(Transaction.transaction_type, " + ") - 1,
+                        ),
+                    ),
+                    else_=Transaction.transaction_type,
+                ).label("transaction_type"),
+                func.sum(Transaction.amount).label("total_amount"),
+            )
+            .group_by(
+                case(
+                    (
+                        func.instr(Transaction.transaction_type, " + ") > 0,
+                        func.substr(
+                            Transaction.transaction_type,
+                            1,
+                            func.instr(Transaction.transaction_type, " + ") - 1,
+                        ),
+                    ),
+                    else_=Transaction.transaction_type,
+                )
+            )
+            .all()
+        )
+        labels = [trans.transaction_type for trans in proportions]
+        data = [trans.total_amount for trans in proportions]
+
+    # If 'type' is 'currency', group by currency
+    elif type == "currency":
+        proportions = (
+            db.session.query(
+                Transaction.currency, func.sum(Transaction.amount).label("total_amount")
+            )
+            .group_by(Transaction.currency)
+            .all()
+        )
+        labels = [trans.currency for trans in proportions]
+        data = [trans.total_amount for trans in proportions]
+
+    else:
+        return (
+            jsonify(
+                {
+                    "error": "Invalid type parameter, must be 'transaction_type' or 'currency'}"
+                }
+            ),
+            400,
+        )
+
+    return jsonify(
+        {
+            "labels": labels,
+            "data": data,
+        }
+    )
+
+
+# Function to get transaction distribution over time (e.g., daily)
+@admin_bp.route("/distribution-over-time", methods=["GET"])
+@staticmethod
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+def get_transaction_distribution_over_time(current_user, *args, **kwargs):
+    # Get the start date for the last 30 days
+    start_date = datetime.datetime.now() - datetime.timedelta(days=30)
+
+    # Query the transaction amounts grouped by the date (day)
+    transactions = (
+        db.session.query(
+            func.date(Transaction.created_at).label("date"),
+            func.sum(Transaction.amount).label("total_amount"),
+        )
+        .filter(Transaction.created_at >= start_date)
+        .group_by("date")
+        .all()
+    )
+
+    # Prepare the data for the chart
+    labels = [str(trans.date) for trans in transactions]
+    data = [trans.total_amount for trans in transactions]
+
+    return jsonify({"labels": labels, "data": data})

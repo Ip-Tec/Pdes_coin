@@ -1,6 +1,10 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchCurrentPrice, getTransactionHistory } from "../services/api";
+import {
+  buySellPdes,
+  fetchCurrentPrice,
+  getTransactionHistory,
+} from "../services/api";
 import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
@@ -18,6 +22,7 @@ import InputField from "../components/InputField";
 import CandlestickChart from "../components/CandlestickChart";
 import { FaArrowLeft } from "react-icons/fa";
 import { formattedMoneyUSD } from "../utils/helpers";
+import { toast } from "react-toastify";
 
 // Register chart components
 ChartJS.register(
@@ -39,6 +44,7 @@ function BuySellCoin() {
   const [total, setTotal] = useState<string>("");
   const [chartType, setChartType] = useState<"line" | "candlestick">("line");
   const [priceHistory, setPriceHistory] = useState<CryptoHistory[]>([]);
+  const [useUsd, setUseUsd] = useState(true); // For toggling between USD and Pdes
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -51,7 +57,6 @@ function BuySellCoin() {
     const fetchCoinPrice = async () => {
       try {
         const coinPrice = await fetchCurrentPrice();
-        console.log("coinPrice", coinPrice);
         setPrice(coinPrice);
       } catch (error) {
         console.error("Error fetching coin price:", error);
@@ -63,7 +68,6 @@ function BuySellCoin() {
     const fetchPriceHistory = async () => {
       try {
         const history = await getTransactionHistory();
-        console.log("history", history);
         setPriceHistory(history);
       } catch (error) {
         console.error("Error fetching price history:", error);
@@ -82,29 +86,40 @@ function BuySellCoin() {
     setAction(action);
   };
 
+  const handleUsdToggle = () => {
+    setUseUsd(!useUsd);
+  };
+
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     const amountValue = parseFloat(amount);
     if (amountValue > 0 && price) {
-      const totalAmount = amountValue * price;
-      alert(
-        `${
-          action.charAt(0).toUpperCase() + action.slice(1)
-        }ing ${amount} Pdes will cost ${totalAmount.toFixed(2)}`
-      );
+      let finalAmount;
+      if (useUsd) {
+        finalAmount = amountValue / price; // Convert USD to Pdes
+      } else {
+        finalAmount = amountValue * price; // Convert Pdes to USD
+      }
+
+      // Logic for sending the finalAmount to the DB, or making the API call
+      buySellPdes(action, finalAmount, price);
+
+      toast.success(`Successfully ${action} ${finalAmount} Pdes`);
     } else {
-      alert("Please enter a valid amount.");
+      toast.error("Please enter a valid amount.");
     }
   };
 
   useEffect(() => {
     if (amount && price) {
-      const calculatedTotal = (parseFloat(amount) * price).toFixed(2);
+      const calculatedTotal = useUsd
+        ? (parseFloat(amount) * price).toFixed(2) // USD to Pdes
+        : (parseFloat(amount) / price).toFixed(2); // Pdes to USD
       setTotal(calculatedTotal);
     } else {
       setTotal("");
     }
-  }, [amount, price]);
+  }, [amount, price, useUsd]);
 
   const handleChartTypeChange = () => {
     setChartType(chartType === "line" ? "candlestick" : "line");
@@ -153,14 +168,9 @@ function BuySellCoin() {
           {chartType === "line" ? (
             <Line data={data} />
           ) : (
-            <>
-              <p className="text-center text-neutral-700">
-                Candlestick is coming soon
-              </p>
-              <div className="mt-4 hidden">
-                <CandlestickChart data={candlestickData} />
-              </div>
-            </>
+            <div className="mt-4 hidden">
+              <CandlestickChart data={candlestickData} />
+            </div>
           )}
         </div>
 
@@ -174,7 +184,6 @@ function BuySellCoin() {
         </div>
 
         <div className="flex my-4 flex-row justify-evenly items-center gap-6 p-4 bg-gray-100 rounded-lg shadow-md">
-          {/* PDES Price Section */}
           <div className="text-center flex flex-col items-center border-r border-green-500 pr-6">
             <span className="text-sm font-medium text-gray-700">
               PDES Price:
@@ -183,17 +192,17 @@ function BuySellCoin() {
               {formattedMoneyUSD(Number(price))}
             </span>
           </div>
-          {/* Balance Section */}
+
           <div className="text-center flex flex-col items-center border-r border-blue-500 pr-6">
             <span className="text-sm font-medium text-gray-700">Balance:</span>
             <span className="text-blue-500 text-lg font-semibold">
               {formattedMoneyUSD(Number(user?.balance))}
             </span>
           </div>
-          {/* Action Section */}
+
           <div className="text-center flex flex-col items-center">
             <span className="text-sm font-medium text-gray-700">
-              {action === "buy" ? "Buy at:" : "Sale at:"}
+              {action === "buy" ? "Buy at:" : "Sell at:"}
             </span>
             <span
               className={`text-lg font-semibold ${
@@ -209,9 +218,15 @@ function BuySellCoin() {
           <div className="text-justify my-4">
             {total && (
               <p className="text-sm text-gray-700">
-                {action === "buy"
-                  ? `You will pay: ${formattedMoneyUSD(parseFloat(total))}`
-                  : `You will receive: ${formattedMoneyUSD(parseFloat(total))}`}
+                {useUsd
+                  ? action === "buy"
+                    ? `You will pay: ${formattedMoneyUSD(parseFloat(total))}`
+                    : `You will receive: ${formattedMoneyUSD(
+                        parseFloat(total)
+                      )}`
+                  : action === "buy"
+                  ? `You will receive: ${formattedMoneyUSD(parseFloat(total))}`
+                  : `You will pay: ${formattedMoneyUSD(parseFloat(total))}`}
               </p>
             )}
           </div>
@@ -222,7 +237,7 @@ function BuySellCoin() {
               name="amount"
               type="number"
               value={amount}
-              label="Amount of Pdes"
+              label={useUsd ? "Amount in USD" : "Amount of Pdes"}
               onChange={handleAmountChange}
             />
           </div>
@@ -264,6 +279,15 @@ function BuySellCoin() {
             </button>
           </div>
         </form>
+
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={handleUsdToggle}
+            className="py-2 px-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300"
+          >
+            Toggle to {useUsd ? "Pdes" : "USD"}
+          </button>
+        </div>
       </div>
     </div>
   );

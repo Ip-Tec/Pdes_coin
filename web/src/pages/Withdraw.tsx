@@ -52,7 +52,7 @@ function Withdraw() {
   };
 
   const handleProceed = async () => {
-    const withdrawalAmount = parseFloat(amount);
+    const withdrawalAmount = parseFloat(amount.replace(/[^\d.]/g, ""));
 
     if (isNaN(withdrawalAmount)) {
       toast.error("Please enter a valid amount.");
