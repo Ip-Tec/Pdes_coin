@@ -167,7 +167,7 @@ def get_top_users_by_balance():
                 "id": user.id,
                 "name": user.name,
                 "username": user.username,
-                "balance": user.balance,
+                "balance": user.balance.balance if user.balance else 0,  # Extract balance
             }
             for user in top_users_by_balance
         ]
@@ -177,7 +177,7 @@ def get_top_users_by_balance():
                 "id": user.id,
                 "name": user.name,
                 "username": user.username,
-                "crypto_balance": user.crypto_balance,
+                "crypto_balance": user.balance.crypto_balance if user.balance else 0,  # Extract crypto balance
             }
             for user in top_users_by_crypto_balance
         ]

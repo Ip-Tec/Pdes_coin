@@ -6,6 +6,7 @@ import API, { apiUrl, withdrawFunds } from "../services/api";
 import { ToastContainer, toast } from "react-toastify";
 import { useAuth } from "../contexts/AuthContext";
 import InputField from "../components/InputField";
+import { formattedMoneyNGN, formattedMoneyUSD } from "../utils/helpers";
 
 function Withdraw() {
   const { user, isAuth } = useAuth();
@@ -28,7 +29,9 @@ function Withdraw() {
       try {
         const response = await API.get(apiUrl("/transactions/conversion-rate"));
         const conversion_rate = response.data.conversion_rate;
-        setConversionRate(conversion_rate.conversion_rate * 0.9);
+        console.log({ conversion_rate });
+
+        setConversionRate(conversion_rate.conversion_rate);
       } catch (error) {
         toast.error("Failed to fetch conversion rate. Please try again.");
         console.error("Conversion Rate Error:", error);
@@ -37,9 +40,15 @@ function Withdraw() {
 
     fetchConversionRate();
   }, [isAuth, navigate]);
-
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setAmount(e.target.value);
+    // Strip out any non-numeric characters before formatting
+    const rawValue = e.target.value.replace(/[^\d.]/g, "");
+
+    // Format the raw value using formattedMoneyNGN function
+    const formattedValue = formattedMoneyUSD(Number(rawValue));
+
+    // Set the amount to the formatted value
+    setAmount(formattedValue);
   };
 
   const handleProceed = async () => {
@@ -90,10 +99,9 @@ function Withdraw() {
       toast.error("An error occurred while processing your withdrawal.");
       console.error("Withdrawal Error:", error);
     }
-  };  useEffect(() => {
-    toast.info(
-      "Note: Withdrawals are subject to a 15% stamp duty deduction by banks."
-    );
+  };
+  useEffect(() => {
+    toast.info("Note: Withdrawals are subject to a 15% stamp duty deduction.");
   }, []);
 
   return (
@@ -118,12 +126,14 @@ function Withdraw() {
           <p className="text-center text-gray-600 mb-4">
             Balance:{" "}
             <span className="text-secondary font-bold">
-              ${userBalance.toFixed(2)}
+              {formattedMoneyUSD(userBalance)}
             </span>
           </p>
           <p className="text-center text-gray-600 mb-4">
             Current Conversion Rate:{" "}
-            <span className="font-bold">1 USD = ₦{conversionRate}</span>
+            <span className="font-bold">
+              1 USD = {formattedMoneyNGN(conversionRate)}
+            </span>
           </p>
           <div className="flex justify-around mb-6">
             <button

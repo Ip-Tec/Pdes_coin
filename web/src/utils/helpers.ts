@@ -6,7 +6,10 @@ export const formatCurrency = (amount: number): string => {
 };
 
 export const formattedMoneyUSD = (number: number): string => {
-  return new Intl.NumberFormat("en-US").format(number);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(number);
 };
 export const formattedMoneyNGN = (amount: number) => {
   return new Intl.NumberFormat("en-NG", {

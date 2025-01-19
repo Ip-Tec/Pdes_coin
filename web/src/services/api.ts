@@ -16,7 +16,6 @@ export const url = prod
 export const feURL = prod
   ? import.meta.env.VITE_EF_URL
   : import.meta.env.VITE_EF_URL_LOCAL;
-console.log({ url, feURL });
 // Create API instance
 const API = axios.create({
   baseURL: url,
@@ -154,8 +153,6 @@ export const getUser = async (): Promise<User | null> => {
 export const getTransactionHistory = async () => {
   try {
     const response = await API.get(apiUrl("/transactions/history"));
-    console.log(response);
-
     return response.data.transactions;
   } catch (error) {
     if (axios.isAxiosError(error)) {

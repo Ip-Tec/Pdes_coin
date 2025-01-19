@@ -133,6 +133,7 @@ export interface DepositType {
   account_number: string;
   amount: number;
   account_type: string;
+  max_deposit_amount: number;
 }
 
 export interface ResetPassword {

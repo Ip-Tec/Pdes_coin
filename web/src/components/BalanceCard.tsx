@@ -10,7 +10,7 @@ const BalanceCard = ({ balance, crypto_balance, full_name, email }: User) => {
   };
   return (
     <div className="bg-primary text-white rounded-2xl p-4 shadow-md relative">
-      <h2 className="text-2xl font-semibold">${formattedMoneyUSD(balance)}</h2>
+      <h2 className="text-2xl font-semibold">{formattedMoneyUSD(balance)}</h2>
       <div className="text-sm">
         <span className="font-semibold flex">
           <img src={logo} width={50} />

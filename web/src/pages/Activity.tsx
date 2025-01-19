@@ -27,14 +27,12 @@ function Activity() {
           // Replace with the actual API call for referrals if available
           const data = await fetchUserReferralList(); // Example data
 
-          console.log({ data });
-
           setReferralData(data);
         }
       } catch (error) {
         setError("Failed to fetch data.");
-        toast.error("Failed to fetch data.")
-        console.error(error)
+        toast.error("Failed to fetch data.");
+        console.error(error);
       } finally {
         setLoading(false);
       }
@@ -81,25 +79,28 @@ function Activity() {
         ) : error ? (
           <div className="text-center text-red-500">{error}</div>
         ) : activeSection === "history" ? (
-          <div className="bg-white px-4 py-3 mt-4 shadow-md rounded-md">
+          <div className="p-3 mt-4">
             <h2 className="text-lg font-bold mb-2">History</h2>
             {historyData.length > 0 ? (
               <ul>
                 {historyData.map((item: TransactionHistory, index: number) => (
                   <li
                     key={index}
-                    className={`py-2 border-b-2 border-gray-200 ${
-                      item.transaction_type == "deposite"
-                        ? "border-bgColor"
-                        : "border-red-600"
+                    className={`p-2  shadow-md mt-3 rounded-md border-b-4 border-gray-200 ${
+                      item.transaction_type == "deposit"
+                        ? "border-green-500 bg-green-50"
+                        : "border-red-600 bg-red-100"
                     }`}
                   >
                     <span className="flex justify-between">
                       {item.account_name.toUpperCase()}{" "}
-                      {new Date(item.created_at ?? '').toDateString()}
+                      {new Date(item.created_at ?? "").toDateString()}
                     </span>
-                    <span className="flex">
-                      Transaction Type: {item.transaction_type}
+                    <span className="flex capitalize">
+                      Transaction Type:{" "}
+                      {item.transaction_type == "deposit"
+                        ? "Deposit"
+                        : "Withdrawal"}
                     </span>
                     <span className="flex">
                       Amount: {formattedMoneyUSD(item.amount)}
@@ -112,15 +113,17 @@ function Activity() {
             )}
           </div>
         ) : (
-          <div className="bg-white px-4 py-3 mt-4 shadow-md rounded-md">
+          <div className="p-3 mt-4">
             <h2 className="text-lg font-bold mb-2">Referral</h2>
             {referralData.length > 0 ? (
               <ul>
                 {referralData.map((item: User, index: number) => (
                   <li
                     key={index}
-                    className={` py-2 border-b-2 border-gray-500 mb-2 ${
-                      item.balance > 0 ? "border-bgColor" : "border-red-600"
+                    className={` p-3 shadow-md rounded-md mt-2 border-b-4 border-gray-500 mb-2 ${
+                      item.balance > 0
+                        ? "border-green-600 bg-green-50"
+                        : "border-red-600 bg-red-100"
                     }`}
                   >
                     <p>{item.full_name.toUpperCase()}</p>

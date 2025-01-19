@@ -2,7 +2,7 @@ from sqlite3 import IntegrityError
 import jwt
 import logging
 import traceback
-import datetime
+from datetime import datetime, timezone
 from app import db
 from app.models import (
     AccountDetail,
@@ -18,12 +18,13 @@ from app.models import (
     PdesTransaction,
 )
 from app.access_level import AccessLevel
+# from sqlalchemy.sql.expression import case
 from flask import request, jsonify
 from app.key_gen import generate_key
 from app.services import token_required
 from app.utils import validate_required_param
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.sql import func
+from sqlalchemy.sql import case, func
 import random
 
 
@@ -214,17 +215,36 @@ class UserTransactionsController:
                     return jsonify({"error": f"'{field}' field is required."}), 400
 
             # Validate accountNumber or cryptoAddress
-            if not account_details.get("accountNumber") and not account_details.get("cryptoAddress"):
-                return jsonify({"error": "Provide either 'accountNumber' or 'cryptoAddress'."}), 400
+            if not account_details.get("accountNumber") and not account_details.get(
+                "cryptoAddress"
+            ):
+                return (
+                    jsonify(
+                        {"error": "Provide either 'accountNumber' or 'cryptoAddress'."}
+                    ),
+                    400,
+                )
 
-            if account_details.get("accountNumber") and account_details.get("cryptoAddress"):
-                return jsonify({"error": "Provide either 'accountNumber' or 'cryptoAddress', not both."}), 400
+            if account_details.get("accountNumber") and account_details.get(
+                "cryptoAddress"
+            ):
+                return (
+                    jsonify(
+                        {
+                            "error": "Provide either 'accountNumber' or 'cryptoAddress', not both."
+                        }
+                    ),
+                    400,
+                )
 
             # Parse and validate the amount
             try:
                 amount = float(account_details["amount"])
                 if amount <= 0:
-                    return jsonify({"error": "'amount' must be greater than zero."}), 400
+                    return (
+                        jsonify({"error": "'amount' must be greater than zero."}),
+                        400,
+                    )
             except (ValueError, TypeError):
                 return jsonify({"error": "'amount' must be a number."}), 400
 
@@ -242,7 +262,9 @@ class UserTransactionsController:
                 currency=account_details.get("type", "naira"),  # Default to "naira"
                 transaction_completed=False,
                 account_name=account_details["accountName"],
-                crypto_address=account_details.get("cryptoAddress", ""),  # Default to empty string
+                crypto_address=account_details.get(
+                    "cryptoAddress", ""
+                ),  # Default to empty string
                 account_number=account_details.get("accountNumber", ""),
                 transaction_type=f"withdraw + {account_details['accountType']}",
             )
@@ -255,18 +277,24 @@ class UserTransactionsController:
             db.session.commit()
 
             # Return success response
-            return jsonify(
-                {
-                    "message": "Withdrawal in Progress",
-                    "data": transaction.serialize(),
-                }
-            ), 201
+            return (
+                jsonify(
+                    {
+                        "message": "Withdrawal in Progress",
+                        "data": transaction.serialize(),
+                    }
+                ),
+                201,
+            )
 
         except Exception as e:
             db.session.rollback()
             # Log the exception for debugging purposes
             print(f"Error during withdrawal: {e}")
-            return jsonify({"error": "Transaction failed due to an unexpected error."}), 500
+            return (
+                jsonify({"error": "Transaction failed due to an unexpected error."}),
+                500,
+            )
 
 
 def get_pdes_coin_details():
@@ -318,37 +346,54 @@ class AccountService:
             "USDCAddress": account_details.USDCAddress,
             "USDCAddressSeed": account_details.USDCAddressSeed,
         }
-        
-        
+
+    
+
     # Get admin account details
     @staticmethod
     @token_required
     def get_random_deposit_account(current_user, *args, **kwargs):
+        # Get the start and end of the current day in UTC
+        today_start = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        today_end = datetime.now(timezone.utc).replace(hour=23, minute=59, second=59, microsecond=999999)
+
         # Query eligible accounts directly from the database
-        eligible_accounts_query = (
-            db.session.query(DepositAccount)
-            .join(Deposit, DepositAccount.id == Deposit.admin_id, isouter=True)
-            .group_by(DepositAccount.id)
-            .having(
-                func.coalesce(func.sum(Deposit.amount), 0)
-                < DepositAccount.max_deposit_amount
+        try:
+            # Build the query for eligible deposit accounts
+            eligible_accounts_query = (
+                db.session.query(DepositAccount)
+                .outerjoin(Deposit, DepositAccount.id == Deposit.admin_id)
+                .group_by(DepositAccount.id)
+                .having(
+                    func.coalesce(
+                        func.sum(
+                            case(
+                                (Deposit.created_at.between(today_start, today_end), Deposit.amount),  # Corrected condition
+                                else_=0  # Provide default value for the case statement
+                            )
+                        ),
+                        0  # Default value for coalesce if no rows match
+                    )
+                    < DepositAccount.max_deposit_amount
+                )
             )
-        )
 
-        # Fetch eligible accounts
-        eligible_accounts = eligible_accounts_query.all()
-        print(f"eligible_accounts: {eligible_accounts}")
+            eligible_accounts = eligible_accounts_query.all()
 
-        if not eligible_accounts:
-            return jsonify({"message": "No eligible accounts available"}), 404
+            # Check if any accounts are eligible
+            if not eligible_accounts:
+                return jsonify({"message": "No eligible accounts available"}), 404
 
-        # Pick a random account
-        random_account = random.choice(eligible_accounts)
+            # Select a random eligible account
+            random_account = random.choice(eligible_accounts)
 
-        # Serialize and return the account details
-        return jsonify(random_account.serialize())
+            # Serialize and return the account details
+            return jsonify(random_account.serialize())
 
-
+        except Exception as e:
+            print(f"Error occurred: {str(e)}")  # Log the error for debugging
+            return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
+    
 
 # # Setting up logging
 # logging.basicConfig(level=logging.INFO)
@@ -545,4 +590,3 @@ class PdesService:
             ),
             200,
         )
-

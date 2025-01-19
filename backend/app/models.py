@@ -117,8 +117,8 @@ class Balance(db.Model):
             "id": self.id,
             "user_id": self.user_id,
             "balance": self.balance,
-            "crypto_balance": self.crypto_balance,
             "rewards": self.rewards,
+            "crypto_balance": self.crypto_balance,
             "created_at": self.created_at.isoformat() if self.created_at else "",
             "updated_at": self.updated_at.isoformat() if self.updated_at else "",
         }

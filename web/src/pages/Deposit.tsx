@@ -7,6 +7,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import { useAuth } from "../contexts/AuthContext";
+import { formattedMoneyNGN } from "../utils/helpers";
 
 function Deposit() {
   const navigate = useNavigate();
@@ -152,7 +153,9 @@ function Deposit() {
           <h1 className="text-2xl font-bold mb-4 text-center">Deposit Funds</h1>
           <p className="text-center text-gray-600 mb-4">
             Current Conversion Rate:{" "}
-            <span className="font-bold">1 USD = ₦{conversionRate}</span>
+            <span className="font-bold">
+              1 USD = {formattedMoneyNGN(conversionRate)}
+            </span>
           </p>
           <div className="flex justify-around mb-6">
             <button
@@ -185,19 +188,28 @@ function Deposit() {
             <div>
               <h2 className="text-lg font-medium mb-4">Select Amount</h2>
               <div className="grid grid-cols-3 gap-4">
-                {[5000, 10000, 20000, 50000, 100000, 500000].map((amount) => (
-                  <button
-                    key={amount}
-                    className={`px-4 py-2 rounded-lg font-medium ${
-                      selectedAmount === amount
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-200 hover:bg-blue-500 hover:text-white"
-                    }`}
-                    onClick={() => setSelectedAmount(amount)}
-                  >
-                    ₦{amount.toLocaleString()}
-                  </button>
-                ))}
+                {accountDetails &&
+                  accountDetails.max_deposit_amount &&
+                  [
+                    5000, 10000, 20000, 30000, 50000, 70000, 100000, 300000,
+                    500000,
+                  ]
+                    .filter(
+                      (amount) => amount <= accountDetails.max_deposit_amount
+                    )
+                    .map((amount) => (
+                      <button
+                        key={amount}
+                        className={`px-4 py-2 rounded-lg font-medium ${
+                          selectedAmount === amount
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-200 hover:bg-blue-500 hover:text-white"
+                        }`}
+                        onClick={() => setSelectedAmount(amount)}
+                      >
+                        {formattedMoneyNGN(amount)}
+                      </button>
+                    ))}
               </div>
 
               {/* Display Account Details */}
