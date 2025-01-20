@@ -78,6 +78,8 @@ def get_account_balance(current_user):
 def buy_sell(current_user):
     data = request.get_json()
 
+    print(f"{data=}")
+
     action = data["action"]  # 'buy' or 'sell'
     amount = data["amount"]
     price = data["price"]  # Current price of PDES coin

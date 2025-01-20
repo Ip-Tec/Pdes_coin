@@ -22,7 +22,7 @@ import InputField from "../components/InputField";
 import CandlestickChart from "../components/CandlestickChart";
 import { FaArrowLeft } from "react-icons/fa";
 import { formattedMoneyUSD } from "../utils/helpers";
-import { toast } from "react-toastify";
+import { toast, ToastContainer } from "react-toastify";
 
 // Register chart components
 ChartJS.register(
@@ -36,7 +36,7 @@ ChartJS.register(
 );
 
 function BuySellCoin() {
-  const { isAuth, user } = useAuth();
+  const { isAuth, user, setUser } = useAuth();
   const [price, setPrice] = useState<number | null>(null);
   const [amount, setAmount] = useState<string>("");
   const [action, setAction] = useState<"buy" | "sell">("buy");
@@ -90,21 +90,29 @@ function BuySellCoin() {
     setUseUsd(!useUsd);
   };
 
-  const handleSubmit = (event: React.FormEvent) => {
+  const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const amountValue = parseFloat(amount);
+
     if (amountValue > 0 && price) {
-      let finalAmount;
-      if (useUsd) {
-        finalAmount = amountValue / price; // Convert USD to Pdes
+      const finalAmountInUSD = useUsd
+        ? amountValue
+        : action === "buy"
+        ? amountValue * price // PDES to USD for buying
+        : amountValue / price; // PDES to USD for selling
+
+      // Send finalAmountInUSD to the DB via API
+      const response = await buySellPdes(action, finalAmountInUSD, price);
+      if (response) {
+        setUser(response.user);
+        toast.success(
+          `Successfully ${action} ${formattedMoneyUSD(
+            finalAmountInUSD
+          )} worth of Pdes`
+        );
       } else {
-        finalAmount = amountValue * price; // Convert Pdes to USD
+        toast.error(`Failed to ${action} Pdes`);
       }
-
-      // Logic for sending the finalAmount to the DB, or making the API call
-      buySellPdes(action, finalAmount, price);
-
-      toast.success(`Successfully ${action} ${finalAmount} Pdes`);
     } else {
       toast.error("Please enter a valid amount.");
     }
@@ -112,14 +120,19 @@ function BuySellCoin() {
 
   useEffect(() => {
     if (amount && price) {
+      const amountValue = parseFloat(amount);
       const calculatedTotal = useUsd
-        ? (parseFloat(amount) * price).toFixed(2) // USD to Pdes
-        : (parseFloat(amount) / price).toFixed(2); // Pdes to USD
+        ? action === "buy"
+          ? (amountValue / price).toFixed(6) // USD to PDES
+          : (amountValue * price).toFixed(2) // USD to USD (sell)
+        : action === "buy"
+        ? (amountValue * price).toFixed(2) // PDES to USD
+        : (amountValue / price).toFixed(6); // PDES to PDES (sell)
       setTotal(calculatedTotal);
     } else {
       setTotal("");
     }
-  }, [amount, price, useUsd]);
+  }, [amount, price, useUsd, action]);
 
   const handleChartTypeChange = () => {
     setChartType(chartType === "line" ? "candlestick" : "line");
@@ -152,6 +165,7 @@ function BuySellCoin() {
 
   return (
     <div className="min-h-screen md:mb-32 bg-mainBG text-neutral-600 p-4 overflow-y-auto">
+      <ToastContainer />
       <button
         className="flex items-center text-lg text-primary mb-5 px-3 py-4 md:hidden z-20"
         onClick={() => navigate(-1) || navigate("/dashboard")}
@@ -163,25 +177,6 @@ function BuySellCoin() {
         <h1 className="text-2xl font-semibold text-center mb-6">
           Buy and Sell Pdes Coin
         </h1>
-
-        <div className="mt-8">
-          {chartType === "line" ? (
-            <Line data={data} />
-          ) : (
-            <div className="mt-4 hidden">
-              <CandlestickChart data={candlestickData} />
-            </div>
-          )}
-        </div>
-
-        <div className="mt-2 text-center">
-          <button
-            onClick={handleChartTypeChange}
-            className="py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary-dark"
-          >
-            Switch to {chartType === "line" ? "Candlestick" : "Line"} Chart
-          </button>
-        </div>
 
         <div className="flex my-4 flex-row justify-evenly items-center gap-6 p-4 bg-gray-100 rounded-lg shadow-md">
           <div className="text-center flex flex-col items-center border-r border-green-500 pr-6">
@@ -216,19 +211,14 @@ function BuySellCoin() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="text-justify my-4">
-            {total && (
-              <p className="text-sm text-gray-700">
-                {useUsd
-                  ? action === "buy"
-                    ? `You will pay: ${formattedMoneyUSD(parseFloat(total))}`
-                    : `You will receive: ${formattedMoneyUSD(
-                        parseFloat(total)
-                      )}`
-                  : action === "buy"
-                  ? `You will receive: ${formattedMoneyUSD(parseFloat(total))}`
-                  : `You will pay: ${formattedMoneyUSD(parseFloat(total))}`}
-              </p>
-            )}
+            {total &&
+              (useUsd
+                ? action === "buy"
+                  ? `You will receive: ${total} PDES`
+                  : `You will pay: ${formattedMoneyUSD(parseFloat(total))} USD`
+                : action === "buy"
+                ? `You will pay: ${formattedMoneyUSD(parseFloat(total))} USD`
+                : `You will receive: ${total} PDES`)}
           </div>
 
           <div className="flex justify-between items-center">
@@ -286,6 +276,25 @@ function BuySellCoin() {
             className="py-2 px-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300"
           >
             Toggle to {useUsd ? "Pdes" : "USD"}
+          </button>
+        </div>
+
+        <div className="mt-8">
+          {chartType === "line" ? (
+            <Line data={data} />
+          ) : (
+            <div className="mt-4 hidden">
+              <CandlestickChart data={candlestickData} />
+            </div>
+          )}
+        </div>
+
+        <div className="mt-2 text-center">
+          <button
+            onClick={handleChartTypeChange}
+            className="py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary-dark"
+          >
+            Switch to {chartType === "line" ? "Candlestick" : "Line"} Chart
           </button>
         </div>
       </div>

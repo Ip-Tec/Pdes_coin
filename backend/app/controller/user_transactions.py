@@ -52,7 +52,7 @@ class UserTransactionsController:
 
         transactions = Transaction.query.filter_by(user_id=current_user.id).all()
         transaction_data = [transaction.serialize() for transaction in transactions]
-        print(f"transaction_data::: {transaction_data}")
+        # print(f"transaction_data::: {transaction_data}")
         return jsonify({"transactions": transaction_data}), 200
 
     @staticmethod
@@ -429,10 +429,18 @@ class PdesService:
         amount = data["amount"]
         price = data["price"]
 
+        print(f"{data=}")
+
         if amount <= 0 or price <= 0:
             return jsonify({"error": "Amount and price must be positive numbers"}), 400
 
-        pdes_price = Utility.pdes_price()
+        # Get the latest PDES price
+        utility_entry = Utility.query.order_by(Utility.id.desc()).first()
+        if not utility_entry:
+            return jsonify({"error": "No price data available"}), 500
+
+        pdes_price = utility_entry.pdes_price
+
         return handle_buy_pdes(
             user_id=user_id, amount=amount, price_per_coin=pdes_price
         )
@@ -507,8 +515,8 @@ class PdesService:
     # Sell PDES coin
     @staticmethod
     @token_required
-    def sell_pdes():
-        user_id = request.user_id
+    def sell_pdes(current_user, *args, **kwargs):
+        user_id = current_user.id
         data = request.get_json()
 
         # Validate required fields
@@ -520,12 +528,20 @@ class PdesService:
         amount = data["amount"]
         price = data["price"]
 
+        print(f"{data=}")
+
         if amount <= 0 or price <= 0:
             return jsonify({"error": "Amount and price must be positive numbers"}), 400
 
-        pdes_price = Utility.pdes_price()
+        # Get the latest PDES price
+        utility_entry = Utility.query.order_by(Utility.id.desc()).first()
+        if not utility_entry:
+            return jsonify({"error": "No price data available"}), 500
+
+        pdes_price = utility_entry.pdes_price
+
         return handle_sell_pdes(
-            user_id=user_id, amount=amount, price_per_coin=pdes_price
+            user_id=user_id, amount_in_usd=amount, price_per_coin=pdes_price
         )
 
         # try:

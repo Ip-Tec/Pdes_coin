@@ -16,7 +16,7 @@ class User(db.Model):
 
     transactions = db.relationship("Transaction", backref="user", lazy=True)
     cryptos = db.relationship("Crypto", backref="user", lazy=True)
-    balance = db.relationship("Balance", uselist=False, backref="user")
+    balance = db.relationship("Balance", uselist=False, backref="user", lazy=True)
 
     referral_code = db.Column(db.String(16), unique=True, nullable=True)
     referrer_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
@@ -574,54 +574,55 @@ def handle_withdrawal(user_id, amount, account_name, account_number):
 # Function to handle Buy Pdes
 def handle_buy_pdes(user_id, amount, price_per_coin):
     user = User.query.get(user_id)
-    total_cost = amount * price_per_coin
+    total_cost = amount / price_per_coin
     user_balance = user.balance
 
-    # Ensure the user has enough balance to buy Pdes
     if user_balance.balance >= total_cost:
-        # Deduct the balance from the user's account
+        # Deduct balance and commit
         user_balance.balance -= total_cost
         db.session.commit()
 
         # Add PDES to user's crypto balance
         crypto = Crypto.query.filter_by(user_id=user.id, crypto_name="Pdes").first()
         if not crypto:
-            crypto = Crypto(user_id=user.id, crypto_name="Pdes", amount=0.0, account_address="")
+            crypto = Crypto(
+                user_id=user.id, crypto_name="Pdes", amount=0.0, account_address=""
+            )
             db.session.add(crypto)
-
         crypto.amount += amount
         db.session.commit()
 
-        # Record the buy transaction
-        pdes_transaction = PdesTransaction(
-            user_id=user.id,
-            action="buy",
-            amount=amount,
-            price=price_per_coin,
-            total=total_cost,
-        )
-        db.session.add(pdes_transaction)
-
-        # Adjust the price based on demand (increase price slightly due to higher buying demand)
+        # Record price history after the transaction
         utility = Utility.query.first()
         if utility:
-            # Increase price by 1% (or another suitable factor)
-            utility.update_price(price_change_factor=1.01)  # Increase by 1%
+            utility.pdes_circulating_supply += amount
+            utility.pdes_supply_left -= amount
+            utility.pdes_market_cap = (
+                utility.pdes_price * utility.pdes_circulating_supply
+            )
             db.session.commit()
 
-        # Apply rewards if configured in RewardConfig
-        reward_config = RewardConfig.query.first()
-        if reward_config and reward_config.percentage_weekly > 0:
-            reward_earned = total_cost * reward_config.percentage_weekly / 100
-            user_balance.rewards += reward_earned
-            db.session.commit()
-            pdes_transaction.reward_earned = reward_earned
-            db.session.commit()
+        # Ensure high_price and low_price are updated in CoinPriceHistory
+        latest_price = CoinPriceHistory.query.order_by(
+            CoinPriceHistory.timestamp.desc()
+        ).first()
 
-        # Record price history after the transaction
+        high_price = (
+            max(price_per_coin, latest_price.high_price)
+            if latest_price
+            else price_per_coin
+        )
+        low_price = (
+            min(price_per_coin, latest_price.low_price)
+            if latest_price
+            else price_per_coin
+        )
+
         coin_price_history = CoinPriceHistory(
             open_price=price_per_coin,
-            close_price=utility.pdes_price,
+            high_price=high_price,
+            low_price=low_price,
+            close_price=price_per_coin,
             volume=amount,
         )
         db.session.add(coin_price_history)
@@ -631,74 +632,104 @@ def handle_buy_pdes(user_id, amount, price_per_coin):
             "message": "Purchase successful",
             "new_balance": user_balance.balance,
             "new_crypto_amount": crypto.amount,
+            "user": user.serialize(),
         }
     else:
-        return {"message": "Insufficient funds to buy Pdes"}
+        return {"message": "Insufficient funds to buy Pdes"}, 400
 
 
 # Function to handle Sell Pdes
-def handle_sell_pdes(user_id, amount, price_per_coin):
+def handle_sell_pdes(user_id, amount_in_usd, price_per_coin):
     user = User.query.get(user_id)
     crypto = Crypto.query.filter_by(user_id=user.id, crypto_name="Pdes").first()
 
-    # Ensure the user has enough Pdes to sell
-    if crypto and crypto.amount >= amount:
-        total_sale = amount * price_per_coin
-        user_balance = user.balance
-        user_balance.balance += total_sale
-        db.session.commit()
+    # Ensure the user's PDES balance is sufficient for the USD equivalent
+    if crypto and price_per_coin > 0:
+        # Calculate the amount in PDES to be deducted
+        amount_in_pdes = amount_in_usd / price_per_coin
 
-        # Deduct the sold amount from the crypto balance
-        crypto.amount -= amount
-        db.session.commit()
-
-        # Record the sell transaction
-        pdes_transaction = PdesTransaction(
-            user_id=user.id,
-            action="sell",
-            amount=amount,
-            price=price_per_coin,
-            total=total_sale,
-        )
-        db.session.add(pdes_transaction)
-
-        # Adjust the price based on supply (decrease price slightly due to higher selling pressure)
-        utility = Utility.query.first()
-        if utility:
-            # Decrease price by 1% (or another suitable factor)
-            utility.update_price(price_change_factor=0.99)  # Decrease by 1%
+        if crypto.amount >= amount_in_pdes:
+            # Update user's balance in USD
+            user_balance = user.balance
+            user_balance.balance += amount_in_usd
             db.session.commit()
 
-        # Apply rewards if configured
-        reward_config = RewardConfig.query.first()
-        if reward_config and reward_config.percentage_weekly > 0:
-            reward_earned = total_sale * reward_config.percentage_weekly / 100
-            user_balance.rewards += reward_earned
-            db.session.commit()
-            pdes_transaction.reward_earned = reward_earned
+            # Deduct the PDES amount from the user's crypto balance
+            crypto.amount -= amount_in_pdes
             db.session.commit()
 
-        # Record price history after the transaction
-        coin_price_history = CoinPriceHistory(
-            open_price=price_per_coin,
-            close_price=utility.pdes_price,
-            volume=amount,
-        )
-        db.session.add(coin_price_history)
-        db.session.commit()
+            # Record the sell transaction
+            pdes_transaction = PdesTransaction(
+                user_id=user.id,
+                action="sell",
+                amount=amount_in_pdes,
+                price=price_per_coin,
+                total=amount_in_usd,
+            )
+            db.session.add(pdes_transaction)
 
-        # Check if user sold all PDES, in that case, reset their reward status
-        if crypto.amount == 0:
-            user.referral_reward = 0.0  # Reset referral rewards if they sold all
+            # Update Utility table (adjust circulating supply, market cap, etc.)
+            utility = Utility.query.first()
+            current_price = utility.pdes_price if utility else price_per_coin
+
+            if utility:
+                utility.update_price(price_change_factor=0.99)  # Decrease price by 1%
+                utility.pdes_circulating_supply -= amount_in_pdes
+                utility.pdes_supply_left += amount_in_pdes
+                utility.pdes_market_cap = (
+                    utility.pdes_price * utility.pdes_circulating_supply
+                )
+                db.session.commit()
+
+            # Apply rewards if configured
+            reward_config = RewardConfig.query.first()
+            if reward_config and reward_config.percentage_weekly > 0:
+                reward_earned = amount_in_usd * reward_config.percentage_weekly / 100
+                user_balance.rewards += reward_earned
+                db.session.commit()
+                pdes_transaction.reward_earned = reward_earned
+                db.session.commit()
+
+            # Ensure high_price and low_price are not None
+            high_price = (
+                max(price_per_coin, current_price)
+                if price_per_coin and current_price
+                else price_per_coin
+            )
+            low_price = (
+                min(price_per_coin, current_price)
+                if price_per_coin and current_price
+                else price_per_coin
+            )
+
+            # Record the transaction details
+            coin_price_history = CoinPriceHistory(
+                open_price=price_per_coin,
+                high_price=high_price,
+                low_price=low_price,
+                close_price=current_price,
+                volume=amount_in_pdes,
+            )
+            db.session.add(coin_price_history)
             db.session.commit()
 
-        return {
-            "message": "Sale successful",
-            "new_balance": user_balance.balance,
-            "new_crypto_amount": crypto.amount,
-        }
+            # Check if user sold all PDES, reset referral rewards
+            if crypto.amount == 0:
+                user.referral_reward = 0.0
+                db.session.commit()
+
+            return {
+                "message": "Sale successful",
+                "new_balance": user_balance.balance,
+                "new_crypto_amount": crypto.amount,
+                "user": user.serialize(),
+            }
+        else:
+            return {"message": "Insufficient PDES to sell"}
     else:
-        return {"message": "Insufficient Pdes to sell"}
+        return {
+            "message": "Invalid sell request: insufficient balance or price is zero"
+        }
 
 
 def get_pdes_trade_price():

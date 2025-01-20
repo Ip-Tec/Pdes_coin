@@ -278,6 +278,7 @@ export const buySellPdes = async (
       amount,
       price,
     });
+    console.log({ response });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -285,6 +286,9 @@ export const buySellPdes = async (
         window.location.href = "/login";
       }
       const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.message);
+      console.log({ errorData });
+
       throw new Error(errorData?.message || "Buy/Sell transaction failed");
     }
     throw new Error("Network error. Please try again.");
