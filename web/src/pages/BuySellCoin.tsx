@@ -178,7 +178,7 @@ function BuySellCoin() {
           Buy and Sell Pdes Coin
         </h1>
 
-        <div className="flex my-4 flex-row justify-evenly items-center gap-6 p-4 bg-gray-100 rounded-lg shadow-md">
+        <div className="flex my-4 overflow-x-auto no-scrollbar flex-row justify-evenly items-center gap-6 p-4 bg-gray-100 rounded-lg shadow-md">
           <div className="text-center flex flex-col items-center border-r border-green-500 pr-6">
             <span className="text-sm font-medium text-gray-700">
               PDES Price:
@@ -192,6 +192,12 @@ function BuySellCoin() {
             <span className="text-sm font-medium text-gray-700">Balance:</span>
             <span className="text-blue-500 text-lg font-semibold">
               {formattedMoneyUSD(Number(user?.balance))}
+            </span>
+          </div>
+           <div className="text-center flex flex-col items-center border-r border-blue-500 pr-6">
+            <span className="text-sm font-medium text-gray-700">PDES Balance:</span>
+            <span className="text-blue-500 text-lg font-semibold">
+              {user?.crypto_balance?.toFixed(8)}
             </span>
           </div>
 

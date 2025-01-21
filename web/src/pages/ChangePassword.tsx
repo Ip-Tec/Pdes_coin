@@ -1,15 +1,15 @@
 import { useState } from "react";
 import logo from "../assets/pdes.png";
+import Navbar from "../components/Header";
 import "react-toastify/dist/ReactToastify.css";
 import { useNavigate } from "react-router-dom";
+import { changePassword } from "../services/api";
 import { useAuth } from "../contexts/AuthContext";
-import { ToastContainer, toast } from "react-toastify";
-import Navbar from "../components/Header";
 import InputField from "../components/InputField";
-import { resetPassword } from "../services/api";
+import { ToastContainer, toast } from "react-toastify";
 
-function ResetPassword() {
-  const { isAuth } = useAuth();
+function ChangePassword() {
+  const { isAuth, logout } = useAuth();
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -18,25 +18,31 @@ function ResetPassword() {
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
 
-    if (password !== newPassword) {
-      toast.error("Passwords do not match!");
+    
+    if (password == newPassword) {
+      toast.error("Same password as old password");
       return;
     }
 
     try {
       setIsLoading(true);
 
-      // Replace this with your API call for password reset
-      const response = await resetPassword({ newPassword, password });
-      if (response) {
-        toast.success("Password reset successfully!");
-      } else {
-        toast.error("Failed to reset password. Please try again");
-      }
+      // Call the API to change the password
+      const response = await changePassword({
+        oldPassword: password,
+        newPassword,
+      });
 
-      navigate("/login");
+      if (response && response.message === "Password changed successfully") {
+        toast.success("Password changed successfully!");
+        logout()
+        navigate("/login");
+      } else {
+        toast.error("Failed to change password. Please try again.");
+      }
     } catch (error) {
-      toast.error(`Failed to reset password. Please try again /n ${error}`);
+      toast.error(`Failed to change password. Please try again.`);
+      throw error;
     } finally {
       setIsLoading(false);
     }
@@ -45,10 +51,14 @@ function ResetPassword() {
   return (
     <div className="min-h-screen bg-mainBG flex flex-col items-center justify-center mx-4">
       <ToastContainer />
-      <img src={logo} alt="Logo" className={`mx-auto h-64 w-64 ${isLoading ? "hidden" : "block"}`} />
+      <img
+        src={logo}
+        alt="Logo"
+        className={`mx-auto h-48 w-48 ${isLoading ? "hidden" : "block"}`}
+      />
       <div className="bg-white shadow-lg rounded-lg p-8 max-w-md w-full">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
-          Reset Password
+          Change Password
         </h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -60,9 +70,9 @@ function ResetPassword() {
               onChange={(e) => setPassword(e.target.value)}
             />
             <InputField
-              label="Confirm Password"
+              label="New Password"
               type="password"
-              name="confirmPassword"
+              name="New Password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
@@ -77,23 +87,16 @@ function ResetPassword() {
               }`}
               disabled={isLoading}
             >
-              {isLoading ? "Resetting..." : "Reset Password"}
+              {isLoading ? "Changing..." : "Change Password"}
             </button>
           </div>
         </form>
-        <p className="text-sm text-gray-500 text-center mt-4">
-          Remember your password?{" "}
-          <span
-            onClick={() => navigate("/login")}
-            className="text-primary font-medium cursor-pointer hover:underline"
-          >
-            Login
-          </span>
-        </p>
+       
       </div>
       {/* if user is authenticated, show the navbar */}
       {!isAuth ? <Navbar /> : null}
     </div>
   );
 }
-export default ResetPassword;
+
+export default ChangePassword;

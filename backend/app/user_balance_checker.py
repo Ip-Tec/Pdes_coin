@@ -45,8 +45,8 @@ def correct_user_balance():
                 "username": user.username,
                 "expected_balance": recalculated_balance,
                 "stored_balance": user.balance.balance,
-                "expected_crypto_balance": recalculated_crypto_balance,
                 "stored_crypto_balance": user.balance.crypto_balance,
+                "expected_crypto_balance": recalculated_crypto_balance,
             })
 
             # Optionally, update the balances to the recalculated values

@@ -1,40 +1,57 @@
-import { useState } from "react";
-import API from "../services/api";
+import { useState, useEffect } from "react";
+import { forgetPassword, resetPassword } from "../services/api";
 import logo from "../assets/pdes.png";
 import { motion } from "framer-motion";
 import InputField from "../components/InputField";
 import { toast, ToastContainer } from "react-toastify";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 
 const ForgotPassword: React.FC = () => {
   const [email, setEmail] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [comfirmPassword, setComfirmPassword] = useState("");
-  const [token] = useState("");
+  const [token, setToken] = useState<string | null>(null);
   const [stage, setStage] = useState<"email" | "reset" | "sent">("email");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const location = useLocation();
 
+  // Extract token from URL if available
+  useEffect(() => {
+    const urlParams = new URLSearchParams(location.search);
+    const tokenFromURL = urlParams.get("token");
+    if (tokenFromURL) {
+      setToken(tokenFromURL);
+      setStage("reset");
+    }
+  }, [location]);
+
+  // Handle sending reset link
   const handleEmailSubmit = async () => {
     setLoading(true);
     try {
-      //   const response = await API.post("/auth/forgot-password", { email });
-      //   if (response.status === 200) {
-      setStage("sent");
-      setTimeout(() => setStage("reset"), 2000); // Move to reset password after 2 seconds
-      //   }
-    } catch (err: any) {
-      setStage("sent");
-      setTimeout(() => setStage("reset"), 2000);
-      toast.error("Failed to send email.");
-      setError(err.response?.data?.message || "Failed to send email.");
+      const response = await forgetPassword({ email });
+      if (response.message === "Reset link sent to your email") {
+        toast.success(response.message);
+        setStage("sent");
+      } else {
+        toast.error(response.message);
+      }
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        toast.error(err.message || "An unexpected error occurred.");
+      } else {
+        console.error("Unknown error:", err);
+      }
     } finally {
       setLoading(false);
     }
   };
+
+  // Handle password reset with token
   const handleResetPassword = async () => {
     setLoading(true);
-    // check if passwords match
     if (newPassword !== comfirmPassword) {
       toast.error("Passwords do not match.");
       setError("Passwords do not match.");
@@ -42,17 +59,25 @@ const ForgotPassword: React.FC = () => {
     }
 
     try {
-      const response = await API.post("/auth/reset-password", {
-        token,
-        newPassword,
-      });
-      if (response.status === 200) {
-        alert("Password reset successful!");
-        // Optionally redirect to login page
+      if (token) {
+        const response = await resetPassword({
+          email,
+          token,
+          newPassword,
+          password: comfirmPassword,
+        });
+        if ("message" in response) {
+          if (response.message === "Password reset successful") {
+            toast.success(response.message);
+            navigate("/login"); // Redirect to login page after successful reset
+          } else {
+            toast.error("Failed to reset password.");
+          }
+        }
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       toast.error("Failed to reset password.");
-      setError(err.response?.data?.message);
+      setError((err as Error)?.message || "An error occurred.");
     } finally {
       setLoading(false);
     }
@@ -89,12 +114,13 @@ const ForgotPassword: React.FC = () => {
           </div>
           {error && <p className="text-red-500 mb-2">{error}</p>}
           <div className="flex w-full items-center flex-col justify-center">
-            {" "}
             <button
               onClick={handleEmailSubmit}
               disabled={loading}
               className={`w-2/3 py-2 mt-4 ${
-                loading ? "bg-gray-400" : "bg-bgColor text-white hover:bg-secondary"
+                loading
+                  ? "bg-gray-400"
+                  : "bg-bgColor text-white hover:bg-secondary"
               } text-white rounded-3xl transition duration-300`}
             >
               {loading ? "Sending..." : "Send Reset Link"}
@@ -135,18 +161,28 @@ const ForgotPassword: React.FC = () => {
           </h2>
           <div className="flex flex-col w-full items-center rounded-md p-2 mb-4">
             <InputField
+              type="email"
+              label="Enter your Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              required
+            />{" "}
+            <InputField
               type="password"
               label="Enter your new password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               name="newPassword"
+              required
             />
             <InputField
               type="password"
-              label="Comfirm your new password"
+              label="Confirm your new password"
               value={comfirmPassword}
               onChange={(e) => setComfirmPassword(e.target.value)}
-              name="ComfirmPassword"
+              name="comfirmPassword"
+              required
             />
           </div>
           {error && <p className="text-red-500 mb-2">{error}</p>}

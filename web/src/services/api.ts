@@ -1,7 +1,9 @@
 import axios from "axios";
 import {
   AccountDetails,
+  ChangePassword,
   ErrorResponse,
+  ForgetPassword,
   ResetPassword,
   User,
 } from "../utils/type";
@@ -501,7 +503,60 @@ export const AccountAPI = {
   },
 };
 
-// Reset user password
+// For Change Password
+export const changePassword = async ({
+  oldPassword,
+  newPassword,
+}: ChangePassword): Promise<{ message: string } | ErrorResponse> => {
+  try {
+    const response = await API.post(apiUrl("/auth/change-password"), {
+      oldPassword,
+      newPassword,
+    });
+
+    console.log(response);
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      console.log({ error });
+      console.log({ errorData });
+      toast.error(errorData?.message);
+
+      throw new Error(errorData?.message || "Failed to change password");
+    }
+    throw new Error("Failed to change password.");
+  }
+};
+
+// For Forget Password
+export const forgetPassword = async ({
+  email,
+}: ForgetPassword): Promise<{ message: string } | ErrorResponse> => {
+  try {
+    const response = await API.post(apiUrl("/auth/forget-password"), {
+      email,
+    });
+
+    console.log(response.data);
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      
+      const errorData: ErrorResponse = error.response?.data;
+      console.log({ errorData });
+      return errorData;
+      throw new Error(
+        errorData?.message + `/n Failed to send password reset email`
+      );
+    }
+    throw new Error("Failed to send password reset email.");
+  }
+};
+
+// For Reset Password (Authenticated User)
 export const resetPassword = async ({
   email,
   token,

@@ -48,7 +48,7 @@ const PriceChart: React.FC = () => {
   if (!chartData) return <p>Loading...</p>;
 
   return (
-    <div className="text-gray-600 bg-white rounded-lg shadow-lg p-6">
+    <div className="text-gray-600 bg-white w-full rounded-lg shadow-lg p-6">
       <h2>PDES Trading Chart</h2>
       <Line data={chartData} options={{ responsive: true }} />
     </div>

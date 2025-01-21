@@ -50,23 +50,55 @@ def forgot_password():
 
 
 # Reset Password router
-@auth_bp.route("/reset-password", methods=["Get", "POST"])
-def reset_password():
+@auth_bp.route("/forget-password", methods=["POST"])
+def forget_password():
     data = request.json
-    token = data.get("token")
     email = data.get("email")
-    password = data.get("password")
-    newPassword = data.get("newPassword")
-    print(f"token: {token}, password: {password}, newPassword: {newPassword}")
-    return user_controller.UserController.reset_password(token, password, newPassword)
+
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+
+    try:
+
+        return user_controller.UserController.forget_password()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # Change Password router
-@auth_bp.route("/change-password", methods=["POST"])
-def change_password():
+@auth_bp.route("/reset-password", methods=["POST"])
+def reset_password():
     data = request.json
-    # Add change password logic here
-    return jsonify({"message": "Password changed successfully"})
+    token = data.get("token")
+    new_password = data.get("newPassword")
+
+    if not token or not new_password:
+        return jsonify({"error": "Token and new password are required"}), 400
+
+    try:
+        # Validate the reset token and update the password
+        return user_controller.UserController.reset_password()
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# Change Password (Authenticated Users Only)
+@auth_bp.route("/change-password", methods=["POST"])
+@token_required
+def change_password(current_user, *args, **kwargs):
+    data = request.json
+    current_password = data.get("oldPassword")
+    new_password = data.get("newPassword")
+
+    if not current_password or not new_password:
+        return jsonify({"error": "Current and new passwords are required"}), 400
+
+    try:
+        # Verify the current password and change the password
+        user_controller.UserController.change_password(current_password, new_password)
+        return jsonify({"message": "Password changed successfully"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 # Verify Email router

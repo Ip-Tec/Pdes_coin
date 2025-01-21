@@ -1,6 +1,9 @@
+import hashlib
 import re
+import os
 import jwt
 import datetime
+from datetime import timedelta, datetime as dt
 from app import db
 from app.mail.user_mail import Email
 from flask import current_app, request, jsonify
@@ -40,6 +43,12 @@ class UserController:
         if not user:
             return jsonify({"message": "User not found"}), 404
         return jsonify({"message": user.serialize()}), 200
+
+    @staticmethod
+    def get_current_user_id():
+        user_id = request.user_id
+        return jsonify({"message": user_id}), 200
+        
 
     # Find a user by email
     @staticmethod
@@ -202,44 +211,100 @@ class UserController:
         return jsonify({"message": "User updated successfully"}), 200
 
     @staticmethod
-    @token_required
-    def reset_password(current_user):
+    @token_required  # This decorator ensures that the user is logged in and has a valid token
+    def change_password(current_user, *args, **kwargs):
         """
-        Reset or change password based on the provided data.
-        Handles logged-in users and token-based password resets.
+        Change the password for a logged-in user.
+        """
+        data = request.get_json()
+        old_password = data.get("oldPassword")
+        new_password = data.get("newPassword")
+
+        if not old_password or not new_password:
+            return jsonify({"message": "Old password and new password are required"}), 400
+
+        # Validate old password
+        if not check_password_hash(current_user.password, old_password):
+            return jsonify({"message": "Old password is incorrect"}), 401
+
+        # Add password complexity checks (optional but recommended)
+        if len(new_password) < 6:  # Example: password must be at least 6 characters
+            return jsonify({"message": "New password must be at least 6 characters long"}), 400
+
+        # Update the password
+        current_user.password = generate_password_hash(new_password)
+        db.session.commit()
+
+        return jsonify({"message": "Password changed successfully"}), 200
+    
+    
+    # Forrgot Password
+    @staticmethod
+    def forget_password():
+        """
+        Initiates the password reset process by sending a reset link to the user's email.
         """
         data = request.get_json()
         email = data.get("email")
-        token = data.get("token")
-        old_password = data.get("password")
-        new_password = data.get("newPassword")
 
-        if not email or not new_password:
-            return jsonify({"message": "Email and new password are required"}), 400
+        if not email:
+            return jsonify({"message": "Email is required"}), 400
 
-        # Find the user by email
+        # Find user by email
         user = User.query.filter_by(email=email).first()
 
         if not user:
             return jsonify({"message": "User not found"}), 404
 
-        # Handle token-based reset
-        if token:
-            if not verify_reset_token(token):
-                return jsonify({"message": "Invalid or expired token"}), 400
-        else:
-            # Handle logged-in user reset
-            if not old_password:
-                return jsonify({"message": "Old password is required"}), 400
-            if not check_password_hash(user.password, old_password):
-                return jsonify({"message": "Old password is incorrect"}), 401
+        # Generate a unique token (hashing email + a secret key)
+        reset_token = hashlib.sha256(f"{user.email}{os.urandom(16)}".encode()).hexdigest()
+
+        # Store token in database with expiration time (e.g., 1 hour)
+        user.reset_token = reset_token
+        user.reset_token_expiry = dt.utcnow() + timedelta(hours=1)
+        db.session.commit()
+
+        # Send reset email with the token link
+        reset_url = f"https://your-website.com/reset-password?token={reset_token}"
+        # send_reset_email(user.email, reset_url)
+
+        return jsonify({"message": "Reset link sent to your email"}), 200
+    
+    # Reset Password
+    @staticmethod
+    def reset_password():
+        """
+        Allows a user to reset their password using a valid token.
+        """
+        data = request.get_json()
+        token = data.get("token")
+        new_password = data.get("newPassword")
+
+        if not token or not new_password:
+            return jsonify({"message": "Token and new password are required"}), 400
+
+        # Find the user by reset token
+        user = User.query.filter_by(reset_token=token).first()
+
+        if not user:
+            return jsonify({"message": "Invalid or expired token"}), 400
+
+        # Check if the token has expired
+        if user.reset_token_expiry < dt.utcnow():
+            return jsonify({"message": "Token has expired"}), 400
 
         # Update the password
         user.password = generate_password_hash(new_password)
+
+        # Clear the reset token
+        user.reset_token = None
+        user.reset_token_expiry = None
+
         db.session.commit()
 
         return jsonify({"message": "Password reset successfully"}), 200
-
+    
+    
     # Sende Password Reset Link to Email
     @staticmethod
     def send_password_reset_link_to_user_email(email):

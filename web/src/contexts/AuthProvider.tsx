@@ -89,6 +89,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsAuth(true);
       setUser(user);
 
+      if (user.is_blocked) {
+        toast.error("Your account has been blocked");
+        logout();
+        return;
+      }
+
+      if (user.sticks >= 2) {
+        toast.error("Your account is under review, please wait for approval");
+        logout();
+        return;
+      }
+      if (user.sticks >= 3) {
+        toast.error(
+          "Your account has been temporarily blocked contact support for more information"
+        );
+        logout();
+        return;
+      }
+
       socket.emit("get_transaction_history");
       toast.info("Login successful", user);
 
@@ -102,8 +121,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = () => {
+    sessionStorage.removeItem("user");
     localStorage.removeItem("authToken");
     localStorage.removeItem("refreshToken");
+    sessionStorage.removeItem("transactions");
     setIsAuth(false);
     setUser(null);
     setTransactions([]);

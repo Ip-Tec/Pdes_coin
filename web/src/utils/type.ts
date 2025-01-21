@@ -136,11 +136,20 @@ export interface DepositType {
   max_deposit_amount: number;
 }
 
+export interface ChangePassword {
+  oldPassword: string;
+  newPassword: string;
+}
+
+export interface ForgetPassword {
+  email: string;
+}
+
 export interface ResetPassword {
-  email?: string;
-  token?: string;
-  password?: string;
-  newPassword?: string;
+  email: string;
+  token: string;
+  password: string;
+  newPassword: string;
 }
 
 export interface AccountDetails {

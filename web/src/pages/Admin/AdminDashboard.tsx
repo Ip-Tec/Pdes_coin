@@ -221,30 +221,20 @@ const AdminDashboard = () => {
               </p>
             </div>
           </div>
-          
+
           <div className="flex m-auto justify-center items-center mt-4 w-full p-2">
             <PriceChart />
           </div>
 
-          <div className="flex w-full flex-wrap justify-evenly items-center">
+          <div className="flex w-full flex-wrap gap-2 justify-evenly items-center">
             {/* Polar Area Chart Section */}
-            <div className="bg-white shadow-md rounded-lg p-4 mt-6">
+            <div className="bg-white shadow-md w-1/2 rounded-lg p-4 mt-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">
                 Data Overview (Polar Area)
               </h3>
               {polarData ? <PolarArea data={polarData} /> : <p>Loading...</p>}
             </div>
 
-            {/* Chart Section */}
-            <div className="bg-white shadow-md rounded-lg p-4 mt-6">
-              <h3 className="text-lg font-semibold text-gray-700 mb-4">
-                Transaction Trends
-              </h3>
-              <Line data={chartData} />
-            </div>
-          </div>
-
-          <div className="flex flex-wrap justify-evenly items-center">
             {/* HorizontalBar Chart for user with the highest balance and crypto balance */}
             <div className="bg-white shadow-md rounded-lg p-4 mt-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">
@@ -259,7 +249,16 @@ const AdminDashboard = () => {
                 )}
               </div>
             </div>
+          </div>
 
+          <div className="flex flex-wrap justify-evenly items-center">
+            {/* Chart Section */}
+            <div className="bg-white shadow-md w-1/2 rounded-lg p-4 mt-6">
+              <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                Transaction Trends
+              </h3>
+              <Line data={chartData} />
+            </div>
             {/* Table or Bar Chart for Top 10 Referrals */}
             <div className="bg-white text-textColor shadow-md rounded-lg p-4 mt-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">

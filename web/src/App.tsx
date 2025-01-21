@@ -19,7 +19,7 @@ import BuySellCoin from "./pages/BuySellCoin";
 import Navigation from "./components/NavigationBar";
 import { AuthProvider } from "./contexts/AuthProvider";
 import ProtectedRoute from "./components/ProtectedRoute";
-import ResetPassword from "./pages/ResetPassword";
+import ChangePassword from "./pages/ChangePassword";
 import ForgotPassword from "./pages/ForgotPassword";
 import AboutPage from "./pages/AboutPage";
 import SupportPage from "./pages/SupportPage";
@@ -70,8 +70,8 @@ const App: React.FC = () => {
             <Route path="/" element={<HomePage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
+            <Route path="/reset-password" element={<ChangePassword />} />
+            <Route path="/reset-password/:token" element={<ChangePassword />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/about" element={<AboutPage />} />
             <Route path="/support" element={<SupportPage />} />
