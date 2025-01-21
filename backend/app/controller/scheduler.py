@@ -1,7 +1,8 @@
 import datetime
 from app import db
-from app.models import User, RewardSetting, Utility, Transaction, Balance
+from app.user_balance_checker import correct_user_balance
 from apscheduler.schedulers.background import BackgroundScheduler
+from app.models import User, RewardSetting, Utility, Transaction, Balance
 
 
 def reward_pdes_holders():
@@ -28,6 +29,13 @@ def reward_pdes_holders():
         print("Reward job completed successfully.")
     except Exception as e:
         print(f"Error during reward distribution: {e}")
+
+
+def correct_user_balance_with_context(app):
+    """Run the correct_user_balance function inside the app context."""
+    with app.app_context():
+        flagged_accounts = correct_user_balance()
+        print(f"Flagged accounts: {flagged_accounts}")
 
 
 def calculate_weekly_rewards(app):
@@ -65,7 +73,14 @@ def setup_scheduler(app):
     scheduler = BackgroundScheduler()
 
     # Reward PDES holders once a month
-    # scheduler.add_job(reward_pdes_holders, "interval", weeks=4, args=[app])  # Monthly reward for PDES holders
+    scheduler.add_job(
+        reward_pdes_holders, "interval", weeks=4
+    )  # Monthly reward for PDES holders
+
+    # Reward PDES holders once a month
+    scheduler.add_job(
+        lambda: correct_user_balance_with_context(app), "interval", days=4
+    )  # Daily check for stored balance
 
     scheduler.add_job(
         calculate_weekly_rewards, "interval", hours=0.02, args=[app]

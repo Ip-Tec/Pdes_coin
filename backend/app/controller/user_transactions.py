@@ -23,6 +23,7 @@ from app.models import (
 from app.access_level import AccessLevel
 
 # from sqlalchemy.sql.expression import case
+from app.user_balance_checker import correct_user_balance
 from flask import request, jsonify
 from app.key_gen import generate_key
 from app.services import token_required
@@ -539,6 +540,8 @@ class PdesService:
             return jsonify({"error": "No price data available"}), 500
 
         pdes_price = utility_entry.pdes_price
+
+        print(f"{correct_user_balance()=}")
 
         return handle_sell_pdes(
             user_id=user_id, amount_in_usd=amount, price_per_coin=pdes_price

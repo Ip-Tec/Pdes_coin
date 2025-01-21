@@ -29,6 +29,7 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import AdminTransaction from "./pages/Admin/AdminTransaction";
 import AdminUser from "./pages/Admin/AdminUser";
 import Utility from "./pages/Admin/Utility";
+import Referrals from "./pages/Admin/Referrals";
 
 const App: React.FC = () => {
   const DisplayNavbar: React.FC = () => {
@@ -212,6 +213,13 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute requiredRoles={["super_admin", "developer"]}>
                   <Utility />
+                </ProtectedRoute>
+              }
+            /> <Route
+              path="/a/referrals"
+              element={
+                <ProtectedRoute requiredRoles={["super_admin", "developer"]}>
+                  <Referrals />
                 </ProtectedRoute>
               }
             />

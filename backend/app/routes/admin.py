@@ -3,6 +3,7 @@ import os
 import csv
 import jwt
 import datetime
+from datetime import datetime as dt
 from app import db, socketio
 from dotenv import load_dotenv
 from sqlalchemy.orm import joinedload
@@ -16,6 +17,7 @@ from app.models import (
     DepositAccount,
     PdesTransaction,
     RewardConfig,
+    RewardSetting,
     User,
     Transaction,
     Crypto,
@@ -348,7 +350,7 @@ def confirm_user_deposit(current_user, *args, **kwargs):
         # Get the user_id from the request data
         data = request.get_json()
         user_id = data.get("id")
-        print(f"data:: {data}")
+        print(f"data:: {data=}")
 
         # Validate user_id
         if not user_id:
@@ -431,11 +433,11 @@ def confirm_user_deposit(current_user, *args, **kwargs):
             db.session.add(deposit)
 
         # Fetch conversion rate and convert fiat to dollars
-        conversion_rate_entry = Utility.query.filter_by(key="conversion_rate").first()
+        conversion_rate_entry = Utility.query.first()
         if not conversion_rate_entry:
             return jsonify({"error": "Conversion rate not found in Utility table"}), 500
 
-        conversion_rate = float(conversion_rate_entry.value)
+        conversion_rate = float(conversion_rate_entry.conversion_rate)
         amount_in_dollars = data["amount"] / conversion_rate
         print(f"Converted amount: {amount_in_dollars} USD")
 
@@ -757,3 +759,35 @@ def get_transaction_distribution_over_time(current_user, *args, **kwargs):
     data = [trans.total_amount for trans in transactions]
 
     return jsonify({"labels": labels, "data": data})
+
+
+@admin_bp.route("/configure-reward-setting", methods=["POST"])
+@staticmethod
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+def configure_reward_setting(current_user, *args, **kwargs):
+    data = request.json  # Get data from the request body
+    try:
+        weekly_percentage = data.get("weekly_percentage")
+        start_date_str = data.get("start_date")
+        end_date_str = data.get("end_date")
+
+        # Convert string dates to datetime.date
+        start_date = dt.strptime(start_date_str, "%Y-%m-%d").date()
+        end_date = (
+            dt.strptime(end_date_str, "%Y-%m-%d").date() if end_date_str else None
+        )
+
+        # Insert into the database
+        reward_setting = RewardSetting(
+            weekly_percentage=weekly_percentage,
+            start_date=start_date,
+            end_date=end_date,
+        )
+        db.session.add(reward_setting)
+        db.session.commit()
+
+        return jsonify({"message": "Reward settings configured successfully!"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 400

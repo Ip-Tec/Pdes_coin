@@ -1,5 +1,8 @@
 from app import db
+from datetime import datetime
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.types import Enum as SqEnum
+from app.enumValue import TicketPriority, TicketStatus
 
 
 # User model
@@ -13,10 +16,23 @@ class User(db.Model):
 
     role = db.Column(db.String(20), nullable=False, default="user")
     last_reward_date = db.Column(db.DateTime, nullable=True)
+    sticks = db.Column(db.Integer, default=0)  # To track infractions
+    is_blocked = db.Column(
+        db.Boolean, default=False
+    )  # # To mark if the user is blocked
+    correct_balance = db.Column(
+        db.Float, default=0.0
+    )  # Correct balance for reconciliation
 
     transactions = db.relationship("Transaction", backref="user", lazy=True)
     cryptos = db.relationship("Crypto", backref="user", lazy=True)
     balance = db.relationship("Balance", uselist=False, backref="user", lazy=True)
+    tickets = db.relationship(
+        "SupportTicket", back_populates="user", cascade="all, delete-orphan"
+    )
+    responses = db.relationship(
+        "SupportResponse", back_populates="user", cascade="all, delete-orphan"
+    )
 
     referral_code = db.Column(db.String(16), unique=True, nullable=True)
     referrer_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
@@ -515,6 +531,55 @@ class DepositAccount(db.Model):
         return self.max_deposit_amount
 
 
+class SupportTicket(db.Model):
+    __tablename__ = "support_tickets"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
+    title = db.Column(db.String(255), nullable=False)
+    description = db.Column(db.Text, nullable=False)
+
+    # Use SQLAlchemy Enum type for status and priority
+    status = db.Column(
+        SqEnum(TicketStatus), default=TicketStatus.OPEN.value, nullable=False
+    )
+    priority = db.Column(
+        SqEnum(TicketPriority), default=TicketPriority.MEDIUM.value, nullable=False
+    )
+
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+    updated_at = db.Column(db.DateTime, onupdate=db.func.current_timestamp())
+
+    user = db.relationship("User", back_populates="tickets")
+    responses = db.relationship(
+        "SupportResponse", back_populates="ticket", cascade="all, delete-orphan"
+    )
+
+    def __repr__(self):
+        return f"<SupportTicket id={self.id} title={self.title} status={self.status}>"
+
+
+class SupportResponse(db.Model):
+    __tablename__ = "support_responses"
+
+    id = db.Column(db.Integer, primary_key=True)
+    ticket_id = db.Column(
+        db.Integer, db.ForeignKey("support_tickets.id"), nullable=False
+    )
+    user_id = db.Column(
+        db.Integer, db.ForeignKey("user.id"), nullable=True
+    )  # Nullable for system-generated responses
+    sender_role = db.Column(db.String(20), nullable=False)  # "user" or "admin"
+    message = db.Column(db.Text, nullable=False)
+    created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
+
+    ticket = db.relationship("SupportTicket", back_populates="responses")
+    user = db.relationship("User", back_populates="responses")
+
+    def __repr__(self):
+        return f"<SupportResponse id={self.id} ticket_id={self.ticket_id}>"
+
+
 # Functions to handle deposits, withdrawals, and transactions
 def handle_deposit(user_id, amount, account_name, account_number):
     try:
@@ -589,7 +654,7 @@ def handle_buy_pdes(user_id, amount, price_per_coin):
                 user_id=user.id, crypto_name="Pdes", amount=0.0, account_address=""
             )
             db.session.add(crypto)
-        crypto.amount += amount
+        crypto.amount += amount  # Ensure the addition here is correct
         db.session.commit()
 
         # Record price history after the transaction
@@ -641,6 +706,7 @@ def handle_buy_pdes(user_id, amount, price_per_coin):
 # Function to handle Sell Pdes
 def handle_sell_pdes(user_id, amount_in_usd, price_per_coin):
     user = User.query.get(user_id)
+    user_balance = user.balance
     crypto = Crypto.query.filter_by(user_id=user.id, crypto_name="Pdes").first()
 
     # Ensure the user's PDES balance is sufficient for the USD equivalent
@@ -650,12 +716,11 @@ def handle_sell_pdes(user_id, amount_in_usd, price_per_coin):
 
         if crypto.amount >= amount_in_pdes:
             # Update user's balance in USD
-            user_balance = user.balance
-            user_balance.balance += amount_in_usd
+            user_balance.balance += amount_in_usd  # Correctly add to user balance
             db.session.commit()
 
             # Deduct the PDES amount from the user's crypto balance
-            crypto.amount -= amount_in_pdes
+            crypto.amount -= amount_in_pdes  # Ensure correct subtraction
             db.session.commit()
 
             # Record the sell transaction

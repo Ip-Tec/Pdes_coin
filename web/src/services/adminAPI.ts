@@ -1,7 +1,7 @@
 import axios from "axios";
 import API, { apiUrl } from "./api";
 import { toast } from "react-toastify";
-import { ErrorResponse, UtilityProps } from "../utils/type";
+import { ErrorResponse, RewardSettingFormData, UtilityProps } from "../utils/type";
 
 // Transfer Funds
 export const getDashboardTotal = async () => {
@@ -204,6 +204,24 @@ export const distributionOverTime = async () => {
       console.error(errorData);
 
       throw new Error(errorData?.message || "Transfer failed");
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// configure-reward-setting
+export const configureRewardSetting = async (data: RewardSettingFormData) => {
+  try {
+    const response = await API.post(apiUrl("/admin/configure-reward-setting"), data);
+    console.log({ response });
+    toast.success(response.data.message);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.error);
+      console.error(errorData);
+      return errorData;
     }
     throw new Error("Network error. Please try again.");
   }

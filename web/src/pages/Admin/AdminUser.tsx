@@ -1,19 +1,21 @@
 import React, { useState } from "react";
-import { DepositPropsWithUser, User } from "../../utils/type";
 import Draggable from "react-draggable";
 import InputField from "../../components/InputField";
+import { useAuth } from "../../contexts/AuthContext";
 import SearchUsers from "../../components/Admin/SearchUsers";
 import AdminWrapper from "../../components/Admin/AdminWrapper";
 import SlideInPanel from "../../components/Admin/SlideInPanel";
+import { DepositPropsWithUser, User } from "../../utils/type";
 
 const AdminUser: React.FC = () => {
-  const [users, setUsers] = useState<User[] | DepositPropsWithUser[]>([]);
+  const { user } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
   const [selectedUser] = useState<User | null>(null);
   const [isDraggable, setIsDraggable] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [supportVisible, setSupportVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [supportVisible, setSupportVisible] = useState(false);
+  const [users, setUsers] = useState<User[] | DepositPropsWithUser[]>([]);
 
   // Open edit modal
   const handleEditClick = (user: User | DepositPropsWithUser) => {
@@ -156,8 +158,16 @@ const AdminUser: React.FC = () => {
                   >
                     <option value="user">User</option>
                     <option value="admin">Admin</option>
-                    <option value="super admin">Super Admin</option>
-                    <option value="developer">Super Admin</option>
+                    {user?.role == "developer" ||
+                      (user?.role == "super_admin" && (
+                        <option value="super admin">Super Admin</option>
+                      ))}
+                    {user?.role == "developer" && (
+                      <>
+                        <option value="super admin">Super Admin</option>
+                        <option value="developer">Developer</option>
+                      </>
+                    )}
                   </select>
                 </div>
                 <div className="flex gap-2 justify-between">

@@ -2,7 +2,7 @@ import re
 import jwt
 import datetime
 from app import db
-from app.models import Notification, User
+from app.mail.user_mail import Email
 from flask import current_app, request, jsonify
 from app.key_gen import generate_key
 from app.services import (
@@ -13,7 +13,8 @@ from app.services import (
     verify_reset_token,
 )
 from app.utils import validate_required_param
-from app.mail.user_mail import Email
+from app.enumValue import TicketPriority, TicketStatus
+from app.models import Notification, SupportResponse, SupportTicket, User
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -316,3 +317,160 @@ def is_valid_email(email):
     regex = r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$"
     match = re.match(regex, email)
     return email if match else None
+
+
+# Support Center
+class SupportController:
+    @staticmethod
+    def validate_enum_value(value, enum_class):
+        """
+        Validates if the given value is a valid enum value.
+        """
+        if value not in [e.value for e in enum_class]:
+            raise ValueError(
+                f"Invalid value: '{value}'. Allowed values are: {[e.value for e in enum_class]}"
+            )
+
+    # User Creates a Ticket
+    @staticmethod
+    def create_ticket(user_id, title, description, priority="medium"):
+        try:
+            # Validate priority
+            SupportController.validate_enum_value(priority, TicketPriority)
+
+            ticket = SupportTicket(
+                user_id=user_id,
+                title=title,
+                description=description,
+                status=TicketStatus.OPEN.value,
+                priority=priority,
+            )
+            db.session.add(ticket)
+            db.session.commit()
+            return {
+                "success": True,
+                "message": "Ticket created successfully!",
+                "ticket_id": ticket.id,
+            }
+        except ValueError as ve:
+            return {"success": False, "message": str(ve)}
+        except Exception as e:
+            db.session.rollback()
+            return {"success": False, "message": f"Error creating ticket: {str(e)}"}
+
+    # Admin Assigns a Ticket
+    @staticmethod
+    def assign_ticket_to_admin(ticket_id, admin_id):
+        try:
+            ticket = SupportTicket.query.get(ticket_id)
+            if not ticket:
+                return {"success": False, "message": "Ticket not found."}
+
+            # Validate current status
+            if ticket.status != TicketStatus.OPEN.value:
+                return {
+                    "success": False,
+                    "message": "Ticket is not open for assignment.",
+                }
+
+            ticket.admin_id = admin_id
+            ticket.status = TicketStatus.IN_PROGRESS.value
+            ticket.updated_at = datetime.utcnow()
+            db.session.commit()
+            return {
+                "success": True,
+                "message": "Ticket assigned to admin successfully.",
+            }
+        except Exception as e:
+            db.session.rollback()
+            return {"success": False, "message": f"Error assigning ticket: {str(e)}"}
+
+    # Admin or User Adds a Message
+    @staticmethod
+    def add_ticket_message(ticket_id, sender_id, sender_role, message):
+        try:
+            if sender_role not in ["user", "admin"]:
+                return {"success": False, "message": "Invalid sender role."}
+
+            ticket = SupportTicket.query.get(ticket_id)
+            if not ticket:
+                return {"success": False, "message": "Ticket not found."}
+
+            ticket_message = SupportResponse(
+                ticket_id=ticket_id,
+                sender_id=sender_id,
+                sender_role=sender_role,
+                message=message,
+            )
+            ticket.updated_at = datetime.utcnow()
+            db.session.add(ticket_message)
+            db.session.commit()
+            return {"success": True, "message": "Message added successfully."}
+        except Exception as e:
+            db.session.rollback()
+            return {"success": False, "message": f"Error adding message: {str(e)}"}
+
+    # Admin Closes a Ticket
+    @staticmethod
+    def close_ticket(ticket_id):
+        try:
+            ticket = SupportTicket.query.get(ticket_id)
+            if not ticket:
+                return {"success": False, "message": "Ticket not found."}
+
+            # Validate current status
+            if ticket.status == TicketStatus.CLOSED.value:
+                return {"success": False, "message": "Ticket is already closed."}
+
+            ticket.status = TicketStatus.CLOSED.value
+            ticket.updated_at = datetime.utcnow()
+            db.session.commit()
+            return {"success": True, "message": "Ticket closed successfully."}
+        except Exception as e:
+            db.session.rollback()
+            return {"success": False, "message": f"Error closing ticket: {str(e)}"}
+
+    # Fetch Ticket Details
+    @staticmethod
+    def get_ticket_details(ticket_id):
+        try:
+            ticket = SupportTicket.query.get(ticket_id)
+            if not ticket:
+                return {"success": False, "message": "Ticket not found."}
+
+            messages = (
+                SupportResponse.query.filter_by(ticket_id=ticket_id)
+                .order_by(SupportResponse.created_at)
+                .all()
+            )
+            message_data = [
+                {
+                    "id": msg.id,
+                    "sender_id": msg.sender_id,
+                    "sender_role": msg.sender_role,
+                    "message": msg.message,
+                    "created_at": msg.created_at,
+                }
+                for msg in messages
+            ]
+
+            return {
+                "success": True,
+                "ticket": {
+                    "id": ticket.id,
+                    "title": ticket.title,
+                    "description": ticket.description,
+                    "status": ticket.status,
+                    "priority": ticket.priority,
+                    "created_at": ticket.created_at,
+                    "updated_at": ticket.updated_at,
+                    "user_id": ticket.user_id,
+                    "admin_id": ticket.admin_id,
+                    "messages": message_data,
+                },
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "message": f"Error fetching ticket details: {str(e)}",
+            }

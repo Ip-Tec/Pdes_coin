@@ -196,3 +196,9 @@ export interface DepositPropsWithUser {
   deposit_method: string;
   session_id: string | null;
 }
+
+export interface RewardSettingFormData {
+  weekly_percentage: number;
+  start_date: string;
+  end_date?: string;
+}

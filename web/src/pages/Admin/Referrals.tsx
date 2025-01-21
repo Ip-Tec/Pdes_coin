@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { User } from "../../utils/type";
+import AdminWrapper from "../../components/Admin/AdminWrapper";
 
 const Referrals = () => {
   const [referrals, setReferrals] = useState<User[]>([]);
@@ -35,28 +36,30 @@ const Referrals = () => {
     ]);
   }, []);
   return (
-    <div className="referrals">
-      <h2>Referrals</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>User</th>
-            <th>Referred User</th>
-            <th>Referral Reward</th>
-          </tr>
-        </thead>
-        <tbody>
-          {referrals.map((referral: User) => (
-            <tr key={referral.id}>
-              <td>{referral.full_name}</td>
-              <td>{referral.email}</td>
-              <td>{referral.referral_code}</td>
-              <td>{referral.referral_reward}</td>
+    <AdminWrapper>
+      <div className="p-4 md:p-8 min-h-screen my-16 w-auto relative text-gray-600">
+        <h2>Referrals</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>User</th>
+              <th>Referred User</th>
+              <th>Referral Reward</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {referrals.map((referral: User) => (
+              <tr key={referral.id}>
+                <td>{referral.full_name}</td>
+                <td>{referral.email}</td>
+                <td>{referral.referral_code}</td>
+                <td>{referral.referral_reward}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </AdminWrapper>
   );
 };
 
