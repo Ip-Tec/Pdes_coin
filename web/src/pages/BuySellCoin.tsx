@@ -222,6 +222,7 @@ function BuySellCoin() {
                 ? action === "buy"
                   ? `You will receive: ${total} PDES`
                   : `You will pay: ${formattedMoneyUSD(parseFloat(total))} USD`
+                // For PDES
                 : action === "buy"
                 ? `You will pay: ${formattedMoneyUSD(parseFloat(total))} USD`
                 : `You will receive: ${total} PDES`)}

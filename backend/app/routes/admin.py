@@ -349,7 +349,7 @@ def confirm_user_deposit(current_user, *args, **kwargs):
     try:
         # Get the user_id from the request data
         data = request.get_json()
-        user_id = data.get("id")
+        user_id = data.get("user_id")
         print(f"data:: {data=}")
 
         # Validate user_id

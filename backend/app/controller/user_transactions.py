@@ -2,7 +2,7 @@ from sqlite3 import IntegrityError
 import jwt
 import logging
 import traceback
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from app import db
 from app.models import (
     AccountDetail,
@@ -106,7 +106,6 @@ class UserTransactionsController:
         db.session.commit()
         return jsonify({"message": "Transaction deleted successfully"}), 200
 
-    # User add deposit record
     @staticmethod
     @token_required
     def user_add_deposit(current_user, *args, **kwargs):
@@ -135,9 +134,7 @@ class UserTransactionsController:
         missing_fields = [field for field in required_fields if field not in data]
         if missing_fields:
             return (
-                jsonify(
-                    {"error": f"Missing required fields: {', '.join(missing_fields)}"}
-                ),
+                jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}),
                 400,
             )
 
@@ -155,18 +152,29 @@ class UserTransactionsController:
             if not admin_account:
                 return jsonify({"error": "Admin account not found"}), 404
 
-            # Check if the admin account has space for this deposit
+            # Get the total deposit for today for the admin
             total_deposit = (
                 db.session.query(func.coalesce(func.sum(Deposit.amount), 0))
-                .filter(Deposit.admin_id == admin_id)
+                .filter(
+                    Deposit.admin_id == admin_id,  # Filter by admin ID
+                    func.date(Deposit.created_at) == date.today(),  # Today's deposits
+                )
                 .scalar()
             )
 
+            print(f"{total_deposit=}")  # Debug log for total deposits
+
+            # Check if the admin account has space for this deposit
             if total_deposit + amount > admin_account.max_deposit_amount:
                 return (
                     jsonify({"error": "Deposit exceeds the admin's account limit"}),
                     400,
                 )
+
+            # Check if transaction ID is unique
+            existing_deposit = Deposit.query.filter_by(transaction_id=transaction_id).first()
+            if existing_deposit:
+                return jsonify({"error": "Transaction ID already exists"}), 400
 
             # Create a new Deposit record
             new_deposit = Deposit(
@@ -200,6 +208,7 @@ class UserTransactionsController:
         except Exception as e:
             db.session.rollback()
             return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
 
     @staticmethod
     @token_required

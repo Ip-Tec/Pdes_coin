@@ -642,19 +642,19 @@ def handle_buy_pdes(user_id, amount, price_per_coin):
     total_cost = amount / price_per_coin
     user_balance = user.balance
 
-    if user_balance.balance >= total_cost:
+    if user_balance.balance >= amount:
         # Deduct balance and commit
-        user_balance.balance -= total_cost
+        user_balance.balance -= amount
         db.session.commit()
 
         # Add PDES to user's crypto balance
         crypto = Crypto.query.filter_by(user_id=user.id, crypto_name="Pdes").first()
         if not crypto:
             crypto = Crypto(
-                user_id=user.id, crypto_name="Pdes", amount=0.0, account_address=""
+                user_id=user.id, crypto_name="Pdes", amount=0.0, account_address=user.username
             )
             db.session.add(crypto)
-        crypto.amount += amount  # Ensure the addition here is correct
+        crypto.amount += total_cost  # Ensure the addition here is correct
         db.session.commit()
 
         # Record price history after the transaction
