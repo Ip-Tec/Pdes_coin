@@ -3,15 +3,14 @@ from flask_cors import CORS
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from flask import Flask, jsonify, request
-from flask_socketio import SocketIO, emit
+from flask import Flask, jsonify
+from flask_socketio import SocketIO
 from werkzeug.exceptions import HTTPException
 
 db = SQLAlchemy()
 migrate = Migrate()
-socketio = SocketIO(cors_allowed_origins="*")  # Initialize globally
+socketio = SocketIO(cors_allowed_origins="*", async_mode="eventlet")  # Initialize globally
 load_dotenv()
-
 
 def create_app():
     app = Flask(__name__)
@@ -62,21 +61,15 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
-    socketio.init_app(app)  # Attach SocketIO to the Flask app
+    socketio.init_app(app, cors_allowed_origins="*", async_mode="eventlet")  # Attach Socket.IO to the Flask app
 
     # Setup routes
-    @socketio.on("connect")
-    def handle_connect():
-        print("Client connected")
-        emit("response", {"message": "Welcome to the server!"})
-
     @app.route("/", methods=["GET"])
     def index():
         return jsonify({"message": "Welcome to the Pdes Wallet API!"}), 200
 
     # Register blueprints
-    from app.routes import admin, auth, correction ,users, transactions, account, utility
-    
+    from app.routes import admin, auth, correction, users, transactions, account, utility
 
     app.register_blueprint(auth.auth_bp, url_prefix="/api/auth")
     app.register_blueprint(admin.admin_bp, url_prefix="/api/admin")
@@ -100,9 +93,26 @@ def create_app():
             "Account": AccountDetail,
         }
 
-    # Import scheduler after app is created to avoid circular import
-    # from app.controller import scheduler
-    # scheduler.setup_scheduler(app)
+    # Import and bind socket events after app creation to avoid circular import
+    from app.events import register_socketio_events, emit
+    register_socketio_events(socketio)
+    
+    
+    @socketio.on('connect')
+    def handle_connect():
+        print('Client connected')
+        emit('connected', {'message': 'You are connected'})
+
+    @socketio.on('get_transaction_history')
+    def handle_transaction_history(data):
+        print('Received get_transaction_history')
+        # Simulate transaction history
+        transactions = [{"id": 1, "amount": 100}, {"id": 2, "amount": 200}]
+        emit('transaction_history', {'transactions': transactions})
+
+    @socketio.on('disconnect')
+    def handle_disconnect():
+        print('Client disconnected')
+
 
     return app
-

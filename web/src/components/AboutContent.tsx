@@ -56,7 +56,9 @@ function AboutContent() {
 
       {/* About Content */}
       <div className="flex flex-wrap items-center justify-center">
-        <h2 className="text-3xl font-bold text-gray-800 mb-6">About Pdes</h2>
+        <h2 className="text-3xl font-bold text-gray-800 mb-6 w-full md:w-1/3">
+          About Pdes
+        </h2>
         <p className="text-xl text-gray-600 mb-4 max-w-5xl mx-auto w-auto">
           Pdes is a cutting-edge cryptocurrency designed to redefine how digital
           transactions are conducted globally. With a total supply of 8 billion

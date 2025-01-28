@@ -9,29 +9,24 @@ from app.controller.user_transactions import (
     get_pdes_coin_details,
 )
 
-from flask_socketio import SocketIO, emit
-
 # Transactions API
 txn_bp = Blueprint("transactions", __name__)
 
 
-@socketio.on("disconnect")
-def handle_disconnect():
-    print("Client disconnected")
-
-
 # Transaction History router
-@socketio.on("get_transaction_history")
 @txn_bp.route("/all_transactions", methods=["GET"])
-def get_transaction_history():
+def get_transaction_history_route():
+    from app.controller.user_transactions import UserTransactionsController  # Import as needed
     transactions = UserTransactionsController.get_all_transactions()
-    emit("transaction_history", {"transactions": transactions})
-    return jsonify({"message": "Transaction history fetched successfully"}), 200
+    return jsonify({
+        "transactions": transactions,
+        "message": "Transaction history fetched successfully"
+    }), 200
 
 
 @txn_bp.route("/history", methods=["GET"])
 def transaction_history():
-    # Pass the current_user to the controller
+    from app.controller.user_transactions import UserTransactionsController
     transactions = UserTransactionsController.get_transactions()
     return transactions
 

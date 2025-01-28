@@ -27,14 +27,22 @@ const isTokenExpired = (token: string): boolean => {
   }
 };
 
-const socket = io(url + "/api/", {
+const socket = io(url, {
   query: {
     token: localStorage.getItem("authToken"),
   },
   reconnection: true,
   reconnectionAttempts: 5,
   reconnectionDelay: 1000,
-  transports: ["websocket", "polling"],
+  transports: [
+    "websocket",
+    "polling",
+    "flashsocket",
+    "eventsource",
+    "xhr-polling",
+    "jsonp-polling",
+    "htmlfile",
+  ],
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -113,6 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const { transactions } = await getTransactionHistory();
       setTransactions(transactions);
+      console.log({ transactions });
     } catch (error) {
       toast.error("Login failed");
       console.error("Login failed", error);
@@ -128,6 +137,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsAuth(false);
     setUser(null);
     setTransactions([]);
+    socket?.disconnect();
   };
 
   const refreshAuthToken = async () => {
@@ -139,6 +149,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
       const newToken = await refreshTokenAPI(refreshToken);
       localStorage.setItem("authToken", newToken);
+      socket?.emit("update_token", newToken);
       setIsAuth(true);
     } catch (error) {
       console.error("Failed to refresh token", error);

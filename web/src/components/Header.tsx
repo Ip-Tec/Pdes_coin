@@ -11,22 +11,22 @@ const Header: React.FC = () => {
         </a>
         <ul className="flex space-x-6 text-white text-xl">
           <li>
-            <a href="#about" className="hover:text-bgColor">
+            <a href="#about" className="hover:bg-bgColor p-2">
               About
             </a>
           </li>
           <li>
-            <a href="#features" className="hover:text-bgColor">
+            <a href="#features" className="hover:bg-bgColor p-2">
               Features
             </a>
           </li>
           <li>
-            <Link to={"/login"} className="hover:text-bgColor">
+            <Link to={"/login"} className="hover:bg-bgColor p-2">
               Login
             </Link>
           </li>
           <li>
-            <Link to={"/register"} className="hover:text-bgColor">
+            <Link to={"/register"} className="hover:bg-bgColor p-2">
               Register
             </Link>
           </li>

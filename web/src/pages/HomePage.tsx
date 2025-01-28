@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import AboutContent from "../components/AboutContent";
@@ -10,12 +10,17 @@ import Header from "../components/Header";
 
 const HomePage: React.FC = () => {
   const { isAuth } = useAuth();
+  const [pdes_left, setPdesLeft] = useState(7900000000);
   const navigate = useNavigate();
 
   useEffect(() => {
     if (isAuth) {
       navigate("/dashboard");
     }
+    const interval = setInterval(() => {
+      setPdesLeft((prev) => (prev - 112) % 40000000);
+    }, 1000);
+    return () => clearInterval(interval);
   });
   const features = [
     {
@@ -107,7 +112,7 @@ const HomePage: React.FC = () => {
       <section className="coin-section py-10 px-2 text-center flex justify-center flex-col items-center text-secondary bg-bgColor">
         <p className="text-3xl font-semibold text-white ">
           Currently, there are{" "}
-          <span className="text-secondary font-semibold">7,980,000,000</span>{" "}
+          <span className="text-secondary font-semibold">{pdes_left}</span>{" "}
           coins left.
         </p>
         <p className="text-3xl font-semibold text-white ">
