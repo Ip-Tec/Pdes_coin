@@ -211,14 +211,14 @@ const App: React.FC = () => {
             <Route
               path="/a/utility"
               element={
-                <ProtectedRoute requiredRoles={["super_admin", "developer"]}>
+                <ProtectedRoute requiredRoles={["admin", "super_admin", "developer"]}>
                   <Utility />
                 </ProtectedRoute>
               }
             /> <Route
               path="/a/referrals"
               element={
-                <ProtectedRoute requiredRoles={["super_admin", "developer"]}>
+                <ProtectedRoute requiredRoles={["admin", "super_admin", "developer"]}>
                   <Referrals />
                 </ProtectedRoute>
               }

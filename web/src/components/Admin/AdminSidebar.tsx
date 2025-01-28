@@ -4,7 +4,7 @@ import {
   FaCoins,
   FaExchangeAlt,
   FaChartLine,
-  FaCog,
+  // FaCog,
   FaToolbox,
   FaSignOutAlt,
   FaBars,
@@ -21,7 +21,7 @@ const menuItems = [
   { to: "/a/user", icon: FaUser, label: "Manage Users" },
   { to: "/a/transactions", icon: FaExchangeAlt, label: "Transactions" },
   { to: "/a/referrals", icon: FaCoins, label: "Referrals" },
-  { to: "/a/settings", icon: FaCog, label: "Settings" },
+  // { to: "/a/settings", icon: FaCog, label: "Settings" },
   { to: "/a/utility", icon: FaToolbox, label: "Utility" },
 ];
 

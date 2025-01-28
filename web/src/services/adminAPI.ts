@@ -1,7 +1,11 @@
 import axios from "axios";
 import API, { apiUrl } from "./api";
 import { toast } from "react-toastify";
-import { ErrorResponse, RewardSettingFormData, UtilityProps } from "../utils/type";
+import {
+  ErrorResponse,
+  RewardSettingFormData,
+  UtilityProps,
+} from "../utils/type";
 
 // Transfer Funds
 export const getDashboardTotal = async () => {
@@ -212,7 +216,10 @@ export const distributionOverTime = async () => {
 // configure-reward-setting
 export const configureRewardSetting = async (data: RewardSettingFormData) => {
   try {
-    const response = await API.post(apiUrl("/admin/configure-reward-setting"), data);
+    const response = await API.post(
+      apiUrl("/admin/configure-reward-setting"),
+      data
+    );
     console.log({ response });
     toast.success(response.data.message);
     return response.data;
@@ -226,3 +233,39 @@ export const configureRewardSetting = async (data: RewardSettingFormData) => {
     throw new Error("Network error. Please try again.");
   }
 };
+
+// download Users
+export const handleDownloadApi = async (url: string) => {
+    // Make the API request
+    try {
+      const response = await API.post(`/admin/${url}`, {}, {
+        responseType: "blob", // Ensure the response is treated as a file
+      });
+  
+      // Create a downloadable file link
+      const blob = new Blob([response.data]);
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+  
+      // Set the filename from server headers or fallback
+      const contentDisposition = response.headers["content-disposition"];
+      const filename = contentDisposition
+        ? contentDisposition.split("filename=")[1].replace(/"/g, "")
+        : `${url}.csv`;
+      link.download = filename;
+  
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+  
+      toast.success(`${filename} downloaded successfully!`);
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        toast.error(error.response.data || "Error during download.");
+      } else {
+        toast.error("Network error. Please try again.");
+      }
+      console.error(error);
+    }
+  };

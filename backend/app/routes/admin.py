@@ -518,7 +518,7 @@ def confirm_user_deposit(current_user, *args, **kwargs):
 @admin_bp.route("/download-transaction-csv", methods=["GET"])
 @staticmethod
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN"])
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
 def download_transaction_csv():
     transactions = Transaction.query.all()  # Fetch all transactions
 
@@ -791,3 +791,289 @@ def configure_reward_setting(current_user, *args, **kwargs):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
+
+
+# Download Deposits
+@admin_bp.route("/download-deposits", methods=["GET"])
+@staticmethod
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+def download_deposits(current_user, *args, **kwargs):
+    # Query all deposit transactions
+    transactions = Transaction.query.filter(
+        Transaction.transaction_type == "deposit"
+    ).all()
+
+    # Create a CSV file in memory
+    output = StringIO()
+    writer = csv.writer(output)
+
+    # Write CSV headers
+    writer.writerow(
+        [
+            "ID",
+            "User ID",
+            "Amount",
+            "Currency",
+            "Account Name",
+            "Account Number",
+            "Crypto Address",
+            "Transaction Type",
+            "Transaction Completed",
+            "Created At",
+            "Updated At",
+        ]
+    )
+
+    # Write each deposit transaction to the CSV file
+    for txn in transactions:
+        writer.writerow(
+            [
+                txn.id,
+                txn.user_id,
+                txn.amount,
+                txn.currency,
+                txn.account_name,
+                txn.account_number,
+                txn.crypto_address,
+                txn.transaction_type,
+                txn.transaction_completed,
+                txn.created_at.isoformat() if txn.created_at else "",
+                txn.updated_at.isoformat() if txn.updated_at else "",
+            ]
+        )
+
+    # Set the response headers for CSV download
+    output.seek(0)
+    response = Response(output, mimetype="text/csv")
+    response.headers["Content-Disposition"] = "attachment; filename=deposits.csv"
+    return (
+        jsonify({"message": "Deposits downloaded successfully!", "data": response}),
+        200,
+    )
+
+
+# Download Withdrawals
+@admin_bp.route("/download-withdrawals", methods=["GET"])
+@staticmethod
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+def download_withdrawals(current_user, *args, **kwargs):
+    # Query all withdrawal transactions
+    transactions = Transaction.query.filter(
+        Transaction.transaction_type.like("withdraw%")
+    ).all()
+
+    # Create a CSV file in memory
+    output = StringIO()
+    writer = csv.writer(output)
+
+    # Write CSV headers
+    writer.writerow(
+        [
+            "ID",
+            "User ID",
+            "Amount",
+            "Currency",
+            "Account Name",
+            "Account Number",
+            "Crypto Address",
+            "Transaction Type",
+            "Transaction Completed",
+            "Created At",
+            "Updated At",
+        ]
+    )
+
+    # Write each withdrawal transaction to the CSV file
+    for txn in transactions:
+        writer.writerow(
+            [
+                txn.id,
+                txn.user_id,
+                txn.amount,
+                txn.currency,
+                txn.account_name,
+                txn.account_number,
+                txn.crypto_address,
+                txn.transaction_type,
+                txn.transaction_completed,
+                txn.created_at.isoformat() if txn.created_at else "",
+                txn.updated_at.isoformat() if txn.updated_at else "",
+            ]
+        )
+
+    # Set the response headers for CSV download
+    output.seek(0)
+    response = Response(output, mimetype="text/csv")
+    response.headers["Content-Disposition"] = "attachment; filename=withdrawals.csv"
+    return (
+        jsonify({"message": "Withdrawals downloaded successfully!", "data": response}),
+        200,
+    )
+
+
+# Download Transactions
+@admin_bp.route("/download-transactions", methods=["GET"])
+@staticmethod
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+def download_transactions(current_user, *args, **kwargs):
+    # Query all transactions (deposits and withdrawals)
+    transactions = Transaction.query.all()
+
+    # Create a CSV file in memory
+    output = StringIO()
+    writer = csv.writer(output)
+
+    # Write CSV headers
+    writer.writerow(
+        [
+            "ID",
+            "User ID",
+            "Amount",
+            "Currency",
+            "Account Name",
+            "Account Number",
+            "Crypto Address",
+            "Transaction Type",
+            "Transaction Completed",
+            "Created At",
+            "Updated At",
+        ]
+    )
+
+    # Write each transaction to the CSV file
+    for txn in transactions:
+        writer.writerow(
+            [
+                txn.id,
+                txn.user_id,
+                txn.amount,
+                txn.currency,
+                txn.account_name,
+                txn.account_number,
+                txn.crypto_address,
+                txn.transaction_type,
+                txn.transaction_completed,
+                txn.created_at.isoformat() if txn.created_at else "",
+                txn.updated_at.isoformat() if txn.updated_at else "",
+            ]
+        )
+
+    # Set the response headers for CSV download
+    output.seek(0)
+    response = Response(output, mimetype="text/csv")
+    response.headers["Content-Disposition"] = "attachment; filename=transactions.csv"
+    return response
+
+
+# Download User
+@admin_bp.route("/download-users", methods=["GET"])
+@staticmethod
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+def download_users(current_user, *args, **kwargs):
+    """
+    Route to download all user data in CSV format.
+    """
+    users = User.query.all()  # Fetch all users
+
+    # Create an in-memory file
+    output = StringIO()
+    writer = csv.writer(output)
+
+    # Write header
+    writer.writerow(["ID", "Name", "Email", "Username", "Role", "Balance", "Referrals"])
+
+    # Write user data
+    for user in users:
+        writer.writerow(
+            [
+                user.id,
+                user.name,
+                user.email,
+                user.username,
+                user.role,
+                user.balance.balance if user.balance else 0.0,
+                user.total_referrals,
+            ]
+        )
+
+    # Set the response
+    output.seek(0)
+    return Response(
+        output,
+        mimetype="text/csv",
+        headers={"Content-Disposition": "attachment;filename=users.csv"},
+    )
+
+
+# Upload Transaction
+@admin_bp.route("/upload-transactions", methods=["POST"])
+@staticmethod
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+def upload_transactions(current_user, *args, **kwargs):
+    """
+    Route to upload a CSV file and update deposits or withdrawals for users.
+    The CSV should have columns: user_id, type (deposit/withdrawal), amount.
+    """
+    if "file" not in request.files:
+        return jsonify({"error": "No file part"}), 400
+
+    file = request.files["file"]
+
+    if file.filename == "":
+        return jsonify({"error": "No selected file"}), 400
+
+    if not file.filename.endswith(".csv"):
+        return (
+            jsonify({"error": "Invalid file format. Only CSV files are allowed."}),
+            400,
+        )
+
+    try:
+        # Read the CSV file
+        stream = StringIO(file.stream.read().decode("UTF-8"))
+        csv_reader = csv.DictReader(stream)
+
+        # Validate columns
+        required_columns = {"user_id", "type", "amount"}
+        if not required_columns.issubset(csv_reader.fieldnames):
+            return (
+                jsonify(
+                    {"error": "CSV file must contain user_id, type, and amount columns"}
+                ),
+                400,
+            )
+
+        # Process rows
+        for row in csv_reader:
+            user_id = row.get("user_id")
+            transaction_type = row.get("type").strip().lower()
+            amount = float(row.get("amount", 0.0))
+
+            # Validate data
+            if (
+                not user_id
+                or transaction_type not in {"deposit", "withdrawal"}
+                or amount <= 0
+            ):
+                continue  # Skip invalid rows
+
+            user = User.query.get(user_id)
+            if not user:
+                continue  # Skip if user does not exist
+
+            if transaction_type == "deposit":
+                user.balance.total_balance += amount  # Update deposit
+            elif transaction_type == "withdrawal":
+                user.balance.total_balance -= amount  # Update withdrawal
+
+        # Commit updates to the database
+        db.session.commit()
+        return jsonify({"message": "Transactions updated successfully"}), 200
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500

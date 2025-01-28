@@ -11,7 +11,7 @@ import { formattedMoneyNGN, formattedMoneyUSD } from "../utils/helpers";
 function Withdraw() {
   const { user, isAuth } = useAuth();
   const userBalance = user?.balance || 0;
-  const withdrawalLimit = 50;
+  const withdrawalLimit = 5;
   const [selectedOption, setSelectedOption] = useState("");
   const [cryptoAddress, setCryptoAddress] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
