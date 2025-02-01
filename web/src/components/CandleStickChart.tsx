@@ -7,8 +7,6 @@ import {
   CandlestickController,
   CandlestickElement,
 } from 'chartjs-chart-financial';
-import { title } from 'process';
-import { text } from 'stream/consumers';
 
 // Register required components with ChartJS
 ChartJS.register(
@@ -95,12 +93,14 @@ const CandleStickChart = () => {
     },
     scales: {
       x: {
-        text: 'Date',
-        display: false,
-        
+        type: 'category', // Corrected to match Chart.js expected scale type
+        title: {
+          display: true,
+          text: 'Date', // Label for the x-axis
+        },
       },
       y: {
-        type: 'linear',
+        type: 'linear', // Ensure this type is specified
         title: {
           display: true,
           text: 'Price',
@@ -108,6 +108,7 @@ const CandleStickChart = () => {
       },
     },
   };
+  
 
   return <Line data={chartData} options={options} />;
 };
