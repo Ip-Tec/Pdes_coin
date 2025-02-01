@@ -2,6 +2,7 @@ from app import db, socketio
 from flask import Blueprint, jsonify
 from app.services import token_required
 from app.controller.user_controller import UserController
+from flask_cors import cross_origin
 
 from flask_socketio import SocketIO, emit
 
@@ -15,9 +16,10 @@ def handle_connect():
 
 
 # Get Login user info
-@users_bp.route("/", methods=["GET", "OPTIONS"])
+@users_bp.route("/users_info", methods=["GET", "OPTIONS"])
+# @token_required
 def get_users():
-    # Fetch users from the database
+    print(f"get_current_user:::::::::::::::::::: ")
     get_users = UserController.get_user()
     return get_users
 

@@ -236,36 +236,37 @@ export const configureRewardSetting = async (data: RewardSettingFormData) => {
 
 // download Users
 export const handleDownloadApi = async (url: string) => {
-    // Make the API request
-    try {
-      const response = await API.post(`/admin/${url}`, {}, {
-        responseType: "blob", // Ensure the response is treated as a file
+  try {
+    const response = await API.get(`/admin${url}`, {
+        responseType: "blob",
       });
-  
-      // Create a downloadable file link
-      const blob = new Blob([response.data]);
-      const downloadUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-  
-      // Set the filename from server headers or fallback
-      const contentDisposition = response.headers["content-disposition"];
-      const filename = contentDisposition
-        ? contentDisposition.split("filename=")[1].replace(/"/g, "")
-        : `${url}.csv`;
-      link.download = filename;
-  
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-  
-      toast.success(`${filename} downloaded successfully!`);
-    } catch (error) {
-      if (axios.isAxiosError(error) && error.response) {
-        toast.error(error.response.data || "Error during download.");
-      } else {
-        toast.error("Network error. Please try again.");
-      }
-      console.error(error);
+
+    // Create a downloadable file link
+    const blob = new Blob([response.data], { type: "text/csv" });
+    const downloadUrl = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+
+    // Extract filename from headers or use a default name
+    const contentDisposition = response.headers["content-disposition"];
+    let filename = "withdrawals.csv";
+    if (contentDisposition) {
+      const match = contentDisposition.match(/filename="?(.+)"?/);
+      if (match && match[1]) filename = match[1];
     }
-  };
+
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    toast.success(`${filename} downloaded successfully!`);
+  } catch (error) {
+    if (axios.isAxiosError(error) && error.response) {
+      toast.error(error.response.data || "Error during download.");
+    } else {
+      toast.error("Network error. Please try again.");
+    }
+    console.error(error);
+  }
+};

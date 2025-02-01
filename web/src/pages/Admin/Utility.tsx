@@ -13,7 +13,8 @@ function Utility() {
     "UtilityData"
   );
   const [formData, setFormData] = useState({
-    pdes_price: "",
+    pdes_buy_price: "",
+    pdes_sell_price: "",
     pdes_circulating_supply: "",
     conversion_rate: "",
     reward_percentage: "",
@@ -37,7 +38,8 @@ function Utility() {
       if (response.status === 200) {
         toast.success("Utility data added successfully!");
         setFormData({
-          pdes_price: "",
+          pdes_buy_price: "",
+          pdes_sell_price: "",
           pdes_circulating_supply: "",
           conversion_rate: "",
           reward_percentage: "",
@@ -90,10 +92,18 @@ function Utility() {
               className="bg-white shadow-md rounded px-8 pt-6 pb-8 w-full md:max-w-lg mx-auto"
             >
               <InputField
-                label="PDES Price"
+                label="PDES Buy Price"
                 type="number"
-                name="pdes_price"
-                value={formData.pdes_price}
+                name="pdes_buy_price"
+                value={formData.pdes_buy_price}
+                onChange={handleChange}
+              />
+
+              <InputField
+                label="PDES Sell Price"
+                type="number"
+                name="pdes_sell_price"
+                value={formData.pdes_sell_price}
                 onChange={handleChange}
               />
 

@@ -1,16 +1,27 @@
 import os
 from flask_cors import CORS
+
+# from requests import request
 from dotenv import load_dotenv
 from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_socketio import SocketIO
 from werkzeug.exceptions import HTTPException
 
 db = SQLAlchemy()
 migrate = Migrate()
-socketio = SocketIO(cors_allowed_origins="*", async_mode="eventlet")  # Initialize globally
+socketio = SocketIO(
+    cors_allowed_origins=[
+        "https://vercel.app",
+        "http://localhost:5173",
+        "https://pdes-coin.vercel.app",
+    ],
+    async_mode="eventlet",
+)
+# Initialize globally
 load_dotenv()
+
 
 def create_app():
     app = Flask(__name__)
@@ -40,6 +51,25 @@ def create_app():
             404,
         )
 
+    # @app.after_request
+    # @app.before_request
+    # def add_cors_headers(response):
+    #     allowed_origins = [
+    #         "https://vercel.app",
+    #         "http://localhost:5173",
+    #         "https://pdes-coin.vercel.app",
+    #     ]
+    #     origin = request.headers.get("Origin")
+
+    #     if origin in allowed_origins:
+    #         response.headers["Access-Control-Allow-Origin"] = "Origin"
+    #         response.headers["Access-Control-Allow-Credentials"] = "true"
+    #         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE"
+    #         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
+
+    #     return response
+
+
     # CORS configuration
     CORS(
         app,
@@ -55,13 +85,22 @@ def create_app():
         },
     )
 
+
     # Load configuration
     app.config.from_object("app.config.Config")
 
     # Initialize extensions
     db.init_app(app)
     migrate.init_app(app, db)
-    socketio.init_app(app, cors_allowed_origins="*", async_mode="eventlet")  # Attach Socket.IO to the Flask app
+    socketio.init_app(
+        app,
+        cors_allowed_origins="*",
+        async_mode="eventlet",
+        transports=["websocket", "polling"],
+        logger=True,  # Add logging
+        engineio_logger=True,  # Add detailed logging
+    )
+    # Attach Socket.IO to the Flask app
 
     # Setup routes
     @app.route("/", methods=["GET"])
@@ -69,7 +108,15 @@ def create_app():
         return jsonify({"message": "Welcome to the Pdes Wallet API!"}), 200
 
     # Register blueprints
-    from app.routes import admin, auth, correction, users, transactions, account, utility
+    from app.routes import (
+        admin,
+        auth,
+        correction,
+        users,
+        transactions,
+        account,
+        utility,
+    )
 
     app.register_blueprint(auth.auth_bp, url_prefix="/api/auth")
     app.register_blueprint(admin.admin_bp, url_prefix="/api/admin")
@@ -94,25 +141,8 @@ def create_app():
         }
 
     # Import and bind socket events after app creation to avoid circular import
-    from app.events import register_socketio_events, emit
+    from app.events import register_socketio_events
+
     register_socketio_events(socketio)
-    
-    
-    @socketio.on('connect')
-    def handle_connect():
-        print('Client connected')
-        emit('connected', {'message': 'You are connected'})
-
-    @socketio.on('get_transaction_history')
-    def handle_transaction_history(data):
-        print('Received get_transaction_history')
-        # Simulate transaction history
-        transactions = [{"id": 1, "amount": 100}, {"id": 2, "amount": 200}]
-        emit('transaction_history', {'transactions': transactions})
-
-    @socketio.on('disconnect')
-    def handle_disconnect():
-        print('Client disconnected')
-
 
     return app

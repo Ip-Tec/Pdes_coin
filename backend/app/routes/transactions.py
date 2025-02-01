@@ -23,7 +23,7 @@ def get_transaction_history_route():
         "message": "Transaction history fetched successfully"
     }), 200
 
-
+# get user Transaction history
 @txn_bp.route("/history", methods=["GET"])
 def transaction_history():
     from app.controller.user_transactions import UserTransactionsController
@@ -168,7 +168,7 @@ def fetch_pdes_details():
 @txn_bp.route("/conversion-rate", methods=["GET"])
 def get_conversion_rate():
     rate = get_pdes_coin_details()
-    print(f"conversion_rate: {rate}")
+    # print(f"conversion_rate: {rate}")
 
     if rate:
         return jsonify({"conversion_rate": rate})
@@ -188,6 +188,14 @@ def get_account_details():
 @token_required
 def get_price_history(current_user):
     return PdesService.get_pdes_price_history()
+
+
+# PDES Chart router
+@txn_bp.route("/trade-history", methods=["GET"])
+@token_required
+def get_trade_history(current_user, *args, **kwargs):
+    return PdesService.get_pdes_trade_history(current_user)
+
 
 
 # get account detail for user to deposit to

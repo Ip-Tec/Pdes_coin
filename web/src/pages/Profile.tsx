@@ -29,12 +29,7 @@ function Profile() {
       navigate("/login");
     }
     if (!user) {
-      const users = localStorage.getItem("user");
-      if (users) {
-        setUser(JSON.parse(users));
-      } else {
-        navigate("/login");
-      }
+      navigate("/login");
     }
   }, [isAuth, navigate, setUser, user]);
 

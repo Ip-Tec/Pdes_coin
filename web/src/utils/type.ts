@@ -182,7 +182,8 @@ export interface DepositAccountProps {
 }
 
 export interface UtilityProps {
-  pdes_price: string;
+  pdes_buy_price: string;
+  pdes_sell_price: string;
   pdes_market_cap?: string;
   pdes_circulating_supply: string;
   conversion_rate: string;
@@ -210,4 +211,26 @@ export interface RewardSettingFormData {
   weekly_percentage: number;
   start_date: string;
   end_date?: string;
+}
+
+export interface TradeHistory {
+  time: string;
+  buy: number;
+  sell: number;
+}
+
+export interface PriceData {
+  time: string;
+  buy: number;
+  sell: number;
+}
+
+export interface LiveChartProps {
+  labels: string[];
+  datasets: {
+    label: string;
+    data: PriceData[];
+    borderColor: string;
+    fill: boolean;
+  }[];
 }

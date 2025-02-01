@@ -1,16 +1,16 @@
 import { useState, useEffect, ReactNode } from "react";
 import { AuthContext } from "./AuthContext";
-import { jwtDecode } from "jwt-decode";
-import { io } from "socket.io-client";
+import { jwtDecode } from "jwt-decode"; // Use the default import
+import { io, Socket } from "socket.io-client";
 import { toast } from "react-toastify";
 import {
   refreshTokenAPI,
   getTransactionHistory,
   loginUser,
   getUser as getUserAPI,
-  url,
+  websocketUrl,
 } from "../services/api";
-import { TransactionHistory, User } from "../utils/type";
+import { TradeHistory, TransactionHistory, User } from "../utils/type";
 
 interface DecodedToken {
   exp: number;
@@ -27,101 +27,135 @@ const isTokenExpired = (token: string): boolean => {
   }
 };
 
-const socket = io(url, {
-  query: {
-    token: localStorage.getItem("authToken"),
-  },
-  reconnection: true,
-  reconnectionAttempts: 5,
-  reconnectionDelay: 1000,
-  transports: [
-    "websocket",
-    "polling",
-    "flashsocket",
-    "eventsource",
-    "xhr-polling",
-    "jsonp-polling",
-    "htmlfile",
-  ],
-});
+// Create a socket connection using the provided token.
+const createSocket = (token: string | null): Socket => {
+  return io(websocketUrl, {
+    query: { token },
+    transports: ["websocket", "polling"],
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+  });
+};
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  // Determine initial auth state based on the existence and validity of a token.
   const [isAuth, setIsAuth] = useState<boolean>(() => {
-    const token = localStorage.getItem("authToken");
+    const token = sessionStorage.getItem("authToken");
     return !!token && !isTokenExpired(token);
   });
 
+  // Keep user data in memory only.
   const [user, setUser] = useState<User | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [trade, setTrade] = useState<TradeHistory[]>([]);
   const [transactions, setTransactions] = useState<TransactionHistory[]>([]);
 
+  // If a valid token exists but no user data is loaded, fetch user data.
   useEffect(() => {
-    const userData = sessionStorage.getItem("user");
-    if (userData) {
-      setUser(JSON.parse(userData));
+    const token = sessionStorage.getItem("authToken");
+    if (token && !isTokenExpired(token)) {
+      setIsAuth(true);
+      // fetch user data again or retrieve it from sessionStorage
+      getUser().catch(() => logout());
+    } else {
+      logout();
     }
   }, []);
 
+  // Manage WebSocket connection when authentication state changes.
   useEffect(() => {
-    socket.on("transaction_history", (data) => {
-      console.log("transaction_history", data);
-      setTransactions(data.transactions);
+    const token = sessionStorage.getItem("authToken");
+    if (!isAuth || !token) {
+      // Disconnect any existing socket if not authenticated.
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+      }
+      return;
+    }
+
+    const newSocket = createSocket(token);
+    setSocket(newSocket);
+
+    newSocket.on("connect", () => {
+      console.log("Connected to WebSocket server");
+      newSocket.emit("get_transaction_history");
+      newSocket.emit("get_trade_history");
     });
 
-    socket.on("error", (error) => {
+    newSocket.on("get_transaction_history", (data) => {
+      console.log("Transaction History:", data);
+      setTransactions(data.transactions || data);
+    });
+    newSocket.on("get_trade_history", (data) => {
+      console.log("Trade History:", data);
+      setTrade(data.trade_history || data);
+    });
+    newSocket.on("transaction_history", (data) => {
+      console.log("Real-time Transaction Update:", data);
+      setTransactions(data.transactions || data);
+    });
+    newSocket.on("error", (error) => {
       console.error("WebSocket Error:", error);
     });
 
+    // Clean up the socket when the effect is re-run or unmounted.
     return () => {
-      socket.off("transaction_history");
-      socket.off("error");
+      newSocket.disconnect();
     };
-  }, []);
+  }, [isAuth]);
 
+  // Login function: calls the API and updates in-memory auth state.
   const login = async (email: string, password: string) => {
+    console.log({ email, password });
+    
     try {
-      const token = localStorage.getItem("authToken");
-      if (token && !isTokenExpired(token)) {
+      const existingToken = sessionStorage.getItem("authToken");
+      if (existingToken && !isTokenExpired(existingToken)) {
         toast.info("User is already logged in.");
         return;
       }
 
-      const { user, access_token, refresh_token } = await loginUser({
+      const {
+        user: userData,
+        access_token,
+        refresh_token,
+      } = await loginUser({
         email,
         password,
       });
+      console.log({ userData, access_token, refresh_token });
+      
+      setUser(userData);
 
-      sessionStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("authToken", access_token);
-      localStorage.setItem("refreshToken", refresh_token);
+      // Store tokens in sessionStorage. Do not store sensitive user data persistently.
+      sessionStorage.setItem("authToken", access_token);
+      sessionStorage.setItem("refreshToken", refresh_token);
 
       setIsAuth(true);
-      setUser(user);
+      setUser(userData);
+      console.log({ userData });
+      
 
-      if (user.is_blocked) {
-        toast.error("Your account has been blocked");
+      // Check if the account is blocked or under review.
+      if (userData.is_blocked || userData.sticks >= 2) {
+        toast.error("Your account is under review or blocked.");
         logout();
         return;
       }
+      console.log({ isAuth, user });
+      toast.success("Login successful!");
 
-      if (user.sticks >= 2) {
-        toast.error("Your account is under review, please wait for approval");
-        logout();
-        return;
-      }
-      if (user.sticks >= 3) {
-        toast.error(
-          "Your account has been temporarily blocked contact support for more information"
-        );
-        logout();
-        return;
-      }
-
-      socket.emit("get_transaction_history");
-      toast.info("Login successful", user);
-
-      const { transactions } = await getTransactionHistory();
+      // Fetch transactions immediately.
+      const transactions = await getTransactionHistory();
       setTransactions(transactions);
-      console.log({ transactions });
+
+      // Initialize WebSocket connection with the new token.
+      const newSocket = createSocket(access_token);
+      setSocket(newSocket);
+      newSocket.emit("get_transaction_history");
+      newSocket.emit("get_trade_history");
     } catch (error) {
       toast.error("Login failed");
       console.error("Login failed", error);
@@ -129,27 +163,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Logout: remove tokens and clear in-memory state.
   const logout = () => {
-    sessionStorage.removeItem("user");
-    localStorage.removeItem("authToken");
-    localStorage.removeItem("refreshToken");
-    sessionStorage.removeItem("transactions");
+    sessionStorage.removeItem("authToken");
+    sessionStorage.removeItem("refreshToken");
     setIsAuth(false);
     setUser(null);
     setTransactions([]);
-    socket?.disconnect();
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
   };
 
+  // Refresh the auth token when needed.
   const refreshAuthToken = async () => {
     try {
-      const refreshToken = localStorage.getItem("refreshToken");
+      const refreshToken = sessionStorage.getItem("refreshToken");
       if (!refreshToken) {
         logout();
         return;
       }
       const newToken = await refreshTokenAPI(refreshToken);
-      localStorage.setItem("authToken", newToken);
-      socket?.emit("update_token", newToken);
+      sessionStorage.setItem("authToken", newToken);
+      if (socket) socket.emit("update_token", newToken);
       setIsAuth(true);
     } catch (error) {
       console.error("Failed to refresh token", error);
@@ -157,15 +194,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // Fetch the current user's data. Sensitive data remains only in memory.
   const getUser = async () => {
-    const user = await getUserAPI();
-    sessionStorage.setItem("user", JSON.stringify(user));
-    setUser(user);
-    return user;
+    console.log({ isAuth, user });
+    // if(!user){
+    //   setIsAuth(false);
+    // }
+    try {
+      const userData = await getUserAPI();
+      setUser(userData);
+      return userData;
+    } catch (error) {
+      console.error("Error fetching user", error);
+      throw error;
+    }
   };
 
+  // On mount, check if the token is expired and refresh it if necessary.
   useEffect(() => {
-    const token = localStorage.getItem("authToken");
+    const token = sessionStorage.getItem("authToken");
     if (token && isTokenExpired(token)) {
       refreshAuthToken();
     }
@@ -178,6 +225,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         setUser,
         getUser,
+        trade,
         transactions,
         login,
         logout,

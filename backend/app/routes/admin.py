@@ -11,7 +11,7 @@ from app.services import token_required
 from app.access_level import AccessLevel
 from sqlalchemy import func, desc, case
 from app.controller import user_controller
-from flask import Blueprint, request, jsonify, Response
+from flask import Blueprint, request, jsonify, Response, make_response
 from app.models import (
     Deposit,
     DepositAccount,
@@ -600,17 +600,19 @@ def add_utility(current_user, *args, **kwargs):
 
     try:
         data = request.json
-        pdes_price = data.get("pdes_price")
+        pdes_buy_price = data.get("pdes_buy_price")
+        pdes_sell_price = data.get("pdes_sell_price")
         pdes_circulating_supply = data.get("pdes_circulating_supply")
 
-        if not pdes_price or not pdes_circulating_supply:
+        if not pdes_buy_price or not pdes_sell_price or not pdes_circulating_supply:
             return jsonify({"error": "Missing required fields"}), 400
 
         # Automatically calculate the market cap
-        pdes_market_cap = float(pdes_price) * float(pdes_circulating_supply)
+        pdes_market_cap = float(pdes_buy_price) * float(pdes_circulating_supply)
 
         utility = Utility(
-            pdes_price=data["pdes_price"],
+            pdes_buy_price=data["pdes_buy_price"],
+            pdes_sell_price=data["pdes_sell_price"],
             pdes_market_cap=pdes_market_cap,
             pdes_circulating_supply=data["pdes_circulating_supply"],
             conversion_rate=data["conversion_rate"],
@@ -855,62 +857,44 @@ def download_deposits(current_user, *args, **kwargs):
 
 # Download Withdrawals
 @admin_bp.route("/download-withdrawals", methods=["GET"])
-@staticmethod
 @token_required
 @AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
-def download_withdrawals(current_user, *args, **kwargs):
-    # Query all withdrawal transactions
-    transactions = Transaction.query.filter(
-        Transaction.transaction_type.like("withdraw%")
-    ).all()
+def download_withdrawals(current_user):
+    try:
+        transactions = Transaction.query.filter(
+            Transaction.transaction_type.like("withdraw%")
+        ).all()
 
-    # Create a CSV file in memory
-    output = StringIO()
-    writer = csv.writer(output)
+        if not transactions:
+            return jsonify({"error": "No transactions found"}), 404
 
-    # Write CSV headers
-    writer.writerow(
-        [
-            "ID",
-            "User ID",
-            "Amount",
-            "Currency",
-            "Account Name",
-            "Account Number",
-            "Crypto Address",
-            "Transaction Type",
-            "Transaction Completed",
-            "Created At",
-            "Updated At",
-        ]
-    )
-
-    # Write each withdrawal transaction to the CSV file
-    for txn in transactions:
+        output = StringIO()
+        writer = csv.writer(output)
         writer.writerow(
-            [
-                txn.id,
-                txn.user_id,
-                txn.amount,
-                txn.currency,
-                txn.account_name,
-                txn.account_number,
-                txn.crypto_address,
-                txn.transaction_type,
-                txn.transaction_completed,
-                txn.created_at.isoformat() if txn.created_at else "",
-                txn.updated_at.isoformat() if txn.updated_at else "",
-            ]
+            ["ID", "User ID", "Amount", "Currency", "Account Name", 
+             "Account Number", "Crypto Address", "Transaction Type", 
+             "Transaction Completed", "Created At", "Updated At"]
         )
 
-    # Set the response headers for CSV download
-    output.seek(0)
-    response = Response(output, mimetype="text/csv")
-    response.headers["Content-Disposition"] = "attachment; filename=withdrawals.csv"
-    return (
-        jsonify({"message": "Withdrawals downloaded successfully!", "data": response}),
-        200,
-    )
+        for txn in transactions:
+            print(txn.serialize())  # Log each transaction
+            writer.writerow([
+                txn.id, txn.user_id, txn.amount, txn.currency,
+                txn.account_name, txn.account_number, txn.crypto_address,
+                txn.transaction_type, txn.transaction_completed,
+                txn.created_at.isoformat() if txn.created_at else "",
+                txn.updated_at.isoformat() if txn.updated_at else ""
+            ])
+
+        output.seek(0)
+        response = make_response(output.getvalue())
+        response.headers["Content-Disposition"] = "attachment; filename=withdrawals.csv"
+        response.headers["Content-Type"] = "text/csv"
+        return response
+
+    except Exception as e:
+        print("Error in download_withdrawals:", str(e))  # Log error in console
+        return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
 
 
 # Download Transactions

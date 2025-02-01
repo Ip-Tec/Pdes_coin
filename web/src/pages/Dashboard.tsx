@@ -5,95 +5,72 @@ import TransactionList from "../components/TransactionList";
 import Loading from "../components/Loading";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
+import { ToastContainer } from "react-toastify";
+// import { getUser } from "../services/api";
 
-const AdminDashboard = () => {
-  const { user, getUser, setUser, transactions, logout, isAuth } = useAuth();
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+const Dashboard = () => {
+  const { user, setUser, transactions, isAuth } = useAuth();
+  const [isLoading] = useState<boolean>(false);
   const navigate = useNavigate();
 
-  // Redirect to login if user is not authenticated
+  // const fetchUser = async () => {
+    console.log({ isAuth, user });
+  //   try {
+  //     const userData = await getUser();
+  //     setUser(userData);
+  //   } catch (error) {
+  //     console.error("Error fetching user", error);
+  //     throw error;
+  //   }
+  // };
+
   useEffect(() => {
+    // fetchUser();
+
     if (!isAuth) {
       navigate("/login");
     }
-  }, [isAuth, navigate]);
-
-  // The transactions are already available in the context, no need to fetch them here
-  useEffect(() => {
-    // If we need to load additional data, we can trigger a loading state
-    setIsLoading(false); // Set loading to false once the data is ready
-  }, [transactions]);
-
-  const handleLogout = () => {
-    logout();
-    navigate("/login");
-  };
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      if (!user) {
-        const storedUser = sessionStorage.getItem("user");
-        if (storedUser) {
-          const parsedUser = JSON.parse(storedUser);
-          setUser(parsedUser);
-        } else if (getUser) {
-          try {
-            const fetchedUser = await getUser();
-            if (fetchedUser) {
-              console.log("fetchedUser", fetchedUser);
-
-              setUser(fetchedUser);
-              sessionStorage.setItem("user", JSON.stringify(fetchedUser));
-            }
-          } catch (error) {
-            toast.error(`Failed to fetch user: ${error}`);
-            handleLogout();
-          }
-        }
-      }
-    };
-
-    fetchUser();
-  }, [user, getUser, setUser]);
+    if (!user) {
+      navigate("/login");
+    }
+  }, [isAuth, navigate, setUser, user]);
 
   if (isLoading) {
     return (
       <div className="h-screen flex items-center justify-center bg-mainBG">
+        <h2 className="text-9xl font-bold text-black">Loading...</h2>
         <Loading isLoading={isLoading} />
       </div>
     );
   }
 
+  // const handleLogout = () => {
+  //   navigate("/login");
+  //   setTimeout(() => logout(), 500);
+  // };
+
   if (!user) {
-    return <Loading isLoading={isLoading} />;
+    return (
+      <div className="h-screen flex items-center justify-center bg-mainBG">
+        <h2 className="text-7xl font-bold text-black">User not found</h2>
+        <Loading isLoading={isLoading} />
+      </div>
+    );
   }
 
-  // If user exists, render dashboard components
   return (
-    <div className="h-screen bg-mainBG pb-16 overflow-hidden mb-28">
+    <div className="bg-mainBG pb-16 overflow-hidden mb-18 md:mb-2">
       <ToastContainer />
-      {/* Desktop Layout */}
-      <div className="lg:flex lg:space-x-6 m-2 overflow-hidden">
-        {/* Fixed Left Section for Desktop */}
-        <div className="lg:w-1/3 lg:sticky lg:top-4 lg:mt-[15%]">
-          <BalanceCard
-            id={user.id}
-            email={user.email}
-            full_name={user.full_name}
-            username={user.username}
-            balance={user.balance}
-            crypto_balance={user.crypto_balance}
-            referral_code={user.referral_code}
-            total_referrals={user.total_referrals}
-            referral_reward={user.referral_reward}
-            created_at={user.created_at}
-            role={user.role}          />
+      <div className="md:flex relative md:space-x-6 m-2 overflow-hidden">
+        
+        {/* Left Section - Fixed on md screens only */}
+        <div className="md:w-1/2 md:sticky md:top-4 md:mt-[15%] lg:static lg:top-auto">
+          <BalanceCard {...user} />
           <QuickActions />
         </div>
-
-        {/* Right Section */}
-        <div className="lg:w-2/3 m-2 h-screen overflow-scroll no-scrollbar">
+  
+        {/* Right Section - Transactions (Takes full width on small screens) */}
+        <div className="md:w-1/2 md:ml-[34%] m-2 h-auto overflow-scroll no-scrollbar">
           {transactions?.length === 0 ? (
             <div className="mt-6">
               <h2 className="text-lg font-bold text-black">Transactions</h2>
@@ -108,6 +85,7 @@ const AdminDashboard = () => {
       </div>
     </div>
   );
+  
 };
 
-export default AdminDashboard;
+export default Dashboard;

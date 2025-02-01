@@ -3,9 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   buySellPdes,
   fetchCurrentPrice,
-  getTransactionHistory,
 } from "../services/api";
-import { Line } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -17,12 +15,12 @@ import {
   Legend,
 } from "chart.js";
 import { useAuth } from "../contexts/AuthContext";
-import { CryptoHistory } from "../utils/type";
 import InputField from "../components/InputField";
-import CandlestickChart from "../components/CandlestickChart";
 import { FaArrowLeft } from "react-icons/fa";
 import { formattedMoneyUSD } from "../utils/helpers";
 import { toast, ToastContainer } from "react-toastify";
+import LiveChart from "../components/LiveChart";
+import CandleStickChart from "../components/CandleStickChart";
 
 // Register chart components
 ChartJS.register(
@@ -37,13 +35,12 @@ ChartJS.register(
 
 function BuySellCoin() {
   const { isAuth, user, setUser } = useAuth();
-  const [price, setPrice] = useState<number | null>(null);
+  const [price, setPrice] = useState({ pdes_sell_price: 0, pdes_buy_price: 0 });
   const [amount, setAmount] = useState<string>("");
   const [action, setAction] = useState<"buy" | "sell">("buy");
   const [isLoading, setIsLoading] = useState(true);
   const [total, setTotal] = useState<string>("");
   const [chartType, setChartType] = useState<"line" | "candlestick">("line");
-  const [priceHistory, setPriceHistory] = useState<CryptoHistory[]>([]);
   const [useUsd, setUseUsd] = useState(true); // For toggling between USD and Pdes
   const navigate = useNavigate();
 
@@ -57,6 +54,8 @@ function BuySellCoin() {
     const fetchCoinPrice = async () => {
       try {
         const coinPrice = await fetchCurrentPrice();
+        console.log({ coinPrice });
+
         setPrice(coinPrice);
       } catch (error) {
         console.error("Error fetching coin price:", error);
@@ -65,17 +64,9 @@ function BuySellCoin() {
       }
     };
 
-    const fetchPriceHistory = async () => {
-      try {
-        const history = await getTransactionHistory();
-        setPriceHistory(history);
-      } catch (error) {
-        console.error("Error fetching price history:", error);
-      }
-    };
+   
 
     fetchCoinPrice();
-    fetchPriceHistory();
   }, []);
 
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,19 +86,22 @@ function BuySellCoin() {
     const amountValue = parseFloat(amount);
 
     if (amountValue > 0 && price) {
-      const finalAmountInUSD = useUsd
-        ? amountValue
+      // Calculate the amount in USD or PDES
+      const finalAmount = useUsd
+        ? action === "buy"
+          ? amountValue / price.pdes_buy_price // Convert USD to PDES for buying
+          : amountValue * price.pdes_sell_price // Convert USD to PDES for selling
         : action === "buy"
-        ? amountValue * price // PDES to USD for buying
-        : amountValue / price; // PDES to USD for selling
+        ? amountValue * price.pdes_buy_price // Convert PDES to USD for buying
+        : amountValue / price.pdes_sell_price; // Convert PDES to USD for selling
 
-      // Send finalAmountInUSD to the DB via API
-      const response = await buySellPdes(action, finalAmountInUSD, price);
+      // Send the finalAmount to the API for processing the transaction
+      const response = await buySellPdes(action, finalAmount, price);
       if (response) {
         setUser(response.user);
         toast.success(
           `Successfully ${action} ${formattedMoneyUSD(
-            finalAmountInUSD
+            finalAmount
           )} worth of Pdes`
         );
       } else {
@@ -121,13 +115,22 @@ function BuySellCoin() {
   useEffect(() => {
     if (amount && price) {
       const amountValue = parseFloat(amount);
-      const calculatedTotal = useUsd
-        ? action === "buy"
-          ? (amountValue / price).toFixed(6) // USD to PDES
-          : (amountValue * price).toFixed(2) // USD to USD (sell)
-        : action === "buy"
-        ? (amountValue * price).toFixed(2) // PDES to USD
-        : (amountValue / price).toFixed(6); // PDES to PDES (sell)
+      let calculatedTotal = "";
+
+      if (useUsd) {
+        // Convert USD to PDES or PDES to USD for Buy/Sell
+        calculatedTotal =
+          action === "buy"
+            ? (price.pdes_buy_price * amountValue).toFixed(3)
+            : (price.pdes_sell_price / amountValue).toFixed(3);
+      } else {
+        // Convert PDES to USD or USD to PDES for Buy/Sell
+        calculatedTotal =
+          action === "buy"
+            ? (price.pdes_buy_price * amountValue).toFixed(2)
+            : (price.pdes_sell_price / amountValue).toFixed(6);
+      }
+
       setTotal(calculatedTotal);
     } else {
       setTotal("");
@@ -142,26 +145,7 @@ function BuySellCoin() {
     return <div className="text-center">Loading coin price...</div>;
   }
 
-  const data = {
-    labels: priceHistory.map((item) => item.created_at),
-    datasets: [
-      {
-        label: "Pdes Coin Price",
-        data: priceHistory.map((item) => item.amount),
-        borderColor: "rgb(75, 192, 192)",
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
-        fill: false,
-      },
-    ],
-  };
-
-  const candlestickData = priceHistory.map((item) => ({
-    time: item.created_at.split("T")[0],
-    open: item.openPrice ?? 0,
-    high: item.highPrice ?? 0,
-    low: item.lowPrice ?? 0,
-    close: item.closePrice ?? 0,
-  }));
+ 
 
   return (
     <div className="min-h-screen md:mb-32 bg-mainBG text-neutral-600 p-4 overflow-y-auto">
@@ -173,7 +157,7 @@ function BuySellCoin() {
         <FaArrowLeft className="mr-2" />
         <span>Back</span>
       </button>
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6">
+      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6 mb-16">
         <h1 className="text-2xl font-semibold text-center mb-6">
           Buy and Sell Pdes Coin
         </h1>
@@ -184,7 +168,9 @@ function BuySellCoin() {
               PDES Price:
             </span>
             <span className="text-green-500 text-lg font-semibold">
-              {formattedMoneyUSD(Number(price))}
+              {action === "buy"
+                ? formattedMoneyUSD(Number(price.pdes_buy_price))
+                : formattedMoneyUSD(Number(price.pdes_sell_price))}
             </span>
           </div>
 
@@ -194,8 +180,10 @@ function BuySellCoin() {
               {formattedMoneyUSD(Number(user?.balance))}
             </span>
           </div>
-           <div className="text-center flex flex-col items-center border-r border-blue-500 pr-6">
-            <span className="text-sm font-medium text-gray-700">PDES Balance:</span>
+          <div className="text-center flex flex-col items-center border-r border-blue-500 pr-6">
+            <span className="text-sm font-medium text-gray-700">
+              PDES Balance:
+            </span>
             <span className="text-blue-500 text-lg font-semibold">
               {user?.crypto_balance?.toFixed(8)}
             </span>
@@ -210,7 +198,9 @@ function BuySellCoin() {
                 action === "buy" ? "text-green-500" : "text-red-500"
               }`}
             >
-              {formattedMoneyUSD(Number(price))}
+              {action === "buy"
+                ? formattedMoneyUSD(Number(price.pdes_buy_price))
+                : formattedMoneyUSD(Number(price.pdes_sell_price))}
             </span>
           </div>
         </div>
@@ -220,12 +210,16 @@ function BuySellCoin() {
             {total &&
               (useUsd
                 ? action === "buy"
-                  ? `You will receive: ${total} PDES`
-                  : `You will pay: ${formattedMoneyUSD(parseFloat(total))} USD`
-                // For PDES
-                : action === "buy"
-                ? `You will pay: ${formattedMoneyUSD(parseFloat(total))} USD`
-                : `You will receive: ${total} PDES`)}
+                  ? `You will Get: ${(
+                      price.pdes_buy_price / parseFloat(total)
+                    ).toFixed(3)} PDES`
+                  : `You will receive: ${formattedMoneyUSD(
+                      parseFloat(total)
+                    )} USD`
+                : // For PDES
+                action === "buy"
+                ? `You will receive: ${total} PDES`
+                : `You will pay: ${formattedMoneyUSD(parseFloat(total))} USD`)}
           </div>
 
           <div className="flex justify-between items-center">
@@ -288,10 +282,10 @@ function BuySellCoin() {
 
         <div className="mt-8">
           {chartType === "line" ? (
-            <Line data={data} />
+            <LiveChart />
           ) : (
-            <div className="mt-4 hidden">
-              <CandlestickChart data={candlestickData} />
+            <div className="mt-4">
+              <CandleStickChart  />
             </div>
           )}
         </div>

@@ -27,12 +27,16 @@ class UserController:
     """
 
     # Get login user information
-    @staticmethod
-    @token_required
-    def get_user(current_user):
+
+    # @token_required
+    def get_user():
         # Use current_user instead of request.user_id
-        if current_user:
-            return jsonify({"message": current_user.serialize()}), 200
+        # Get User from the database
+        print(f"current_user:::::::::")
+        user = User.query.filter_by(id=1).first()
+        print(f"current_user=", user)
+        if user:
+            return jsonify(user.serialize()), 200
         else:
             return jsonify({"message": "User not found"}), 404
 
@@ -48,7 +52,6 @@ class UserController:
     def get_current_user_id():
         user_id = request.user_id
         return jsonify({"message": user_id}), 200
-        
 
     # Find a user by email
     @staticmethod
@@ -58,7 +61,7 @@ class UserController:
             return jsonify({"message": "User not found"}), 404
         return jsonify({"message": user.serialize()}), 200
 
-    @staticmethod
+    # Login user
     def login():
         data = request.get_json()
         email = data.get("email")
@@ -221,7 +224,10 @@ class UserController:
         new_password = data.get("newPassword")
 
         if not old_password or not new_password:
-            return jsonify({"message": "Old password and new password are required"}), 400
+            return (
+                jsonify({"message": "Old password and new password are required"}),
+                400,
+            )
 
         # Validate old password
         if not check_password_hash(current_user.password, old_password):
@@ -229,15 +235,17 @@ class UserController:
 
         # Add password complexity checks (optional but recommended)
         if len(new_password) < 6:  # Example: password must be at least 6 characters
-            return jsonify({"message": "New password must be at least 6 characters long"}), 400
+            return (
+                jsonify({"message": "New password must be at least 6 characters long"}),
+                400,
+            )
 
         # Update the password
         current_user.password = generate_password_hash(new_password)
         db.session.commit()
 
         return jsonify({"message": "Password changed successfully"}), 200
-    
-    
+
     # Forrgot Password
     @staticmethod
     def forget_password():
@@ -257,7 +265,9 @@ class UserController:
             return jsonify({"message": "User not found"}), 404
 
         # Generate a unique token (hashing email + a secret key)
-        reset_token = hashlib.sha256(f"{user.email}{os.urandom(16)}".encode()).hexdigest()
+        reset_token = hashlib.sha256(
+            f"{user.email}{os.urandom(16)}".encode()
+        ).hexdigest()
 
         # Store token in database with expiration time (e.g., 1 hour)
         user.reset_token = reset_token
@@ -269,7 +279,7 @@ class UserController:
         # send_reset_email(user.email, reset_url)
 
         return jsonify({"message": "Reset link sent to your email"}), 200
-    
+
     # Reset Password
     @staticmethod
     def reset_password():
@@ -303,8 +313,7 @@ class UserController:
         db.session.commit()
 
         return jsonify({"message": "Password reset successfully"}), 200
-    
-    
+
     # Sende Password Reset Link to Email
     @staticmethod
     def send_password_reset_link_to_user_email(email):

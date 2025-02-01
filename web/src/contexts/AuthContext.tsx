@@ -1,5 +1,5 @@
 import { createContext, useContext } from "react";
-import { User, TransactionHistory } from "../utils/type";
+import { User, TransactionHistory, TradeHistory } from "../utils/type";
 
 export interface AuthContextType {
   isAuth: boolean;
@@ -7,6 +7,7 @@ export interface AuthContextType {
   getUser: () => Promise<User | null>;
   setUser: (user: User | null) => void;
   transactions: TransactionHistory[];
+  trade: TradeHistory[];
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   refreshAuthToken: () => Promise<void>;

@@ -2,7 +2,7 @@ from sqlite3 import IntegrityError
 import jwt
 import logging
 import traceback
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timezone, timedelta
 from app import db
 from app.models import (
     AccountDetail,
@@ -20,6 +20,7 @@ from app.models import (
     handle_buy_pdes,
     handle_sell_pdes,
 )
+from sqlalchemy.sql import or_, desc, asc
 from app.access_level import AccessLevel
 
 # from sqlalchemy.sql.expression import case
@@ -62,6 +63,30 @@ class UserTransactionsController:
         user_id = request.user_id
         transaction = Transaction.query.filter_by(user_id=user_id, id=id).first()
         return jsonify({"message": transaction.serialize()}), 200
+
+    # Get 3 weeks of Socket Transactions
+    def get_transactions_socket():
+         # Get the date 3 weeks ago from today
+        three_weeks_ago = datetime.now() - timedelta(weeks=3)
+        
+        # Fetch all deposit or withdraw transactions from the last 3 weeks
+        transactions = Transaction.query.filter(
+            Transaction.created_at >= three_weeks_ago,  # Filter by date for last 3 weeks
+            or_(
+                Transaction.transaction_type.like("%deposit%"),
+                Transaction.transaction_type.like("%withdraw%")
+            ),
+        ).order_by(desc(Transaction.created_at)).all()
+        
+        transaction_data = [transaction.serialize() for transaction in transactions]
+        return transaction_data
+    
+    # Get all transactions for web Socket
+    def get_all_transactions_socket():
+        transactions = Transaction.query.order_by(desc(Transaction.created_at)).all()
+        transaction_data = [transaction.serialize() for transaction in transactions]
+        return transaction_data
+
 
     @staticmethod
     @token_required
@@ -134,7 +159,9 @@ class UserTransactionsController:
         missing_fields = [field for field in required_fields if field not in data]
         if missing_fields:
             return (
-                jsonify({"error": f"Missing required fields: {', '.join(missing_fields)}"}),
+                jsonify(
+                    {"error": f"Missing required fields: {', '.join(missing_fields)}"}
+                ),
                 400,
             )
 
@@ -162,7 +189,7 @@ class UserTransactionsController:
                 .scalar()
             )
 
-            print(f"{total_deposit=}")  # Debug log for total deposits
+            # print(f"{total_deposit=}")  # Debug log for total deposits
 
             # Check if the admin account has space for this deposit
             if total_deposit + amount > admin_account.max_deposit_amount:
@@ -172,7 +199,9 @@ class UserTransactionsController:
                 )
 
             # Check if transaction ID is unique
-            existing_deposit = Deposit.query.filter_by(transaction_id=transaction_id).first()
+            existing_deposit = Deposit.query.filter_by(
+                transaction_id=transaction_id
+            ).first()
             if existing_deposit:
                 return jsonify({"error": "Transaction ID already exists"}), 400
 
@@ -208,7 +237,6 @@ class UserTransactionsController:
         except Exception as e:
             db.session.rollback()
             return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-
 
     @staticmethod
     @token_required
@@ -322,7 +350,8 @@ def get_pdes_coin_details():
         # Construct the response with current data
         return {
             "id": utility.id,  # Removed the braces here
-            "pdes_price": utility.pdes_price,
+            "pdes_buy_price": utility.pdes_buy_price,
+            "pdes_sell_price": utility.pdes_sell_price,
             "conversion_rate": utility.conversion_rate,
             "pdes_market_cap": utility.pdes_market_cap,
             "pdes_supply_left": utility.pdes_supply_left,
@@ -439,7 +468,7 @@ class PdesService:
         amount = data["amount"]
         price = data["price"]
 
-        print(f"{data=}")
+        # print(f"{data=}")
 
         if amount <= 0 or price <= 0:
             return jsonify({"error": "Amount and price must be positive numbers"}), 400
@@ -449,10 +478,10 @@ class PdesService:
         if not utility_entry:
             return jsonify({"error": "No price data available"}), 500
 
-        pdes_price = utility_entry.pdes_price
+        pdes_buy_price = utility_entry.pdes_buy_price
 
         return handle_buy_pdes(
-            user_id=user_id, amount=amount, price_per_coin=pdes_price
+            user_id=user_id, amount=amount, pdes_buy_price=pdes_buy_price
         )
 
         # try:
@@ -538,7 +567,7 @@ class PdesService:
         amount = data["amount"]
         price = data["price"]
 
-        print(f"{data=}")
+        # print(f"{data=}")
 
         if amount <= 0 or price <= 0:
             return jsonify({"error": "Amount and price must be positive numbers"}), 400
@@ -548,12 +577,12 @@ class PdesService:
         if not utility_entry:
             return jsonify({"error": "No price data available"}), 500
 
-        pdes_price = utility_entry.pdes_price
+        pdes_sell_price = utility_entry.pdes_sell_price
 
-        print(f"{correct_user_balance()=}")
+        # print(f"{correct_user_balance()=}")
 
         return handle_sell_pdes(
-            user_id=user_id, amount_in_usd=amount, price_per_coin=pdes_price
+            user_id=user_id, amount_in_usd=amount, pdes_sell_price=pdes_sell_price
         )
 
         # try:
@@ -643,6 +672,37 @@ class PdesService:
         ).all()
 
         return jsonify([entry.serialize() for entry in price_history]), 200
+    
+    # Get PDES price history for Line Charts in ChartJS
+    @token_required
+    def get_pdes_trade_history(current_user, *args, **kwargs):
+        # Define time range: Last 24 hours
+        time_limit = datetime.utcnow() - timedelta(hours=24)
+
+        # Fetch data from CoinPriceHistory for the last 24 hours
+        price_data = (
+            db.session.query(
+                CoinPriceHistory.timestamp,
+                CoinPriceHistory.open_price.label("buy_price"),
+                CoinPriceHistory.close_price.label("sell_price"),
+            )
+            .filter(CoinPriceHistory.timestamp >= time_limit)
+            .order_by(CoinPriceHistory.timestamp.asc())  # Ensure chronological order
+            .limit(100)  # Adjust limit for performance
+            .all()
+        )
+
+        # Convert query result to JSON
+        price_trend = [
+            {
+                "time": p.timestamp.isoformat(),  # Ensure correct JSON format
+                "buy": p.buy_price,
+                "sell": p.sell_price,
+            }
+            for p in price_data
+        ]
+
+        return jsonify({"price_trend": price_trend}), 200
 
     # Get user activity
     @staticmethod

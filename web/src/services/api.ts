@@ -15,6 +15,10 @@ export const url = prod
   ? import.meta.env.REACT_APP_API_URL
   : import.meta.env.VITE_API_URL;
 
+export const websocketUrl = prod
+  ? import.meta.env.REACT_APP_API_WEBSOCKET_URL
+  : import.meta.env.VITE_API_WEBSOCKET_URL;
+
 export const feURL = prod
   ? import.meta.env.VITE_EF_URL
   : import.meta.env.VITE_EF_URL_LOCAL;
@@ -32,7 +36,8 @@ const API = axios.create({
 API.interceptors.request.use(
   (config) => {
     // Retrieve the token from localStorage
-    const token = localStorage.getItem("authToken");
+    const token = sessionStorage.getItem("authToken");
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -115,8 +120,8 @@ export const loginUser = async (loginData: {
     const response = await API.post(apiUrl("/auth/login"), loginData);
     const { access_token, refresh_token, user } = response.data;
 
-    localStorage.setItem("authToken", access_token);
-    localStorage.setItem("refreshToken", refresh_token);
+    sessionStorage.setItem("authToken", access_token);
+    sessionStorage.setItem("refreshToken", refresh_token);
 
     console.log({ user, access_token, refresh_token });
 
@@ -136,17 +141,19 @@ export const loginUser = async (loginData: {
 // Get user info
 export const getUser = async (): Promise<User | null> => {
   try {
-    const response = await API.get<User>(apiUrl("/users/"), {
-      headers: {
-        Authorization: `Bearer ${localStorage.getItem("authToken")}`,
-      },
-    });
+    const response = await API.get<User>(apiUrl("/users/users_info"));
 
     console.log(response);
 
     return response.data;
-  } catch (error) {
-    console.error("Error fetching user:", error);
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      console.error("Error fetching user:", error);
+      toast.error(error.message);
+    } else {
+      console.error("Unknown error:", error);
+    }
+    toast.error("Failed to fetch user.");
     return null; // Return null if the user is not logged in or an error occurs
   }
 };
@@ -162,6 +169,27 @@ export const getTransactionHistory = async () => {
         window.location.href = "/login";
       }
       const errorData: ErrorResponse = error.response?.data;
+      console.error(errorData?.message || "Failed to fetch transactions");
+      return [];
+    }
+    console.error("Network error. Please try again.");
+    return [];
+  }
+};
+
+// Get Trade History
+export const getTradeHistory = async () => {
+  try {
+    const response = await API.get(apiUrl("/transactions/trade-history"));
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
+      const errorData: ErrorResponse = error.response?.data;
+      console.error("Failed to fetch transactions", error.response?.data);
       console.error(errorData?.message || "Failed to fetch transactions");
       return [];
     }
@@ -272,7 +300,7 @@ export const getAccountBalance = async () => {
 export const buySellPdes = async (
   action: "buy" | "sell",
   amount: number,
-  price: number
+  price: { pdes_sell_price: number; pdes_buy_price: number }
 ) => {
   try {
     const response = await API.post(apiUrl("/transactions/buy_sell"), {
@@ -327,7 +355,7 @@ export const updatePriceHistory = async (priceData: {
 export const fetchCurrentPrice = async () => {
   try {
     const response = await API.get(apiUrl("/utility/current-price"));
-    return response.data.pdes_price;
+    return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       if (error.response && error.response.status === 401) {
@@ -544,7 +572,6 @@ export const forgetPassword = async ({
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      
       const errorData: ErrorResponse = error.response?.data;
       console.log({ errorData });
       return errorData;

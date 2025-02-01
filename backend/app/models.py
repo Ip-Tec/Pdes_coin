@@ -243,8 +243,8 @@ class Transaction(db.Model):
     amount = db.Column(db.Float, nullable=False)
     currency = db.Column(db.String(10), nullable=True)
     account_name = db.Column(db.String(100), nullable=False)
-    account_number = db.Column(db.String(20), nullable=True)
-    crypto_address = db.Column(db.String(20), nullable=True)
+    account_number = db.Column(db.String(30), nullable=True)
+    crypto_address = db.Column(db.String(50), nullable=True)
     transaction_type = db.Column(db.String(20), nullable=False)
     transaction_completed = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
@@ -419,7 +419,8 @@ class Utility(db.Model):
     __tablename__ = "utility"
 
     id = db.Column(db.Integer, primary_key=True)
-    pdes_price = db.Column(db.Float, nullable=False)
+    pdes_buy_price = db.Column(db.Float, nullable=False)
+    pdes_sell_price = db.Column(db.Float, nullable=False)
     pdes_market_cap = db.Column(db.Float, nullable=False)
     pdes_circulating_supply = db.Column(db.Float, nullable=False)
     conversion_rate = db.Column(db.Float, nullable=False, default=1980)
@@ -431,7 +432,8 @@ class Utility(db.Model):
     def serialize(self):
         return {
             "id": self.id,
-            "pdes_price": self.pdes_price,
+            "pdes_buy_price": self.pdes_buy_price,
+            "pdes_sell_price": self.pdes_sell_price,
             "conversion_rate": self.conversion_rate,
             "pdes_market_cap": self.pdes_market_cap,
             "pdes_supply_left": self.pdes_supply_left,
@@ -442,7 +444,8 @@ class Utility(db.Model):
         }
 
     def update_price(self, price_change_factor: float):
-        self.pdes_price *= price_change_factor
+        self.pdes_buy_price *= price_change_factor
+        self.pdes_sell_price *= price_change_factor
         db.session.commit()
 
 
@@ -663,7 +666,7 @@ def handle_buy_pdes(user_id, amount, price_per_coin):
             utility.pdes_circulating_supply += amount
             utility.pdes_supply_left -= amount
             utility.pdes_market_cap = (
-                utility.pdes_price * utility.pdes_circulating_supply
+                utility.pdes_buy_price * utility.pdes_circulating_supply
             )
             db.session.commit()
 
@@ -735,14 +738,14 @@ def handle_sell_pdes(user_id, amount_in_usd, price_per_coin):
 
             # Update Utility table (adjust circulating supply, market cap, etc.)
             utility = Utility.query.first()
-            current_price = utility.pdes_price if utility else price_per_coin
+            current_price = utility.pdes_sell_price if utility else price_per_coin
 
             if utility:
                 utility.update_price(price_change_factor=0.99)  # Decrease price by 1%
                 utility.pdes_circulating_supply -= amount_in_pdes
                 utility.pdes_supply_left += amount_in_pdes
                 utility.pdes_market_cap = (
-                    utility.pdes_price * utility.pdes_circulating_supply
+                    utility.pdes_sell_price * utility.pdes_circulating_supply
                 )
                 db.session.commit()
 

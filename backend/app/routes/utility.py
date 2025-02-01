@@ -16,7 +16,8 @@ def get_current_price():
 
         print(
             {
-                "pdes_price": utility.pdes_price,
+                "pdes_buy_price": utility.pdes_buy_price,
+                "pdes_sell_price": utility.pdes_sell_price,
                 "pdes_market_cap": utility.pdes_market_cap,
                 "pdes_circulating_supply": utility.pdes_circulating_supply,
                 "pdes_supply_left": utility.pdes_supply_left,
@@ -27,7 +28,8 @@ def get_current_price():
         return (
             jsonify(
                 {
-                    "pdes_price": utility.pdes_price,
+                    "pdes_buy_price": utility.pdes_buy_price,
+                    "pdes_sell_price": utility.pdes_sell_price,
                     "pdes_market_cap": utility.pdes_market_cap,
                     "pdes_circulating_supply": utility.pdes_circulating_supply,
                     "pdes_supply_left": utility.pdes_supply_left,

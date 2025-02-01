@@ -5,6 +5,14 @@ import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import { useAuth } from "../contexts/AuthContext";
 import { toast, ToastContainer } from "react-toastify";
+import { User } from "../utils/type";
+import { getUser } from "../services/api";
+
+interface LoginResponse {
+  user: User | null; // Update the type to match your actual user type
+  access_token?: string | null;
+  refresh_token?: string | null;
+}
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -52,13 +60,30 @@ const Login: React.FC = () => {
     setErrorMessage("");
   };
 
+  const loginUser = async (
+    email: string,
+    password: string
+  ): Promise<LoginResponse> => {
+    await login(email, password);
+    const user = await getUser();
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return { user };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     if (validateForm()) {
       try {
-        await login(formData.email, formData.password);
-        if (user?.role !== "user") {
+        const loginResponse = await loginUser(
+          formData.email,
+          formData.password
+        );
+        // const  = user;
+        // console.log({ user, access_token, refresh_token });
+        if (loginResponse?.user?.role !== "user") {
           navigate("/a/dashboard");
         } else {
           navigate("/dashboard");
@@ -88,7 +113,11 @@ const Login: React.FC = () => {
 
       <div className="w-full max-w-md p-8">
         <div className="text-center mb-6">
-        <img src={logo} alt="Logo" className={`mx-auto h-56 w-56 ${loading ? "hidden" : "block"}`} />
+          <img
+            src={logo}
+            alt="Logo"
+            className={`mx-auto h-56 w-56 ${loading ? "hidden" : "block"}`}
+          />
         </div>
         <h2 className="text-xl font-semibold text-center mb-4 text-gray-800">
           Login to Your Account

@@ -51,6 +51,14 @@ def generate_token(user_id):
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
 
+def decode_token(token):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+        return payload  # Return decoded user data
+    except jwt.ExpiredSignatureError:
+        return None  # Token expired
+    except jwt.InvalidTokenError:
+        return None  # Invalid token
 
 # Token generation
 def generate_access_token(user_id):
