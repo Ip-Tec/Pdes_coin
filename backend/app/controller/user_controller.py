@@ -32,9 +32,9 @@ class UserController:
     def get_user():
         # Use current_user instead of request.user_id
         # Get User from the database
-        print(f"current_user:::::::::")
+        
         user = User.query.filter_by(id=1).first()
-        print(f"current_user=", user)
+        
         if user:
             return jsonify(user.serialize()), 200
         else:
@@ -131,7 +131,7 @@ class UserController:
 
         # Check for existing email
         if User.query.filter_by(email=email).first():
-            print("email::::", email)
+            
             return jsonify({"message": "Email is already registered"}), 400
 
         # Check for existing username
@@ -360,16 +360,14 @@ class UserController:
         """
         Get all users that the current user has referred.
         """
-        print("current_user:::>", current_user)
-
+        
         if current_user:
             # Query users where referrer_id matches current user's referral_code
             referrals = User.query.filter_by(referrer_id=current_user.id).all()
 
             # Serialize the referrals
             serialized_referrals = [referral.serialize() for referral in referrals]
-
-            print("get_referrals:::>", serialized_referrals)
+            
 
             return jsonify({"referrals": serialized_referrals}), 200
         else:

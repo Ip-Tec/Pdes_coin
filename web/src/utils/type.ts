@@ -234,3 +234,13 @@ export interface LiveChartProps {
     fill: boolean;
   }[];
 }
+
+export interface TradePrice {
+  pdes_buy_price: number;
+  pdes_sell_price: number;
+  pdes_market_cap: number;
+  pdes_circulating_supply: number;
+  pdes_supply_left: number;
+  pdes_total_supply: number;
+  error?: string;
+}

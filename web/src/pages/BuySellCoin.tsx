@@ -1,19 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  buySellPdes,
-  fetchCurrentPrice,
-} from "../services/api";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
+import { buySellPdes, fetchCurrentPrice } from "../services/api";
+
 import { useAuth } from "../contexts/AuthContext";
 import InputField from "../components/InputField";
 import { FaArrowLeft } from "react-icons/fa";
@@ -21,41 +9,33 @@ import { formattedMoneyUSD } from "../utils/helpers";
 import { toast, ToastContainer } from "react-toastify";
 import LiveChart from "../components/LiveChart";
 import CandleStickChart from "../components/CandleStickChart";
-
-// Register chart components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
+import { TradePrice } from "../utils/type";
 
 function BuySellCoin() {
-  const { isAuth, user, setUser } = useAuth();
-  const [price, setPrice] = useState({ pdes_sell_price: 0, pdes_buy_price: 0 });
+  const { isAuth, user, setUser, tradePrice } = useAuth();
+  const [price, setPrice] = useState<TradePrice | undefined>();
   const [amount, setAmount] = useState<string>("");
   const [action, setAction] = useState<"buy" | "sell">("buy");
   const [isLoading, setIsLoading] = useState(true);
-  const [total, setTotal] = useState<string>("");
+  const [conversionMessage, setConversionMessage] = useState<string>(""); // Automatic conversion message
   const [chartType, setChartType] = useState<"line" | "candlestick">("line");
-  const [useUsd, setUseUsd] = useState(true); // For toggling between USD and Pdes
+  const [useUsd, setUseUsd] = useState(true); // For toggling between USD and PDES
   const navigate = useNavigate();
 
+  // Redirect if not authenticated.
   useEffect(() => {
     if (!isAuth) {
       navigate("/login");
     }
   }, [isAuth, navigate]);
 
+  // Fetch the coin price from tradePrice provided by AuthContext.
   useEffect(() => {
     const fetchCoinPrice = async () => {
       try {
+        // tradePrice might be a promise or value from context.
         const coinPrice = await fetchCurrentPrice();
         console.log({ coinPrice });
-
         setPrice(coinPrice);
       } catch (error) {
         console.error("Error fetching coin price:", error);
@@ -64,11 +44,10 @@ function BuySellCoin() {
       }
     };
 
-   
-
     fetchCoinPrice();
-  }, []);
+  }, [tradePrice]);
 
+  // Update the amount state when the user types.
   const handleAmountChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setAmount(event.target.value);
   };
@@ -81,27 +60,76 @@ function BuySellCoin() {
     setUseUsd(!useUsd);
   };
 
+
+
+  // Update the conversion message automatically.
+  useEffect(() => {
+    if (amount && price) {
+      const amountValue = parseFloat(amount);
+      if (isNaN(amountValue)) {
+        setConversionMessage("");
+        return;
+      }
+      let message = "";
+      if (useUsd) {
+        // When the user is entering USD.
+        if (action === "buy") {
+          // PDES received = USD / pdes_buy_price.
+          message = `With $${amount} USD, you will get approximately ${(
+            amountValue / price.pdes_buy_price
+          ).toFixed(4)} PDES.`;
+        } else {
+          // For selling, USD is already entered.
+          message = `With $${amount} USD, you will sell and receive PDES equivalent to ${(
+            amountValue / price.pdes_sell_price
+          ).toFixed(4)} PDES.`;
+        }
+      } else {
+        // When the user is entering PDES.
+        if (action === "buy") {
+          // USD required = PDES * pdes_buy_price.
+          message = `You will pay ${formattedMoneyUSD(
+            amountValue * price.pdes_buy_price
+          )} USD to get ${amount} PDES.`;
+        } else {
+          // USD received = PDES * pdes_sell_price.
+          message = `You will receive ${formattedMoneyUSD(
+            amountValue * price.pdes_sell_price
+          )} USD for selling ${amount} PDES.`;
+        }
+      }
+      setConversionMessage(message);
+    } else {
+      setConversionMessage("");
+    }
+  }, [amount, price, useUsd, action]);
+
+  // Handle form submission.
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const amountValue = parseFloat(amount);
 
     if (amountValue > 0 && price) {
-      // Calculate the amount in USD or PDES
-      const finalAmount = useUsd
-        ? action === "buy"
-          ? amountValue / price.pdes_buy_price // Convert USD to PDES for buying
-          : amountValue * price.pdes_sell_price // Convert USD to PDES for selling
-        : action === "buy"
-        ? amountValue * price.pdes_buy_price // Convert PDES to USD for buying
-        : amountValue / price.pdes_sell_price; // Convert PDES to USD for selling
+      let finalAmountUSD = 0;
+      // If the user is entering USD, send that value directly.
+      if (useUsd) {
+        finalAmountUSD = amountValue;
+      } else {
+        // Otherwise, convert PDES to USD.
+        finalAmountUSD =
+          action === "buy"
+            ? amountValue * price.pdes_buy_price
+            : amountValue * price.pdes_sell_price;
+      }
+      console.log({ action, finalAmountUSD, price });
 
-      // Send the finalAmount to the API for processing the transaction
-      const response = await buySellPdes(action, finalAmount, price);
+      // Send the USD amount to the API.
+      const response = await buySellPdes(action, finalAmountUSD, price);
       if (response) {
         setUser(response.user);
         toast.success(
           `Successfully ${action} ${formattedMoneyUSD(
-            finalAmount
+            finalAmountUSD
           )} worth of Pdes`
         );
       } else {
@@ -112,31 +140,6 @@ function BuySellCoin() {
     }
   };
 
-  useEffect(() => {
-    if (amount && price) {
-      const amountValue = parseFloat(amount);
-      let calculatedTotal = "";
-
-      if (useUsd) {
-        // Convert USD to PDES or PDES to USD for Buy/Sell
-        calculatedTotal =
-          action === "buy"
-            ? (price.pdes_buy_price * amountValue).toFixed(3)
-            : (price.pdes_sell_price / amountValue).toFixed(3);
-      } else {
-        // Convert PDES to USD or USD to PDES for Buy/Sell
-        calculatedTotal =
-          action === "buy"
-            ? (price.pdes_buy_price * amountValue).toFixed(2)
-            : (price.pdes_sell_price / amountValue).toFixed(6);
-      }
-
-      setTotal(calculatedTotal);
-    } else {
-      setTotal("");
-    }
-  }, [amount, price, useUsd, action]);
-
   const handleChartTypeChange = () => {
     setChartType(chartType === "line" ? "candlestick" : "line");
   };
@@ -144,8 +147,6 @@ function BuySellCoin() {
   if (isLoading) {
     return <div className="text-center">Loading coin price...</div>;
   }
-
- 
 
   return (
     <div className="min-h-screen md:mb-32 bg-mainBG text-neutral-600 p-4 overflow-y-auto">
@@ -169,8 +170,8 @@ function BuySellCoin() {
             </span>
             <span className="text-green-500 text-lg font-semibold">
               {action === "buy"
-                ? formattedMoneyUSD(Number(price.pdes_buy_price))
-                : formattedMoneyUSD(Number(price.pdes_sell_price))}
+                ? formattedMoneyUSD(price?.pdes_buy_price || 0)
+                : formattedMoneyUSD(price?.pdes_sell_price || 0)}
             </span>
           </div>
 
@@ -180,6 +181,7 @@ function BuySellCoin() {
               {formattedMoneyUSD(Number(user?.balance))}
             </span>
           </div>
+
           <div className="text-center flex flex-col items-center border-r border-blue-500 pr-6">
             <span className="text-sm font-medium text-gray-700">
               PDES Balance:
@@ -199,36 +201,23 @@ function BuySellCoin() {
               }`}
             >
               {action === "buy"
-                ? formattedMoneyUSD(Number(price.pdes_buy_price))
-                : formattedMoneyUSD(Number(price.pdes_sell_price))}
+                ? formattedMoneyUSD(price?.pdes_buy_price || 0)
+                : formattedMoneyUSD(price?.pdes_sell_price || 0)}
             </span>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="text-justify my-4">
-            {total &&
-              (useUsd
-                ? action === "buy"
-                  ? `You will Get: ${(
-                      price.pdes_buy_price / parseFloat(total)
-                    ).toFixed(3)} PDES`
-                  : `You will receive: ${formattedMoneyUSD(
-                      parseFloat(total)
-                    )} USD`
-                : // For PDES
-                action === "buy"
-                ? `You will receive: ${total} PDES`
-                : `You will pay: ${formattedMoneyUSD(parseFloat(total))} USD`)}
-          </div>
+        {/* Display the conversion message automatically */}
+        <div className="text-justify my-4">{conversionMessage}</div>
 
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="flex justify-between items-center">
             <InputField
               required
               name="amount"
               type="number"
               value={amount}
-              label={useUsd ? "Amount in USD" : "Amount of Pdes"}
+              label={useUsd ? "Amount in USD" : "Amount of PDES"}
               onChange={handleAmountChange}
             />
           </div>
@@ -243,7 +232,7 @@ function BuySellCoin() {
                   : "bg-gray-200 text-gray-700"
               }`}
             >
-              Buy Pdes
+              Buy PDES
             </button>
 
             <button
@@ -255,18 +244,18 @@ function BuySellCoin() {
                   : "bg-gray-200 text-gray-700"
               }`}
             >
-              Sell Pdes
+              Sell PDES
             </button>
           </div>
 
           <div className="mt-4">
             <button
               type="submit"
-              className={`w-full py-2 bg-primary text-white rounded-lg hover:bg-primary-dark" ${
+              className={`w-full py-2 bg-primary text-white rounded-lg hover:bg-primary-dark ${
                 action === "sell" && "bg-red-600 text-white"
               }`}
             >
-              {action.charAt(0).toUpperCase() + action.slice(1)} Pdes
+              {action.charAt(0).toUpperCase() + action.slice(1)} PDES
             </button>
           </div>
         </form>
@@ -276,7 +265,7 @@ function BuySellCoin() {
             onClick={handleUsdToggle}
             className="py-2 px-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300"
           >
-            Toggle to {useUsd ? "Pdes" : "USD"}
+            Toggle to {useUsd ? "PDES" : "USD"}
           </button>
         </div>
 
@@ -285,7 +274,7 @@ function BuySellCoin() {
             <LiveChart />
           ) : (
             <div className="mt-4">
-              <CandleStickChart  />
+              <CandleStickChart />
             </div>
           )}
         </div>
@@ -302,4 +291,5 @@ function BuySellCoin() {
     </div>
   );
 }
+
 export default BuySellCoin;

@@ -116,11 +116,14 @@ def create_app():
         transactions,
         account,
         utility,
+        support,
     )
+
 
     app.register_blueprint(auth.auth_bp, url_prefix="/api/auth")
     app.register_blueprint(admin.admin_bp, url_prefix="/api/admin")
     app.register_blueprint(users.users_bp, url_prefix="/api/users")
+    app.register_blueprint(support.support_bp, url_prefix="/support")
     app.register_blueprint(account.account_bp, url_prefix="/api/account")
     app.register_blueprint(utility.utility_bp, url_prefix="/api/utility")
     app.register_blueprint(correction.correct_bp, url_prefix="/correct_db")

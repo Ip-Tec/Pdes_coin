@@ -209,7 +209,7 @@ const AdminDashboard = () => {
                 Total Rewards
               </h3>
               <p className="text-2xl font-bold text-gray-900">
-                {totalDashboard?.total_rewards ?? "Loading..."}
+                {totalDashboard?.total_rewards.toFixed(2) ?? "Loading..."}
               </p>
             </div>{" "}
             <div className="bg-white shadow-md rounded-lg p-4 text-center">

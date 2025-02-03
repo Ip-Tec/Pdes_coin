@@ -640,9 +640,9 @@ def handle_withdrawal(user_id, amount, account_name, account_number):
 
 
 # Function to handle Buy Pdes
-def handle_buy_pdes(user_id, amount, price_per_coin):
+def handle_buy_pdes(user_id, amount, pdes_buy_price):
     user = User.query.get(user_id)
-    total_cost = amount / price_per_coin
+    total_cost = amount / pdes_buy_price
     user_balance = user.balance
 
     if user_balance.balance >= amount:
@@ -676,21 +676,21 @@ def handle_buy_pdes(user_id, amount, price_per_coin):
         ).first()
 
         high_price = (
-            max(price_per_coin, latest_price.high_price)
+            max(pdes_buy_price, latest_price.high_price)
             if latest_price
-            else price_per_coin
+            else pdes_buy_price
         )
         low_price = (
-            min(price_per_coin, latest_price.low_price)
+            min(pdes_buy_price, latest_price.low_price)
             if latest_price
-            else price_per_coin
+            else pdes_buy_price
         )
 
         coin_price_history = CoinPriceHistory(
-            open_price=price_per_coin,
+            open_price=pdes_buy_price,
             high_price=high_price,
             low_price=low_price,
-            close_price=price_per_coin,
+            close_price=pdes_buy_price,
             volume=amount,
         )
         db.session.add(coin_price_history)
@@ -707,15 +707,15 @@ def handle_buy_pdes(user_id, amount, price_per_coin):
 
 
 # Function to handle Sell Pdes
-def handle_sell_pdes(user_id, amount_in_usd, price_per_coin):
+def handle_sell_pdes(user_id, amount_in_usd, pdes_sell_price):
     user = User.query.get(user_id)
     user_balance = user.balance
     crypto = Crypto.query.filter_by(user_id=user.id, crypto_name="Pdes").first()
 
     # Ensure the user's PDES balance is sufficient for the USD equivalent
-    if crypto and price_per_coin > 0:
+    if crypto and pdes_sell_price > 0:
         # Calculate the amount in PDES to be deducted
-        amount_in_pdes = amount_in_usd / price_per_coin
+        amount_in_pdes = amount_in_usd / pdes_sell_price
 
         if crypto.amount >= amount_in_pdes:
             # Update user's balance in USD
@@ -731,14 +731,14 @@ def handle_sell_pdes(user_id, amount_in_usd, price_per_coin):
                 user_id=user.id,
                 action="sell",
                 amount=amount_in_pdes,
-                price=price_per_coin,
+                price=pdes_sell_price,
                 total=amount_in_usd,
             )
             db.session.add(pdes_transaction)
 
             # Update Utility table (adjust circulating supply, market cap, etc.)
             utility = Utility.query.first()
-            current_price = utility.pdes_sell_price if utility else price_per_coin
+            current_price = utility.pdes_sell_price if utility else pdes_sell_price
 
             if utility:
                 utility.update_price(price_change_factor=0.99)  # Decrease price by 1%
@@ -760,19 +760,19 @@ def handle_sell_pdes(user_id, amount_in_usd, price_per_coin):
 
             # Ensure high_price and low_price are not None
             high_price = (
-                max(price_per_coin, current_price)
-                if price_per_coin and current_price
-                else price_per_coin
+                max(pdes_sell_price, current_price)
+                if pdes_sell_price and current_price
+                else pdes_sell_price
             )
             low_price = (
-                min(price_per_coin, current_price)
-                if price_per_coin and current_price
-                else price_per_coin
+                min(pdes_sell_price, current_price)
+                if pdes_sell_price and current_price
+                else pdes_sell_price
             )
 
             # Record the transaction details
             coin_price_history = CoinPriceHistory(
-                open_price=price_per_coin,
+                open_price=pdes_sell_price,
                 high_price=high_price,
                 low_price=low_price,
                 close_price=current_price,

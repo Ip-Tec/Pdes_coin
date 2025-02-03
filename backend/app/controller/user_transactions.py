@@ -54,7 +54,6 @@ class UserTransactionsController:
 
         transactions = Transaction.query.filter_by(user_id=current_user.id).all()
         transaction_data = [transaction.serialize() for transaction in transactions]
-        # print(f"transaction_data::: {transaction_data}")
         return jsonify({"transactions": transaction_data}), 200
 
     @staticmethod
@@ -66,27 +65,31 @@ class UserTransactionsController:
 
     # Get 3 weeks of Socket Transactions
     def get_transactions_socket():
-         # Get the date 3 weeks ago from today
+        # Get the date 3 weeks ago from today
         three_weeks_ago = datetime.now() - timedelta(weeks=3)
-        
+
         # Fetch all deposit or withdraw transactions from the last 3 weeks
-        transactions = Transaction.query.filter(
-            Transaction.created_at >= three_weeks_ago,  # Filter by date for last 3 weeks
-            or_(
-                Transaction.transaction_type.like("%deposit%"),
-                Transaction.transaction_type.like("%withdraw%")
-            ),
-        ).order_by(desc(Transaction.created_at)).all()
-        
+        transactions = (
+            Transaction.query.filter(
+                Transaction.created_at
+                >= three_weeks_ago,  # Filter by date for last 3 weeks
+                or_(
+                    Transaction.transaction_type.like("%deposit%"),
+                    Transaction.transaction_type.like("%withdraw%"),
+                ),
+            )
+            .order_by(desc(Transaction.created_at))
+            .all()
+        )
+
         transaction_data = [transaction.serialize() for transaction in transactions]
         return transaction_data
-    
+
     # Get all transactions for web Socket
     def get_all_transactions_socket():
         transactions = Transaction.query.order_by(desc(Transaction.created_at)).all()
         transaction_data = [transaction.serialize() for transaction in transactions]
         return transaction_data
-
 
     @staticmethod
     @token_required
@@ -189,7 +192,6 @@ class UserTransactionsController:
                 .scalar()
             )
 
-            # print(f"{total_deposit=}")  # Debug log for total deposits
 
             # Check if the admin account has space for this deposit
             if total_deposit + amount > admin_account.max_deposit_amount:
@@ -466,9 +468,10 @@ class PdesService:
                 return jsonify({"error": f"{field} is required"}), 400
 
         amount = data["amount"]
-        price = data["price"]
+        price = data["price"]["pdes_buy_price"]
+        total = amount / price
 
-        # print(f"{data=}")
+        print(f"{data=}")
 
         if amount <= 0 or price <= 0:
             return jsonify({"error": "Amount and price must be positive numbers"}), 400
@@ -565,7 +568,8 @@ class PdesService:
                 return jsonify({"error": f"{field} is required"}), 400
 
         amount = data["amount"]
-        price = data["price"]
+        price = data["price"]["pdes_buy_price"]
+        total = amount / price
 
         # print(f"{data=}")
 
@@ -672,12 +676,13 @@ class PdesService:
         ).all()
 
         return jsonify([entry.serialize() for entry in price_history]), 200
-    
+
     # Get PDES price history for Line Charts in ChartJS
+    @staticmethod
     @token_required
     def get_pdes_trade_history(current_user, *args, **kwargs):
         # Define time range: Last 24 hours
-        time_limit = datetime.utcnow() - timedelta(hours=24)
+        time_limit = datetime.utcnow() - timedelta(days=24)  # Last 24 hours
 
         # Fetch data from CoinPriceHistory for the last 24 hours
         price_data = (
@@ -686,9 +691,9 @@ class PdesService:
                 CoinPriceHistory.open_price.label("buy_price"),
                 CoinPriceHistory.close_price.label("sell_price"),
             )
-            .filter(CoinPriceHistory.timestamp >= time_limit)
+            # .filter(CoinPriceHistory.timestamp >= time_limit)
             .order_by(CoinPriceHistory.timestamp.asc())  # Ensure chronological order
-            .limit(100)  # Adjust limit for performance
+            .limit(28)  # Adjust limit for performance
             .all()
         )
 
@@ -701,6 +706,8 @@ class PdesService:
             }
             for p in price_data
         ]
+
+        # print(f"price_trend::::::: {price_trend}")
 
         return jsonify({"price_trend": price_trend}), 200
 

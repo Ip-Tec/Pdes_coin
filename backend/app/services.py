@@ -153,3 +153,5 @@ def generate_password_reset_token(email):
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     return token
+
+

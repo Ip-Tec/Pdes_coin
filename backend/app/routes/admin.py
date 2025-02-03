@@ -1,6 +1,7 @@
 from io import StringIO
 import os
 import csv
+import traceback
 import jwt
 import datetime
 from datetime import datetime as dt
@@ -35,7 +36,10 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 # Get dashboard totals
 @admin_bp.route("/get-dashboard-total", methods=["POST"])
-def get_totals():
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "OWNER"])
+def get_totals(current_user, *args, **kwargs):
+
     # Total Transactions (all transaction types)
     total_transactions = db.session.query(func.count(Transaction.id)).scalar()
 
@@ -74,7 +78,9 @@ def get_totals():
 
 # Get the transaction trends
 @admin_bp.route("/get-transaction-trends", methods=["GET"])
-def get_transaction_trends():
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "OWNER"])
+def get_transaction_trends(current_user, *args, **kwargs):
     # Get the start of the current year
     current_year = datetime.datetime.now().year
     start_of_year = datetime.datetime(current_year, 1, 1)
@@ -117,7 +123,10 @@ def get_transaction_trends():
 
 # Get the top 10 people with the highest referrals
 @admin_bp.route("/get-top-referrers", methods=["GET"])
-def get_top_referrers():
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "OWNER"])
+def get_top_referrers(current_user, *args, **kwargs):
+
     # Query the users ordered by total referrals in descending order and limit to 10
     top_referrers = (
         db.session.query(User)
@@ -142,7 +151,10 @@ def get_top_referrers():
 
 
 @admin_bp.route("/get-top-users-by-balance", methods=["GET"])
-def get_top_users_by_balance():
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "OWNER"])
+def get_top_users_by_balance(current_user, *args, **kwargs):
+
     try:
         # Query the users ordered by balance in descending order
         top_users_by_balance = (
@@ -199,7 +211,9 @@ def get_top_users_by_balance():
 
 # Get Data Overview for Polar Area Chart
 @admin_bp.route("/get-data-overview", methods=["GET"])
-def get_data_overview():
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "OWNER"])
+def get_data_overview(current_user, *args, **kwargs):
     # Get the total number of users, transactions, PDES Coin, etc.
     total_users = db.session.query(User).count()
     total_transactions = db.session.query(Transaction).count()
@@ -229,7 +243,7 @@ def get_data_overview():
 # Search for a user
 @admin_bp.route("/search-user", methods=["GET"])
 # @token_required
-@AccessLevel.role_required(["ADMIN", "DEVELOPER", "SUPER_ADMIN"])
+@AccessLevel.role_required(["ADMIN", "DEVELOPER", "SUPER_ADMIN", "OWNER"])
 def search_user(current_user):
     query = request.args.get("query", "").strip()
     print(query)
@@ -344,7 +358,7 @@ def add_account(current_user, *args, **kwargs):
 # Confirm user deposit and add it to Transaction, Balance, and Crypto tables
 @admin_bp.route("/add-money", methods=["POST"])
 @token_required
-@AccessLevel.role_required(["ADMIN", "DEVELOPER", "SUPER_ADMIN"])
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"])
 def confirm_user_deposit(current_user, *args, **kwargs):
     try:
         # Get the user_id from the request data
@@ -518,7 +532,7 @@ def confirm_user_deposit(current_user, *args, **kwargs):
 @admin_bp.route("/download-transaction-csv", methods=["GET"])
 @staticmethod
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"])
 def download_transaction_csv():
     transactions = Transaction.query.all()  # Fetch all transactions
 
@@ -557,7 +571,7 @@ def download_transaction_csv():
 @admin_bp.route("/upload-transaction-csv", methods=["POST"])
 @staticmethod
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"])
 def upload_transaction_csv():
     file = request.files.get("file")
     if not file:
@@ -594,7 +608,7 @@ def upload_transaction_csv():
 @admin_bp.route("/utility", methods=["POST"])
 @staticmethod
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"])
 def add_utility(current_user, *args, **kwargs):
     data = request.get_json()
 
@@ -632,7 +646,9 @@ def add_utility(current_user, *args, **kwargs):
 # Search the Deposit table
 @admin_bp.route("/search-deposits", methods=["GET"])
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+@AccessLevel.role_required(
+    ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER", "MODERATOR", "SUPPORT"]
+)
 def search_deposits(current_user, *args, **kwargs):
     try:
         # Extract query parameters
@@ -666,7 +682,9 @@ def search_deposits(current_user, *args, **kwargs):
 @admin_bp.route("/proportions", methods=["GET"])
 @staticmethod
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+@AccessLevel.role_required(
+    ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER", "MODERATOR", "SUPPORT"]
+)
 def get_transaction_proportions(current_user, *args, **kwargs):
     type = request.args.get("type", "transaction_type").strip()
 
@@ -740,7 +758,9 @@ def get_transaction_proportions(current_user, *args, **kwargs):
 @admin_bp.route("/distribution-over-time", methods=["GET"])
 @staticmethod
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+@AccessLevel.role_required(
+    ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER", "MODERATOR", "SUPPORT"]
+)
 def get_transaction_distribution_over_time(current_user, *args, **kwargs):
     # Get the start date for the last 30 days
     start_date = datetime.datetime.now() - datetime.timedelta(days=30)
@@ -763,10 +783,11 @@ def get_transaction_distribution_over_time(current_user, *args, **kwargs):
     return jsonify({"labels": labels, "data": data})
 
 
+# Configure Reward Setting
 @admin_bp.route("/configure-reward-setting", methods=["POST"])
 @staticmethod
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"])
 def configure_reward_setting(current_user, *args, **kwargs):
     data = request.json  # Get data from the request body
     try:
@@ -797,69 +818,74 @@ def configure_reward_setting(current_user, *args, **kwargs):
 
 # Download Deposits
 @admin_bp.route("/download-deposits", methods=["GET"])
-@staticmethod
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+@AccessLevel.role_required(
+    ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER", "MODERATOR", "SUPPORT"]
+)
 def download_deposits(current_user, *args, **kwargs):
-    # Query all deposit transactions
-    transactions = Transaction.query.filter(
-        Transaction.transaction_type == "deposit"
-    ).all()
+    try:
+        # Query all deposit transactions
+        transactions = Transaction.query.filter(
+            Transaction.transaction_type == "deposit"
+        ).all()
 
-    # Create a CSV file in memory
-    output = StringIO()
-    writer = csv.writer(output)
+        # Create a CSV file in memory
+        output = StringIO()
+        writer = csv.writer(output)
 
-    # Write CSV headers
-    writer.writerow(
-        [
-            "ID",
-            "User ID",
-            "Amount",
-            "Currency",
-            "Account Name",
-            "Account Number",
-            "Crypto Address",
-            "Transaction Type",
-            "Transaction Completed",
-            "Created At",
-            "Updated At",
-        ]
-    )
-
-    # Write each deposit transaction to the CSV file
-    for txn in transactions:
+        # Write CSV headers
         writer.writerow(
             [
-                txn.id,
-                txn.user_id,
-                txn.amount,
-                txn.currency,
-                txn.account_name,
-                txn.account_number,
-                txn.crypto_address,
-                txn.transaction_type,
-                txn.transaction_completed,
-                txn.created_at.isoformat() if txn.created_at else "",
-                txn.updated_at.isoformat() if txn.updated_at else "",
+                "ID",
+                "User ID",
+                "Amount",
+                "Currency",
+                "Account Name",
+                "Account Number",
+                "Crypto Address",
+                "Transaction Type",
+                "Transaction Completed",
+                "Created At",
+                "Updated At",
             ]
         )
 
-    # Set the response headers for CSV download
-    output.seek(0)
-    response = Response(output, mimetype="text/csv")
-    response.headers["Content-Disposition"] = "attachment; filename=deposits.csv"
-    return (
-        jsonify({"message": "Deposits downloaded successfully!", "data": response}),
-        200,
-    )
+        # Write each deposit transaction to the CSV file
+        for txn in transactions:
+            writer.writerow(
+                [
+                    txn.id,
+                    txn.user_id,
+                    txn.amount,
+                    txn.currency,
+                    txn.account_name,
+                    txn.account_number,
+                    txn.crypto_address,
+                    txn.transaction_type,
+                    txn.transaction_completed,
+                    txn.created_at.isoformat() if txn.created_at else "",
+                    txn.updated_at.isoformat() if txn.updated_at else "",
+                ]
+            )
+
+        # Prepare the CSV file for download
+        output.seek(0)
+        response = Response(output.getvalue(), mimetype="text/csv")
+        response.headers["Content-Disposition"] = "attachment; filename=deposits.csv"
+        return response
+
+    except Exception as e:
+        # Log the exception if needed
+        return jsonify({"error": "An error occurred", "details": str(e)}), 500
 
 
 # Download Withdrawals
 @admin_bp.route("/download-withdrawals", methods=["GET"])
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
-def download_withdrawals(current_user):
+@AccessLevel.role_required(
+    ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER", "MODERATOR", "SUPPORT"]
+)
+def download_withdrawals(current_user, *args, **kwargs):
     try:
         transactions = Transaction.query.filter(
             Transaction.transaction_type.like("withdraw%")
@@ -870,38 +896,77 @@ def download_withdrawals(current_user):
 
         output = StringIO()
         writer = csv.writer(output)
+        # Updated header: added "Bank Name" column between Transaction Type and Transaction Completed
         writer.writerow(
-            ["ID", "User ID", "Amount", "Currency", "Account Name", 
-             "Account Number", "Crypto Address", "Transaction Type", 
-             "Transaction Completed", "Created At", "Updated At"]
+            [
+                "id",
+                "user_id",
+                "amount",
+                "currency",
+                "account_name",
+                "account_number",
+                "crypto_address",
+                "transaction_type",
+                "bank_name",
+                "transaction_completed",
+                "created_at",
+                "updated_at",
+            ]
         )
 
         for txn in transactions:
-            print(txn.serialize())  # Log each transaction
-            writer.writerow([
-                txn.id, txn.user_id, txn.amount, txn.currency,
-                txn.account_name, txn.account_number, txn.crypto_address,
-                txn.transaction_type, txn.transaction_completed,
-                txn.created_at.isoformat() if txn.created_at else "",
-                txn.updated_at.isoformat() if txn.updated_at else ""
-            ])
+            # Safe conversion for datetime fields
+            created_at = (
+                txn.created_at.isoformat()
+                if txn.created_at and isinstance(txn.created_at, dt)
+                else ""
+            )
+            updated_at = (
+                txn.updated_at.isoformat()
+                if txn.updated_at and isinstance(txn.updated_at, dt)
+                else ""
+            )
+
+            # Split the transaction_type field into type and bank name if applicable
+            if " + " in txn.transaction_type:
+                transaction_type, bank_name = txn.transaction_type.split(" + ", 1)
+            else:
+                transaction_type = txn.transaction_type
+                bank_name = ""
+
+            writer.writerow(
+                [
+                    txn.id,
+                    txn.user_id,
+                    txn.amount,
+                    txn.currency,
+                    txn.account_name,
+                    txn.account_number,
+                    txn.crypto_address,
+                    transaction_type,
+                    bank_name,
+                    txn.transaction_completed,
+                    created_at,
+                    updated_at,
+                ]
+            )
 
         output.seek(0)
-        response = make_response(output.getvalue())
+        response = Response(output.getvalue(), mimetype="text/csv")
         response.headers["Content-Disposition"] = "attachment; filename=withdrawals.csv"
-        response.headers["Content-Type"] = "text/csv"
         return response
 
     except Exception as e:
-        print("Error in download_withdrawals:", str(e))  # Log error in console
+        traceback.print_exc()
         return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
-
 
 # Download Transactions
 @admin_bp.route("/download-transactions", methods=["GET"])
 @staticmethod
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+@AccessLevel.role_required(
+    ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER", "MODERATOR", "SUPPORT"]
+)
 def download_transactions(current_user, *args, **kwargs):
     # Query all transactions (deposits and withdrawals)
     transactions = Transaction.query.all()
@@ -913,17 +978,17 @@ def download_transactions(current_user, *args, **kwargs):
     # Write CSV headers
     writer.writerow(
         [
-            "ID",
-            "User ID",
-            "Amount",
-            "Currency",
-            "Account Name",
-            "Account Number",
-            "Crypto Address",
-            "Transaction Type",
-            "Transaction Completed",
-            "Created At",
-            "Updated At",
+            "id",
+            "user_id",
+            "amount",
+            "currency",
+            "account_name",
+            "account_number",
+            "crypto_address",
+            "transaction_type",
+            "transaction_completed",
+            "created_at",
+            "updated_at",
         ]
     )
 
@@ -956,7 +1021,7 @@ def download_transactions(current_user, *args, **kwargs):
 @admin_bp.route("/download-users", methods=["GET"])
 @staticmethod
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"])
 def download_users(current_user, *args, **kwargs):
     """
     Route to download all user data in CSV format.
@@ -997,7 +1062,7 @@ def download_users(current_user, *args, **kwargs):
 @admin_bp.route("/upload-transactions", methods=["POST"])
 @staticmethod
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER"])
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"])
 def upload_transactions(current_user, *args, **kwargs):
     """
     Route to upload a CSV file and update deposits or withdrawals for users.
@@ -1061,3 +1126,111 @@ def upload_transactions(current_user, *args, **kwargs):
 
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+# Upload Deposit
+@admin_bp.route("/upload-deposit-csv", methods=["POST"])
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"])
+def upload_deposit_csv(current_user, *args, **kwargs):
+    """
+    Bulk upload deposits from a CSV file.
+    
+    Expected CSV columns (header names):
+      - user_id
+      - amount
+      - account_name
+      - account_number
+      - transaction_type (should be 'deposit')
+      - [optional] crypto_address
+      - [optional] currency (defaults to 'naira')
+    
+    For each row, a new deposit transaction is created with the logged-in admin's ID
+    recorded in the confirm_by field. The fiat amount is converted to dollars using the
+    current conversion rate from the Utility table, and the user's balance is updated.
+    """
+    file = request.files.get("file")
+    if not file:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    try:
+        # Read CSV content
+        stream = StringIO(file.read().decode("utf-8"))
+        csv_reader = csv.DictReader(stream)
+        
+        # Get the conversion rate from the Utility table
+        utility = Utility.query.first()
+        if not utility:
+            return jsonify({"error": "Conversion rate not found in Utility table"}), 500
+        conversion_rate = float(utility.conversion_rate)
+        
+        # Process each row in the CSV
+        for row in csv_reader:
+            # Validate that required fields exist and are non-empty
+            required_fields = ["user_id", "amount", "account_name", "account_number", "transaction_type"]
+            missing_fields = [field for field in required_fields if not row.get(field)]
+            if missing_fields:
+                # Skip rows with missing required fields
+                continue
+            
+            try:
+                user_id = int(row["user_id"])
+                amount = float(row["amount"])
+            except ValueError:
+                # Skip rows with invalid number formats
+                continue
+
+            if amount <= 0:
+                # Skip rows with non-positive amount
+                continue
+
+            # Only process rows where the transaction type is 'deposit'
+            transaction_type = row["transaction_type"].strip().lower()
+            if transaction_type != "deposit":
+                continue
+
+            account_name = row["account_name"]
+            account_number = row["account_number"]
+            crypto_address = row.get("crypto_address", "")
+            currency = row.get("currency", "naira")
+            
+            # Convert fiat amount to dollars using the conversion rate
+            amount_in_dollars = amount / conversion_rate
+
+            # Create a new Transaction with confirm_by set to the current admin's id
+            transaction = Transaction(
+                user_id=user_id,
+                confirm_by=current_user.id,
+                transaction_completed=True,
+                account_name=account_name,
+                account_number=account_number,
+                crypto_address=crypto_address,
+                transaction_type=transaction_type,
+                amount=amount_in_dollars,
+                currency=currency
+            )
+            db.session.add(transaction)
+            
+            # Update the user's balance (for fiat deposits)
+            balance = Balance.query.filter_by(user_id=user_id).first()
+            if not balance:
+                balance = Balance(
+                    user_id=user_id,
+                    balance=amount_in_dollars,
+                    crypto_balance=0.0,
+                    rewards=0.0
+                )
+                db.session.add(balance)
+            else:
+                balance.balance += amount_in_dollars
+        
+        # Commit all transactions at once
+        db.session.commit()
+        return jsonify({"message": "Deposits uploaded successfully!"}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "An error occurred", "details": str(e)}), 500
+    

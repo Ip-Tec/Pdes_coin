@@ -16,17 +16,27 @@ txn_bp = Blueprint("transactions", __name__)
 # Transaction History router
 @txn_bp.route("/all_transactions", methods=["GET"])
 def get_transaction_history_route():
-    from app.controller.user_transactions import UserTransactionsController  # Import as needed
+    from app.controller.user_transactions import (
+        UserTransactionsController,
+    )  # Import as needed
+
     transactions = UserTransactionsController.get_all_transactions()
-    return jsonify({
-        "transactions": transactions,
-        "message": "Transaction history fetched successfully"
-    }), 200
+    return (
+        jsonify(
+            {
+                "transactions": transactions,
+                "message": "Transaction history fetched successfully",
+            }
+        ),
+        200,
+    )
+
 
 # get user Transaction history
 @txn_bp.route("/history", methods=["GET"])
 def transaction_history():
     from app.controller.user_transactions import UserTransactionsController
+
     transactions = UserTransactionsController.get_transactions()
     return transactions
 
@@ -77,8 +87,16 @@ def buy_sell(current_user):
 
     action = data["action"]  # 'buy' or 'sell'
     amount = data["amount"]
-    price = data["price"]  # Current price of PDES coin
-    total = amount * price
+    price = data["price"].get("price")  # Current price of PDES coin
+    # Select the correct price based on the action
+    if action == "buy":
+        price = data["price"]["pdes_buy_price"]
+        total = amount / price
+    elif action == "sell":
+        price = data["price"]["pdes_sell_price"]
+        total = amount * price
+    else:
+        raise ValueError(f"Invalid action: {action}")
 
     # Validate price (you can fetch this from an external API or use static)
     current_price = 50  # Example static price, replace with dynamic price if needed
@@ -195,7 +213,6 @@ def get_price_history(current_user):
 @token_required
 def get_trade_history(current_user, *args, **kwargs):
     return PdesService.get_pdes_trade_history(current_user)
-
 
 
 # get account detail for user to deposit to
