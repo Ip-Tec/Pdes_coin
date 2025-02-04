@@ -6,23 +6,54 @@ import SearchUsers from "../../components/Admin/SearchUsers";
 import AdminWrapper from "../../components/Admin/AdminWrapper";
 import SlideInPanel from "../../components/Admin/SlideInPanel";
 import { DepositPropsWithUser, User } from "../../utils/type";
+import { updateUser } from "../../services/adminAPI";
+import { toast } from "react-toastify";
 
 const AdminUser: React.FC = () => {
-  const { user } = useAuth();
+  const { user, roles, isAllowed } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  // selectedUser is kept for potential future use
   const [selectedUser] = useState<User | null>(null);
   const [isDraggable, setIsDraggable] = useState(false);
   const [supportVisible, setSupportVisible] = useState(false);
-  const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [editingUser, setEditingUser] = useState<User | null>({
+    id: 0,
+    full_name: "",
+    email: "",
+    username: "",
+    role: "",
+    balance: 0,
+    sticks: 0,
+    is_blocked: false,
+    created_at: "",
+    referral_code: null,
+    total_referrals: 0,
+    referral_reward: 0,
+  });
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [users, setUsers] = useState<User[] | DepositPropsWithUser[]>([]);
+  const allowedRoles = ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"];
+  const roleHierarchy = [
+    "USER",
+    "MODERATOR",
+    "SUPPORT",
+    "ADMIN",
+    "SUPER_ADMIN",
+    "DEVELOPER",
+    "OWNER",
+  ];
+
+  const userRoleIndex = roleHierarchy.indexOf(
+    user?.role.toLocaleUpperCase() || "USER"
+  );
+  console.log({ allowedRoles, userRoleIndex, roles, user });
 
   // Open edit modal
-  const handleEditClick = (user: User | DepositPropsWithUser) => {
-    if ("full_name" in user) {
-      setEditingUser(user);
+  const handleEditClick = (userItem: User | DepositPropsWithUser) => {
+    if ("full_name" in userItem) {
+      setEditingUser(userItem);
     } else {
-      setEditingUser(user.user);
+      setEditingUser(userItem.user);
     }
     setIsEditing(true);
   };
@@ -43,6 +74,28 @@ const AdminUser: React.FC = () => {
     setSupportVisible(!supportVisible);
   };
 
+  const handleSubmitUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingUser) return;
+
+    console.log("Sending updated user data:", editingUser);
+
+    try {
+      // Call your API to update the user with the updated info
+      const response = await updateUser(editingUser);
+      toast.success(response.message);
+      setEditingUser(null);
+
+      // Optionally, refresh your users list or show a success message here
+    } catch (error: unknown) {
+      if (error instanceof Error) {
+        toast.error(error.message || "Error updating user");
+      } else {
+        console.error("Unknown error:", error);
+      }
+    }
+  };
+
   return (
     <AdminWrapper>
       <div className="p-4 md:p-8 min-h-screen my-16 text-gray-800 relative">
@@ -51,48 +104,58 @@ const AdminUser: React.FC = () => {
 
         {/* Floating Search Results */}
         {users.length > 0 && (
-          <div className="my-24 w-auto text-gray-600 mx-auto px-6">
-            {users.map((user: User | DepositPropsWithUser, index: number) => (
-              <div
-                key={user.id}
-                className="cursor-pointer mb-4 p-4 border rounded-lg shadow bg-gray-50 hover:bg-gray-100"
-              >
-                <div onClick={() => toggleAccordion(index)}>
-                  <p>
-                    <strong>Name:</strong>{" "}
-                    {"full_name" in user ? user.full_name : user.user.full_name}
-                  </p>
-                  <p>
-                    <strong>Email:</strong>{" "}
-                    {"email" in user ? user.email : user.user.email}
-                  </p>
-                  <p>
-                    <strong>Username:</strong>{" "}
-                    {"username" in user ? user.username : user.user.username}
-                  </p>
-                  <p>
-                    <strong>Role:</strong>{" "}
-                    {"role" in user ? user.role : user.user.role}
-                  </p>
-                  <p>
-                    <strong>Balance:</strong>{" "}
-                    {"balance" in user ? user.balance : user.user.balance}
-                  </p>
-                </div>
+          <div className="my-24 w-auto flex flex-wrap gap-2 text-gray-600 mx-auto px-6">
+            {users.map(
+              (userItem: User | DepositPropsWithUser, index: number) => {
+                // Extract user data whether it's a direct User or wrapped in DepositPropsWithUser
+                const userData =
+                  "full_name" in userItem ? userItem : userItem.user;
+                return (
+                  <div
+                    key={userData.id}
+                    className="cursor-pointer mb-4 p-4 border rounded-lg shadow bg-gray-50 hover:bg-gray-100"
+                  >
+                    <div onClick={() => toggleAccordion(index)}>
+                      <p>
+                        <strong>Name:</strong> {userData.full_name}
+                      </p>
+                      <p>
+                        <strong>Email:</strong> {userData.email}
+                      </p>
+                      <p>
+                        <strong>Username:</strong> {userData.username}
+                      </p>
+                      <p>
+                        <strong>Role:</strong> {userData.role}
+                      </p>
+                      <p>
+                        <strong>Sticks:</strong> {userData.sticks}
+                      </p>
+                      <p>
+                        <strong>Is Blocked:</strong> {userData.is_blocked}
+                      </p>
+                      <p>
+                        <strong>Balance:</strong> {userData.balance}
+                      </p>
+                    </div>
 
-                {/* Accordion Content */}
-                {activeIndex === index && (
-                  <div className="mt-2 p-4 bg-gray-100 rounded-lg">
-                    <button
-                      onClick={() => handleEditClick(user)}
-                      className="mt-2 text-blue-500"
-                    >
-                      Edit
-                    </button>
+                    {/* Accordion Content */}
+                    {/* Check if user has access to edit user */}
+                    {activeIndex === index &&
+                      isAllowed(user?.role as string) && (
+                        <div className="mt-2 p-4 bg-gray-100 rounded-lg">
+                          <button
+                            onClick={() => handleEditClick(userItem)}
+                            className="mt-2 text-blue-500"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      )}
                   </div>
-                )}
-              </div>
-            ))}
+                );
+              }
+            )}
           </div>
         )}
 
@@ -120,79 +183,128 @@ const AdminUser: React.FC = () => {
 
         {/* Edit User Modal */}
         {isEditing && editingUser && (
-          <SlideInPanel
-            title="Edit User Info"
-            onClose={closeEditModal}
-            children={
-              <div className="flex flex-col justify-center items-center bg-white">
-                <div className="p-2 flex flex-col w-full m-auto">
-                  <InputField
-                    label="Full Name"
-                    type="text"
-                    name="name"
-                    value={editingUser.full_name}
-                    onChange={(e) =>
-                      setEditingUser({
-                        ...editingUser,
-                        full_name: e.target.value,
-                      })
-                    }
-                  />
+          <SlideInPanel title="Edit User Info" onClose={closeEditModal}>
+            <form
+              onSubmit={handleSubmitUser}
+              className="flex flex-col justify-center items-center bg-white"
+            >
+              <div className="p-2 flex flex-col w-full m-auto space-y-4">
+                <InputField
+                  label="Full Name"
+                  type="text"
+                  name="name"
+                  value={editingUser.full_name}
+                  onChange={(e) =>
+                    setEditingUser({
+                      ...editingUser,
+                      full_name: e.target.value,
+                    })
+                  }
+                />
 
-                  <InputField
-                    label="Email"
-                    type="Email"
-                    name="email"
-                    value={editingUser.email}
+                <InputField
+                  label="Email"
+                  type="email"
+                  name="email"
+                  value={editingUser.email}
+                  onChange={(e) =>
+                    setEditingUser({
+                      ...editingUser,
+                      email: e.target.value,
+                    })
+                  }
+                />
+
+                <div className="flex flex-col space-y-2">
+                  <label className="block text-sm font-medium text-gray-700">
+                    Stick {user?.full_name}
+                  </label>
+                  <input
+                    type="range"
+                    name="stick"
+                    min="0"
+                    max="3"
+                    step="1"
+                    value={editingUser.sticks ?? "0"}
                     onChange={(e) =>
                       setEditingUser({
                         ...editingUser,
-                        email: e.target.value,
+                        sticks: parseInt(e.target.value, 10),
                       })
                     }
+                    className="w-full h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-500"
                   />
-                  <label className="block mb-1">Role</label>
-                  <select
-                    className="p-3 bg-slate-400 rounded-lg ml-4 text-textColor placeholder-gray-500 
-          focus:outline-none focus:ring-0 focus:ring-transparent"
-                  >
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                    {user?.role == "developer" ||
-                      (user?.role == "super_admin" && (
-                        <option value="super admin">Super Admin</option>
-                      ))}
-                    {user?.role == "developer" && (
-                      <>
-                        <option value="super admin">Super Admin</option>
-                        <option value="developer">Developer</option>
-                      </>
-                    )}
-                  </select>
+                  <div className="flex justify-between text-sm text-gray-600">
+                    <span>0</span>
+                    <span>1</span>
+                    <span>2</span>
+                    <span>3</span>
+                  </div>
                 </div>
-                <div className="flex gap-2 justify-between">
-                  <button
-                    onClick={closeEditModal}
-                    className="bg-gray-500 text-white px-4 py-2 rounded"
-                  >
-                    Cancel
-                  </button>
-                  <button className="bg-blue-500 text-white px-4 py-2 rounded">
-                    Save Changes
-                  </button>
-                </div>
+
+                <InputField
+                  label="Block User"
+                  type="checkbox"
+                  name="is_blocked"
+                  checked={editingUser.is_blocked}
+                  value={editingUser.is_blocked ? "true" : "false"}
+                  onChange={(e) =>
+                    setEditingUser({
+                      ...editingUser,
+                      is_blocked: e.target.checked,
+                    })
+                  }
+                />
+
+                <label className="block mb-1">Role</label>
+                <select
+                  value={editingUser.role}
+                  onChange={(e) =>
+                    setEditingUser({
+                      ...editingUser,
+                      role: e.target.value,
+                    })
+                  }
+                  className="p-3 bg-slate-400 rounded-lg ml-4 text-textColor placeholder-gray-500 
+                             focus:outline-none focus:ring-0 focus:ring-transparent"
+                >
+                  {roleHierarchy
+                    .filter(
+                      (role) => roleHierarchy.indexOf(role) <= userRoleIndex
+                    )
+                    .map((role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                </select>
               </div>
-            }
-          />
+              <div className="flex gap-2 justify-between mt-4">
+                <button
+                  type="button"
+                  onClick={closeEditModal}
+                  className="bg-gray-500 text-white px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="bg-blue-500 text-white px-4 py-2 rounded"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
+          </SlideInPanel>
         )}
 
         {/* Draggable Support Panel */}
         {supportVisible && (
           <Draggable disabled={!isDraggable}>
             <div
-              className={`fixed top-0 ${
+              className={`fixed top-0 right-0 z-50 bg-white shadow-lg p-4 w-full md:w-1/2 h-full md:h-auto ${
                 isDraggable ? "cursor-move" : ""
-              } bg-white shadow-lg p-4 w-full md:w-1/2 h-full md:h-auto right-0 z-50`}
+              }`}
             >
               <div className="flex justify-between items-center border-b pb-2 mb-4">
                 <h2 className="font-semibold text-xl">Support</h2>
@@ -229,4 +341,5 @@ const AdminUser: React.FC = () => {
     </AdminWrapper>
   );
 };
+
 export default AdminUser;

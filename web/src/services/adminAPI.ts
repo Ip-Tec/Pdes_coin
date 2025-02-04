@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import {
   ErrorResponse,
   RewardSettingFormData,
+  User,
   UtilityProps,
 } from "../utils/type";
 
@@ -268,5 +269,24 @@ export const handleDownloadApi = async (url: string) => {
       toast.error("Network error. Please try again.");
     }
     console.error(error);
+  }
+};
+
+// Update User
+
+export const updateUser = async (data: User) => {
+  try {
+    const response = await API.put(apiUrl("/admin/update-user"), data);
+    console.log({ response });
+    toast.success(response.data.message);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.error);
+      console.error(errorData);
+      return errorData;
+    }
+    throw new Error("Network error. Please try again.");
   }
 };

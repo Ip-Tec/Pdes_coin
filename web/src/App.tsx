@@ -81,7 +81,7 @@ const App: React.FC = () => {
               path="/deposit"
               element={
                 <ProtectedRoute
-                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
                 >
                   <Deposit />
                 </ProtectedRoute>
@@ -91,7 +91,7 @@ const App: React.FC = () => {
               path="/trade"
               element={
                 <ProtectedRoute
-                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
                 >
                   <BuySellCoin />
                 </ProtectedRoute>
@@ -101,7 +101,7 @@ const App: React.FC = () => {
               path="/dashboard"
               element={
                 <ProtectedRoute
-                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
                 >
                   <Dashboard />
                 </ProtectedRoute>
@@ -111,7 +111,7 @@ const App: React.FC = () => {
               path="/activity"
               element={
                 <ProtectedRoute
-                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
                 >
                   <Activity />
                 </ProtectedRoute>
@@ -121,7 +121,7 @@ const App: React.FC = () => {
               path="/withdraw"
               element={
                 <ProtectedRoute
-                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
                 >
                   <Withdraw />
                 </ProtectedRoute>
@@ -131,7 +131,7 @@ const App: React.FC = () => {
               path="/profile"
               element={
                 <ProtectedRoute
-                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
                 >
                   <Profile />
                 </ProtectedRoute>
@@ -141,7 +141,7 @@ const App: React.FC = () => {
               path="/about"
               element={
                 <ProtectedRoute
-                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
                 >
                   <AboutPage />
                 </ProtectedRoute>
@@ -151,7 +151,7 @@ const App: React.FC = () => {
               path="/wallet"
               element={
                 <ProtectedRoute
-                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
                 >
                   <WalletPage />
                 </ProtectedRoute>
@@ -161,7 +161,7 @@ const App: React.FC = () => {
               path="/support"
               element={
                 <ProtectedRoute
-                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
                 >
                   <SupportPage />
                 </ProtectedRoute>
@@ -171,7 +171,7 @@ const App: React.FC = () => {
               path="/help-center"
               element={
                 <ProtectedRoute
-                  requiredRoles={["user", "admin", "super_admin", "developer"]}
+                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
                 >
                   <HelpCenterPage />
                 </ProtectedRoute>
@@ -182,17 +182,17 @@ const App: React.FC = () => {
               path="/a/dashboard"
               element={
                 <ProtectedRoute
-                  requiredRoles={["admin", "super_admin", "developer"]}
+                  requiredRoles={["MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
                 >
                   <AdminDashboard />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/a/user"
+              path="/a/USER"
               element={
                 <ProtectedRoute
-                  requiredRoles={["admin", "super_admin", "developer"]}
+                  requiredRoles={["MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
                 >
                   <AdminUser />
                 </ProtectedRoute>
@@ -202,7 +202,7 @@ const App: React.FC = () => {
               path="/a/transactions"
               element={
                 <ProtectedRoute
-                  requiredRoles={["admin", "super_admin", "developer"]}
+                  requiredRoles={["MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
                 >
                   <AdminTransaction />
                 </ProtectedRoute>
@@ -211,14 +211,14 @@ const App: React.FC = () => {
             <Route
               path="/a/utility"
               element={
-                <ProtectedRoute requiredRoles={["admin", "super_admin", "developer"]}>
+                <ProtectedRoute requiredRoles={["MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}>
                   <Utility />
                 </ProtectedRoute>
               }
             /> <Route
               path="/a/referrals"
               element={
-                <ProtectedRoute requiredRoles={["admin", "super_admin", "developer"]}>
+                <ProtectedRoute requiredRoles={["MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}>
                   <Referrals />
                 </ProtectedRoute>
               }

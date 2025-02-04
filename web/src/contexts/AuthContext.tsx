@@ -1,5 +1,10 @@
 import { createContext, useContext } from "react";
-import { User, TransactionHistory, TradeHistory, TradePrice } from "../utils/type";
+import {
+  User,
+  TransactionHistory,
+  TradeHistory,
+  TradePrice,
+} from "../utils/type";
 
 export interface AuthContextType {
   isAuth: boolean;
@@ -12,6 +17,8 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   refreshAuthToken: () => Promise<void>;
+  roles: string[];
+  isAllowed: (role: string) => boolean;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);

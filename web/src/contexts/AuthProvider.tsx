@@ -48,6 +48,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return !!token && !isTokenExpired(token);
   });
 
+  const [userRoles, setUserRoles] = useState<string[]>([
+    "USER",
+    "MODERATOR",
+    "SUPPORT",
+    "ADMIN",
+    "SUPER_ADMIN",
+    "DEVELOPER",
+    "OWNER",
+  ]);
   const [user, setUser] = useState<User | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [trade, setTrade] = useState<TradeHistory[]>([]);
@@ -141,6 +150,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
 
       setUser(userData);
+      setUserRoles(userData.role);
       sessionStorage.setItem("authToken", access_token);
       sessionStorage.setItem("refreshToken", refresh_token);
       setIsAuth(true);
@@ -161,7 +171,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       newSocket.emit("get_transaction_history");
       newSocket.emit("get_trade_history");
       newSocket.emit("get_current_price");
-
     } catch (error) {
       toast.error("Login failed");
       console.error("Login failed", error);
@@ -227,6 +236,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         login,
         logout,
         refreshAuthToken,
+        roles: userRoles,
+        isAllowed: (role: string) => (user ? userRoles.includes(role) : false),
       }}
     >
       {children}

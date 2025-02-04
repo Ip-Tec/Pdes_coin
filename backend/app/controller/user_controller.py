@@ -106,7 +106,7 @@ class UserController:
         password = data.get("password")
         confirmPassword = data.get("confirmPassword")
         referral_code = data.get("referralCode", None)
-        role = data.get("role", "user")  # Default to 'user'
+        role = data.get("role", "USER")  # Default to 'user'
 
         # Validate email format
         if not is_valid_email(email):
@@ -195,7 +195,8 @@ class UserController:
             )
 
     @staticmethod
-    def update_user_info():
+    @token_required
+    def update_user_info(current_user, *args, **kwargs):
         """
         Update user info
         """

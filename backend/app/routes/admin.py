@@ -960,6 +960,7 @@ def download_withdrawals(current_user, *args, **kwargs):
         traceback.print_exc()
         return jsonify({"error": "Internal Server Error", "message": str(e)}), 500
 
+
 # Download Transactions
 @admin_bp.route("/download-transactions", methods=["GET"])
 @staticmethod
@@ -1135,7 +1136,7 @@ def upload_transactions(current_user, *args, **kwargs):
 def upload_deposit_csv(current_user, *args, **kwargs):
     """
     Bulk upload deposits from a CSV file.
-    
+
     Expected CSV columns (header names):
       - user_id
       - amount
@@ -1144,7 +1145,7 @@ def upload_deposit_csv(current_user, *args, **kwargs):
       - transaction_type (should be 'deposit')
       - [optional] crypto_address
       - [optional] currency (defaults to 'naira')
-    
+
     For each row, a new deposit transaction is created with the logged-in admin's ID
     recorded in the confirm_by field. The fiat amount is converted to dollars using the
     current conversion rate from the Utility table, and the user's balance is updated.
@@ -1157,22 +1158,28 @@ def upload_deposit_csv(current_user, *args, **kwargs):
         # Read CSV content
         stream = StringIO(file.read().decode("utf-8"))
         csv_reader = csv.DictReader(stream)
-        
+
         # Get the conversion rate from the Utility table
         utility = Utility.query.first()
         if not utility:
             return jsonify({"error": "Conversion rate not found in Utility table"}), 500
         conversion_rate = float(utility.conversion_rate)
-        
+
         # Process each row in the CSV
         for row in csv_reader:
             # Validate that required fields exist and are non-empty
-            required_fields = ["user_id", "amount", "account_name", "account_number", "transaction_type"]
+            required_fields = [
+                "user_id",
+                "amount",
+                "account_name",
+                "account_number",
+                "transaction_type",
+            ]
             missing_fields = [field for field in required_fields if not row.get(field)]
             if missing_fields:
                 # Skip rows with missing required fields
                 continue
-            
+
             try:
                 user_id = int(row["user_id"])
                 amount = float(row["amount"])
@@ -1193,7 +1200,7 @@ def upload_deposit_csv(current_user, *args, **kwargs):
             account_number = row["account_number"]
             crypto_address = row.get("crypto_address", "")
             currency = row.get("currency", "naira")
-            
+
             # Convert fiat amount to dollars using the conversion rate
             amount_in_dollars = amount / conversion_rate
 
@@ -1207,10 +1214,10 @@ def upload_deposit_csv(current_user, *args, **kwargs):
                 crypto_address=crypto_address,
                 transaction_type=transaction_type,
                 amount=amount_in_dollars,
-                currency=currency
+                currency=currency,
             )
             db.session.add(transaction)
-            
+
             # Update the user's balance (for fiat deposits)
             balance = Balance.query.filter_by(user_id=user_id).first()
             if not balance:
@@ -1218,12 +1225,12 @@ def upload_deposit_csv(current_user, *args, **kwargs):
                     user_id=user_id,
                     balance=amount_in_dollars,
                     crypto_balance=0.0,
-                    rewards=0.0
+                    rewards=0.0,
                 )
                 db.session.add(balance)
             else:
                 balance.balance += amount_in_dollars
-        
+
         # Commit all transactions at once
         db.session.commit()
         return jsonify({"message": "Deposits uploaded successfully!"}), 201
@@ -1231,6 +1238,52 @@ def upload_deposit_csv(current_user, *args, **kwargs):
     except Exception as e:
         db.session.rollback()
         import traceback
+
         traceback.print_exc()
         return jsonify({"error": "An error occurred", "details": str(e)}), 500
-    
+
+
+# Update User
+@admin_bp.route("/update-user", methods=["PUT"])
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"])
+def update_user(current_user, *args, **kwargs):
+    """
+    Route to update user details.
+    """
+    data = request.get_json()
+
+    print(f"{data=}")
+
+    # Ensure user_id is provided in the request
+    user_id = data.get("id")  # Allow updating any user
+    if not user_id:
+        return jsonify({"error": "User ID is required"}), 400
+
+    # Fetch user from database
+    user = User.query.filter_by(id=user_id).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    try:
+        # Allowed fields to update
+        updatable_fields = [
+            "name",
+            "email",
+            "username",
+            "role",
+            "sticks",
+            "is_blocked",
+            "is_verified",
+        ]
+
+        for field in updatable_fields:
+            if field in data and hasattr(user, field):
+                setattr(user, field, data[field])
+
+        db.session.commit()
+        return jsonify({"message": "User updated successfully"}), 200
+
+    except SQLAlchemyError as e:
+        db.session.rollback()
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
