@@ -35,8 +35,8 @@ const AdminUser: React.FC = () => {
   const allowedRoles = ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"];
   const roleHierarchy = [
     "USER",
-    "MODERATOR",
     "SUPPORT",
+    "MODERATOR",
     "ADMIN",
     "SUPER_ADMIN",
     "DEVELOPER",
@@ -46,7 +46,7 @@ const AdminUser: React.FC = () => {
   const userRoleIndex = roleHierarchy.indexOf(
     user?.role.toLocaleUpperCase() || "USER"
   );
-  console.log({ allowedRoles, userRoleIndex, roles, user });
+  console.log({ allowedRoles, userRoleIndex, roles, user, users });
 
   // Open edit modal
   const handleEditClick = (userItem: User | DepositPropsWithUser) => {

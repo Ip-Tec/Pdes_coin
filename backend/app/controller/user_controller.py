@@ -106,7 +106,9 @@ class UserController:
         password = data.get("password")
         confirmPassword = data.get("confirmPassword")
         referral_code = data.get("referralCode", None)
-        role = data.get("role", "USER")  # Default to 'user'
+        sticks = 0
+        is_blocked = False,
+        role = data.get("role", "USER")
 
         # Validate email format
         if not is_valid_email(email):
@@ -151,8 +153,11 @@ class UserController:
         # Create the new user
         user = User(
             name=name,
+            role=role,
             email=email,
+            sticks=sticks,
             username=username,
+            is_blocked=is_blocked,
             password=hashed_password,
             referral_code=username,  # Use the username as the referral code
             referrer_id=referrer.id if referrer else None,  # Link the referrer
