@@ -35,8 +35,7 @@ def register():
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
     refresh_token = request.json.get("refresh_token")
-    # Optionally, store and invalidate refresh tokens in a database
-    # For now, we assume the token is client-side only
+    
     return jsonify({"message": "Logged out successfully!"}), 200
 
 

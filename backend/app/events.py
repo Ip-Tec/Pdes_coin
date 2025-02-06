@@ -6,89 +6,88 @@ from app.controller.user_transactions import PdesService, UserTransactionsContro
 from app.models import Utility
 
 
-# def authenticate_socket_event(socketio):
-#     def decorator(f):
-#         @wraps(f)
-#         def decorated_function(*args, **kwargs):
-#             sid = args[0]  # Extract socket session ID
-#             auth_token = socketio.server.environ.get(sid, {}).get(
-#                 "HTTP_AUTHORIZATION", None
-#             )
+def authenticate_socket_event(socketio):
+    def decorator(f):
+        @wraps(f)
+        def decorated_function(*args, **kwargs):
+            sid = args[0]  # Extract socket session ID
+            auth_token = socketio.server.environ.get(sid, {}).get(
+                "HTTP_AUTHORIZATION", None
+            )
 
-#             if not auth_token:
-#                 emit("error", {"message": "Unauthorized: Token missing"})
-#                 return
+            if not auth_token:
+                emit("error", {"message": "Unauthorized: Token missing"})
+                return
 
-#             # Handle Bearer token format correctly
-#             if auth_token.startswith("Bearer "):
-#                 auth_token = auth_token.split(" ")[1]
+            # Handle Bearer token format correctly
+            if auth_token.startswith("Bearer "):
+                auth_token = auth_token.split(" ")[1]
 
-#             try:
-#                 decoded_token = decode_token(auth_token)
-#                 current_user_id = decoded_token.get(
-#                     "sub"
-#                 )  # Assuming `sub` contains the user ID
+            try:
+                decoded_token = decode_token(auth_token)
+                current_user_id = decoded_token.get(
+                    "sub"
+                )  # Assuming `sub` contains the user ID
 
-#                 # Fetch user from DB (avoiding circular import)
-#                 from app.models import User
+                # Fetch user from DB (avoiding circular import)
+                from app.models import User
 
-#                 current_user = User.query.get(current_user_id)
+                current_user = User.query.get(current_user_id)
 
-#                 if not current_user:
-#                     emit("error", {"message": "Unauthorized: Invalid user"})
-#                     return
-#             except Exception as e:
-#                 emit("error", {"message": "Invalid token", "error": str(e)})
-#                 return
+                if not current_user:
+                    emit("error", {"message": "Unauthorized: Invalid user"})
+                    return
+            except Exception as e:
+                emit("error", {"message": "Invalid token", "error": str(e)})
+                return
 
-#             return f(current_user, *args, **kwargs)
+            return f(current_user, *args, **kwargs)
 
-#         return decorated_function
+        return decorated_function
 
-#     return decorator
+    return decorator
 
 
 def register_socketio_events(socketio):
     @socketio.on("connect")
     def handle_connect():
-        print("[WebSocket] Client connected")
         emit("response", {"message": "Welcome to the server!"})
 
     @socketio.on("disconnect")
     def handle_disconnect():
         print("[WebSocket] Client disconnected")
-        
-    
+
     @socketio.on("test_event")
     def handle_test_event():
         print("[WebSocket] Received 'test_event'")
         emit("response", {"message": "Test event successful!"})
 
     @socketio.on("get_transaction_history")
-    def handle_get_transaction_history(auth=None, *args, **kwargs):
+    @authenticate_socket_event(socketio)
+    def handle_get_transaction_history(current_user=None, *args, **kwargs):
         print("[WebSocket] Received 'get_transaction_history' event")
-        if auth:
-            print("Token received:", auth.get("token"))
-        else:
-            print("No auth information received.")
+
+        if not current_user:
+            emit("error", {"message": "Unauthorized: Invalid user"})
+            return
 
         transactions = UserTransactionsController.get_all_transactions_socket()
         emit("transaction_history", {"transactions": transactions})
 
     @socketio.on("get_trade_history")
-    # @authenticate_socket_event(socketio)  # Pass socketio
-    # def handle_get_trade_history(current_user):
-    #     print("[WebSocket] Received 'get_trade_history' event")
+    @authenticate_socket_event(socketio)  # Pass socketio
+    def handle_get_trade_history(current_user, *args, **kwargs):
+        print("[WebSocket] Received 'get_trade_history' event")
 
-    #     transactions = PdesService.get_pdes_trade_history()
-    #     emit("transaction_history", {"transactions": transactions})
+        transactions = PdesService.get_pdes_trade_history()
+        emit("transaction_history", {"transactions": transactions})
 
     @socketio.on("get_current_price")
     def handle_get_current_price():
         print("[WebSocket] Received 'get_current_price' event")
 
         utility = Utility.query.first()
-        print(f"utility::::{utility}")
+        # print(f"utility::::{utility}")
         if utility:
             emit(
                 "trade_price",

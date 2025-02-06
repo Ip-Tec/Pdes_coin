@@ -119,7 +119,6 @@ class AccessLevel:
                     return jsonify({"message": str(e)}), 401
 
                 userRole = current_user.role.upper()
-                print(f"User Role: {userRole}")
                 if userRole not in required_roles:
                     return (
                         jsonify(
