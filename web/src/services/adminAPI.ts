@@ -239,8 +239,8 @@ export const configureRewardSetting = async (data: RewardSettingFormData) => {
 export const handleDownloadApi = async (url: string) => {
   try {
     const response = await API.get(`/admin${url}`, {
-        responseType: "blob",
-      });
+      responseType: "blob",
+    });
 
     // Create a downloadable file link
     const blob = new Blob([response.data], { type: "text/csv" });
@@ -250,7 +250,7 @@ export const handleDownloadApi = async (url: string) => {
 
     // Extract filename from headers or use a default name
     const contentDisposition = response.headers["content-disposition"];
-    let filename = url+".csv";
+    let filename = url + ".csv";
     if (contentDisposition) {
       const match = contentDisposition.match(/filename="?(.+)"?/);
       if (match && match[1]) filename = match[1];
@@ -277,6 +277,27 @@ export const handleDownloadApi = async (url: string) => {
 export const updateUser = async (data: User) => {
   try {
     const response = await API.put(apiUrl("/admin/update-user"), data);
+    console.log({ response });
+    toast.success(response.data.message);
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.error);
+      console.error(errorData);
+      return errorData;
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// Admin change password
+export const changePassword = async (data: User, password: string) => {
+  try {
+    const response = await API.put(apiUrl("/admin/change-password"), {
+      ...data,
+      password,
+    });
     console.log({ response });
     toast.success(response.data.message);
     return response.data;

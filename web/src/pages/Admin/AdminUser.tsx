@@ -6,12 +6,14 @@ import SearchUsers from "../../components/Admin/SearchUsers";
 import AdminWrapper from "../../components/Admin/AdminWrapper";
 import SlideInPanel from "../../components/Admin/SlideInPanel";
 import { DepositPropsWithUser, User } from "../../utils/type";
-import { updateUser } from "../../services/adminAPI";
-import { toast } from "react-toastify";
+import { changePassword, updateUser } from "../../services/adminAPI";
+import { toast, ToastContainer } from "react-toastify";
 
 const AdminUser: React.FC = () => {
   const { user, roles, isAllowed } = useAuth();
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [password, setPassword] = useState<string>();
   // selectedUser is kept for potential future use
   const [selectedUser] = useState<User | null>(null);
   const [isDraggable, setIsDraggable] = useState(false);
@@ -98,6 +100,7 @@ const AdminUser: React.FC = () => {
 
   return (
     <AdminWrapper>
+      <ToastContainer />
       <div className="p-4 md:p-8 min-h-screen my-16 text-gray-800 relative">
         {/* Search Bar with Suggestions */}
         <SearchUsers title="Admin User Page" setUsers={setUsers} />
@@ -141,17 +144,76 @@ const AdminUser: React.FC = () => {
 
                     {/* Accordion Content */}
                     {/* Check if user has access to edit user */}
-                    {activeIndex === index &&
-                      isAllowed(user?.role as string) && (
-                        <div className="mt-2 p-4 bg-gray-100 rounded-lg">
+                    <div className="flex justify-between gap-1 bg-primary-light m-2 w-full rounded-lg">
+                      {activeIndex === index &&
+                        isAllowed(user?.role as string) && (
                           <button
                             onClick={() => handleEditClick(userItem)}
-                            className="mt-2 text-blue-500"
+                            className="m-2 text-white"
                           >
-                            Edit
+                            Edit User
+                          </button>
+                        )}
+                      <div>
+                        <button
+                          onClick={() => {
+                            setEditingUser(userData); // Store selected user
+                            setIsModalOpen(true); // Open modal
+                          }}
+                          className="m-2 text-white"
+                        >
+                          Edit Password
+                        </button>
+                      </div>
+                    </div>
+                    {/* Change Password Modal */}
+                    {isModalOpen && (
+                      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                        <div className="bg-white rounded-lg p-6 shadow-lg w-80">
+                          <h2 className="text-lg font-bold mb-4">
+                            Change Password for {editingUser?.full_name}
+                          </h2>
+
+                          <InputField
+                            type="text"
+                            name="Password"
+                            label={"Password"}
+                            value={password ?? ""}
+                            placeholder="Enter new password"
+                            onChange={(e) => setPassword(e.target.value)}
+                          />
+
+                          <button
+                            onClick={async () => {
+                              if (editingUser) {
+                                try {
+                                  await changePassword(editingUser, password!);
+                                  setIsModalOpen(false); // Close modal
+                                  setPassword(""); // Clear input
+                                } catch (error: unknown) {
+                                  if (error instanceof Error) {
+                                    toast.error(
+                                      `Failed to change password: ${error.message}`
+                                    );
+                                  } else {
+                                    toast.error("An unknown error occurred");
+                                  }
+                                }
+                              }
+                            }}
+                            className="bg-bgColor hover:bg-secondary text-white px-4 py-2 mt-6 rounded-lg w-full"
+                          >
+                            Set Password
+                          </button>
+                          <button
+                            onClick={() => setIsModalOpen(false)}
+                            className="text-gray-100 rounded-md bg-secondary-dark mt-4 text-sm p-3 hover:bg-bgColor hover:text-white"
+                          >
+                            Cancel
                           </button>
                         </div>
-                      )}
+                      </div>
+                    )}
                   </div>
                 );
               }

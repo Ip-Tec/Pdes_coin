@@ -9,6 +9,7 @@ import {
   loginUser,
   getUser as getUserAPI,
   websocketUrl,
+  LogoutUser,
 } from "../services/api";
 import {
   TradeHistory,
@@ -58,6 +59,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     "OWNER",
   ]);
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [socket, setSocket] = useState<Socket | null>(null);
   const [trade, setTrade] = useState<TradeHistory[]>([]);
   const [tradePrice, setTradePrice] = useState<TradePrice>({
@@ -134,6 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     try {
+      setIsLoading(true);
       const existingToken = sessionStorage.getItem("authToken");
       if (existingToken && !isTokenExpired(existingToken)) {
         toast.info("User is already logged in.");
@@ -172,20 +175,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       newSocket.emit("get_trade_history");
       newSocket.emit("get_current_price");
     } catch (error) {
+      setIsLoading(false);
       toast.error("Login failed");
       console.error("Login failed", error);
     }
   };
 
-  const logout = () => {
-    sessionStorage.removeItem("authToken");
-    sessionStorage.removeItem("refreshToken");
-    setIsAuth(false);
-    setUser(null);
-    setTransactions([]);
-    if (socket) {
-      socket.disconnect();
-      setSocket(null);
+  const logout = async () => {
+    try {
+      const response = await LogoutUser();
+      if (response.message) {
+        toast.success(response.message);
+        setIsLoading(true);
+        sessionStorage.removeItem("authToken");
+        sessionStorage.removeItem("refreshToken");
+        setIsAuth(false);
+        setUser(null);
+        setTransactions([]);
+        if (socket) {
+          socket.disconnect();
+          setSocket(null);
+        }
+      }
+    } catch (error: unknown | Error) {
+      setIsLoading(false);
+      console.error("Logout failed:", error);
+      toast.error("Logout failed");
     }
   };
 
@@ -208,10 +223,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const getUser = async () => {
     try {
+      setIsLoading(true);
       const userData = await getUserAPI();
       setUser(userData);
       return userData;
     } catch (error) {
+      setIsLoading(false);
       console.error("Error fetching user", error);
     }
   };
@@ -228,6 +245,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         isAuth,
         user,
+        loading: isLoading,
         setUser,
         getUser,
         trade,

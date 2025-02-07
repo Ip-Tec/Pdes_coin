@@ -217,7 +217,7 @@ function Profile() {
             )}
           </motion.div>
         )} */}
-        {user?.role !== "user" && (
+        {user?.role !== "USER" && (
           <Link to="/a/dashboard">
             <button className="mt-4 px-4 py-2 bg-white rounded-lg shadow-md text-center w-full md:w-40 text-gray-700 hover:text-primary">
               Admin Dashboard

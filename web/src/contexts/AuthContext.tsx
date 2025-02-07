@@ -8,6 +8,7 @@ import {
 
 export interface AuthContextType {
   isAuth: boolean;
+  loading: boolean;
   user: User | null;
   getUser: () => Promise<User | null | undefined>;
   setUser: (user: User | null) => void;

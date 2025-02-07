@@ -19,6 +19,7 @@ import {
   getTopUsersByBalance,
 } from "../../services/adminAPI";
 import PriceChart from "../../components/PriceChart";
+import { useAuth } from "../../contexts/AuthContext";
 
 // Register chart.js components
 ChartJS.register(
@@ -45,6 +46,7 @@ interface Referral {
 }
 
 const AdminDashboard = () => {
+  const { user } = useAuth();
   const [totalDashboard, setTotalDashboard] = useState<
     DashboardData | undefined
   >(undefined);
@@ -179,49 +181,53 @@ const AdminDashboard = () => {
       <AdminWrapper>
         <div className="w-auto px-4 py-20 mb-6">
           {/* Stats Section */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="bg-white shadow-md rounded-lg p-4 text-center">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Total Transactions
-              </h3>
-              <p className="text-2xl font-bold text-gray-900">
-                {totalDashboard?.total_transactions ?? "Loading..."}
-              </p>
-            </div>
-            <div className="bg-white shadow-md rounded-lg p-4 text-center">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Total Deposits
-              </h3>
-              <p className="text-2xl font-bold text-gray-900">
-                {totalDashboard?.total_deposits ?? "Loading..."}
-              </p>
-            </div>
-            <div className="bg-white shadow-md rounded-lg p-4 text-center">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Total Withdrawals
-              </h3>
-              <p className="text-2xl font-bold text-gray-900">
-                {totalDashboard?.total_withdrawals ?? "Loading..."}
-              </p>
-            </div>
-            <div className="bg-white shadow-md rounded-lg p-4 text-center">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Total Rewards
-              </h3>
-              <p className="text-2xl font-bold text-gray-900">
-                {totalDashboard?.total_rewards.toFixed(2) ?? "Loading..."}
-              </p>
-            </div>{" "}
-            <div className="bg-white shadow-md rounded-lg p-4 text-center">
-              <h3 className="text-lg font-semibold text-gray-700">
-                Total User
-              </h3>
-              <p className="text-2xl font-bold text-gray-900">
-                {totalDashboard?.total_users ?? "Loading..."}
-              </p>
-            </div>
-          </div>
 
+          {user!.role in ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"] ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="bg-white shadow-md rounded-lg p-4 text-center">
+                <h3 className="text-lg font-semibold text-gray-700">
+                  Total Transactions
+                </h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalDashboard?.total_transactions ?? "Loading..."}
+                </p>
+              </div>
+              <div className="bg-white shadow-md rounded-lg p-4 text-center">
+                <h3 className="text-lg font-semibold text-gray-700">
+                  Total Deposits
+                </h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalDashboard?.total_deposits ?? "Loading..."}
+                </p>
+              </div>
+              <div className="bg-white shadow-md rounded-lg p-4 text-center">
+                <h3 className="text-lg font-semibold text-gray-700">
+                  Total Withdrawals
+                </h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalDashboard?.total_withdrawals ?? "Loading..."}
+                </p>
+              </div>
+              <div className="bg-white shadow-md rounded-lg p-4 text-center">
+                <h3 className="text-lg font-semibold text-gray-700">
+                  Total Rewards
+                </h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalDashboard?.total_rewards.toFixed(2) ?? "Loading..."}
+                </p>
+              </div>{" "}
+              <div className="bg-white shadow-md rounded-lg p-4 text-center">
+                <h3 className="text-lg font-semibold text-gray-700">
+                  Total User
+                </h3>
+                <p className="text-2xl font-bold text-gray-900">
+                  {totalDashboard?.total_users ?? "Loading..."}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-3xl w-full m-auto text-black text-center">DashBoard</div>
+          )}
           <div className="flex m-auto justify-center items-center mt-4 w-full p-2">
             <PriceChart />
           </div>
