@@ -1,9 +1,10 @@
 import eventlet
+# Monkey-patch to enable eventlet support
+eventlet.monkey_patch()
+
 from app import create_app, socketio
 from app.controller.scheduler import setup_scheduler
 
-# Monkey-patch to enable eventlet support
-eventlet.monkey_patch()
 
 # Create the Flask app
 app = create_app()

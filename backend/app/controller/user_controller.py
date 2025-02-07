@@ -28,13 +28,15 @@ class UserController:
 
     # Get login user information
 
-    # @token_required
-    def get_user():
+    @token_required
+    def get_user(current_user, *args, **kwargs):
         # Use current_user instead of request.user_id
         # Get User from the database
-        
-        user = User.query.filter_by(id=1).first()
-        
+
+        user = User.query.filter_by(
+            id=current_user.id, email=current_user.email
+        ).first()
+
         if user:
             return jsonify(user.serialize()), 200
         else:
@@ -107,7 +109,7 @@ class UserController:
         confirmPassword = data.get("confirmPassword")
         referral_code = data.get("referralCode", None)
         sticks = 0
-        is_blocked = False,
+        is_blocked = False
         role = data.get("role", "USER")
 
         # Validate email format
@@ -133,7 +135,7 @@ class UserController:
 
         # Check for existing email
         if User.query.filter_by(email=email).first():
-            
+
             return jsonify({"message": "Email is already registered"}), 400
 
         # Check for existing username
@@ -366,14 +368,13 @@ class UserController:
         """
         Get all users that the current user has referred.
         """
-        
+
         if current_user:
             # Query users where referrer_id matches current user's referral_code
             referrals = User.query.filter_by(referrer_id=current_user.id).all()
 
             # Serialize the referrals
             serialized_referrals = [referral.serialize() for referral in referrals]
-            
 
             return jsonify({"referrals": serialized_referrals}), 200
         else:

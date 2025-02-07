@@ -1,6 +1,8 @@
 import os
 import jwt
 import datetime
+from app import db
+from app.models import User
 from dotenv import load_dotenv
 from app.controller import user_controller
 from flask import Blueprint, request, jsonify, current_app
@@ -33,8 +35,18 @@ def register():
 
 # Logout router
 @auth_bp.route("/logout", methods=["POST"])
-def logout():
-    refresh_token = request.json.get("refresh_token")
+@token_required
+def logout(current_user, *args, **kwargs):
+    # Add logout logic here
+    user_id = current_user.id
+    # fine user with the User id
+    user = User.query.filter_by(id=user_id).first()
+    print(f"user::: {user}")
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+    # update user's refresh token to None
+    user.refresh_token = None
+    db.session.commit()
     
     return jsonify({"message": "Logged out successfully!"}), 200
 

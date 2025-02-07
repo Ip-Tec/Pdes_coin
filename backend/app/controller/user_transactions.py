@@ -89,6 +89,7 @@ class UserTransactionsController:
     def get_all_transactions_socket():
         transactions = Transaction.query.order_by(desc(Transaction.created_at)).all()
         transaction_data = [transaction.serialize() for transaction in transactions]
+        # print(f"transaction_data: {transaction_data}")
         return transaction_data
 
     @staticmethod
@@ -191,7 +192,6 @@ class UserTransactionsController:
                 )
                 .scalar()
             )
-
 
             # Check if the admin account has space for this deposit
             if total_deposit + amount > admin_account.max_deposit_amount:

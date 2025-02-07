@@ -9,20 +9,10 @@ import { ToastContainer } from "react-toastify";
 // import { getUser } from "../services/api";
 
 const Dashboard = () => {
-  const { user, setUser, transactions, isAuth } = useAuth();
+  const { user, setUser, isAuth } = useAuth();
   const [isLoading] = useState<boolean>(false);
   const navigate = useNavigate();
 
-  // const fetchUser = async () => {
-    console.log({ isAuth, user });
-  //   try {
-  //     const userData = await getUser();
-  //     setUser(userData);
-  //   } catch (error) {
-  //     console.error("Error fetching user", error);
-  //     throw error;
-  //   }
-  // };
 
   useEffect(() => {
     // fetchUser();
@@ -44,10 +34,6 @@ const Dashboard = () => {
     );
   }
 
-  // const handleLogout = () => {
-  //   navigate("/login");
-  //   setTimeout(() => logout(), 500);
-  // };
 
   if (!user) {
     return (
@@ -62,30 +48,19 @@ const Dashboard = () => {
     <div className="bg-mainBG pb-16 overflow-hidden mb-18 md:mb-2">
       <ToastContainer />
       <div className="md:flex relative md:space-x-6 m-2 overflow-hidden">
-        
         {/* Left Section - Fixed on md screens only */}
         <div className="md:w-1/2 md:sticky md:top-4 md:mt-[15%] lg:static lg:top-auto">
           <BalanceCard {...user} />
           <QuickActions />
         </div>
-  
+
         {/* Right Section - Transactions (Takes full width on small screens) */}
         <div className="md:w-1/2 md:ml-[34%] m-2 h-auto overflow-scroll no-scrollbar">
-          {transactions?.length === 0 ? (
-            <div className="mt-6">
-              <h2 className="text-lg font-bold text-black">Transactions</h2>
-              <p className="text-center text-gray-500">
-                You have not made any transactions yet.
-              </p>
-            </div>
-          ) : (
-            <TransactionList transactions={transactions} />
-          )}
+          <TransactionList />
         </div>
       </div>
     </div>
   );
-  
 };
 
 export default Dashboard;

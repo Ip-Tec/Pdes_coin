@@ -4,7 +4,6 @@ import {
   FaCoins,
   FaExchangeAlt,
   FaChartLine,
-  // FaCog,
   FaToolbox,
   FaSignOutAlt,
   FaBars,
@@ -17,17 +16,41 @@ interface AdminSidebarProps {
 }
 
 const menuItems = [
-  { to: "/a/dashboard", icon: FaChartLine, label: "Dashboard" },
-  { to: "/a/user", icon: FaUser, label: "Manage Users" },
-  { to: "/a/transactions", icon: FaExchangeAlt, label: "Transactions" },
-  { to: "/a/referrals", icon: FaCoins, label: "Referrals" },
-  // { to: "/a/settings", icon: FaCog, label: "Settings" },
-  { to: "/a/utility", icon: FaToolbox, label: "Utility" },
+  {
+    to: "/a/dashboard",
+    icon: FaChartLine,
+    label: "Dashboard",
+    isAllowed: ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"],
+  },
+  {
+    to: "/a/user",
+    icon: FaUser,
+    label: "Manage Users",
+    isAllowed: ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER", "MODERATOR", "SUPPORT"],
+  },
+  {
+    to: "/a/transactions",
+    icon: FaExchangeAlt,
+    label: "Transactions",
+    isAllowed: ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER", "MODERATOR", "SUPPORT"],
+  },
+  {
+    to: "/a/referrals",
+    icon: FaCoins,
+    label: "Referrals",
+    isAllowed: ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER", "MODERATOR", "SUPPORT"],
+  },
+  {
+    to: "/a/utility",
+    icon: FaToolbox,
+    label: "Utility",
+    isAllowed: ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"],
+  },
 ];
 
 const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
+  const { user, logout } = useAuth();
   const location = useLocation();
-  const { logout } = useAuth();
 
   return (
     <div
@@ -45,19 +68,21 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
 
       {/* Menu Items */}
       <ul className="mt-4 space-y-2">
-        {menuItems.map(({ to, icon: Icon, label }) => (
-          <li key={to}>
-            <Link
-              to={to}
-              className={`flex items-center gap-4 px-4 py-2 hover:bg-gray-700 rounded-md ${
-                location.pathname === to ? "bg-gray-700" : ""
-              }`}
-            >
-              <Icon size={20} />
-              {!isCollapsed && <span>{label}</span>}
-            </Link>
-          </li>
-        ))}
+        {menuItems
+          .filter((item) => user && item.isAllowed.includes(user.role))
+          .map(({ to, icon: Icon, label }) => (
+            <li key={to}>
+              <Link
+                to={to}
+                className={`flex items-center gap-4 px-4 py-2 hover:bg-gray-700 rounded-md ${
+                  location.pathname === to ? "bg-gray-700" : ""
+                }`}
+              >
+                <Icon size={20} />
+                {!isCollapsed && <span>{label}</span>}
+              </Link>
+            </li>
+          ))}
 
         {/* Logout */}
         <li>

@@ -12,6 +12,7 @@ from app.services import token_required
 from app.access_level import AccessLevel
 from sqlalchemy import func, desc, case
 from app.controller import user_controller
+from werkzeug.security import generate_password_hash
 from flask import Blueprint, request, jsonify, Response, make_response
 from app.models import (
     Deposit,
@@ -37,7 +38,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # Get dashboard totals
 @admin_bp.route("/get-dashboard-total", methods=["POST"])
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "OWNER"])
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"])
 def get_totals(current_user, *args, **kwargs):
 
     # Total Transactions (all transaction types)
@@ -353,6 +354,43 @@ def add_account(current_user, *args, **kwargs):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+# Admin route to change user password
+@admin_bp.route("/change-password", methods=["POST", "PUT"])
+@token_required
+@AccessLevel.role_required(
+    ["SUPPORT", "MODERATOR", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]
+)
+def change_password(current_user, *args, **kwargs):
+    admin_id = current_user.id
+    data = request.get_json()
+
+    user_id = data.get("id")
+    user_email = data.get("email")
+    user_username = data.get("username")
+    user_password = data.get("password")
+    
+
+    # Validate input
+    if not all([user_id, user_email, user_username, user_password]):
+        return jsonify({"error": "All fields are required"}), 400
+
+    # Find user in DB
+    user = User.query.filter_by(
+        id=user_id, email=user_email, username=user_username
+    ).first()
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Hash new password
+    user.password = generate_password_hash(user_password)
+
+    # Save to DB
+    db.session.commit()
+
+    return jsonify({"message": "User password has been updated successfully"}), 200
 
 
 # Confirm user deposit and add it to Transaction, Balance, and Crypto tables

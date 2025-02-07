@@ -98,30 +98,28 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       newSocket.on("connect", () => {
         console.log("Connected to WebSocket server");
-        if (newSocket.connected) {
-          newSocket.emit("get_transaction_history");
-          newSocket.emit("get_trade_history");
-        }
+        // if (newSocket.connected) {
+        //   newSocket.emit("get_transaction_history");
+        //   newSocket.emit("get_trade_history");
+        // }
       });
 
-      newSocket.on("get_transaction_history", (data) => {
+      // Listen for transaction history events:
+      newSocket.on("transaction_history", (data) => {
         console.log("Transaction History:", data);
         setTransactions(data.transactions || data);
       });
 
-      newSocket.on("get_trade_history", (data) => {
+      // Listen for trade history events:
+      newSocket.on("trade_history", (data) => {
         console.log("Trade History:", data);
         setTrade(data.trade_history || data);
       });
 
-      newSocket.on("get_current_price", (data: TradePrice) => {
+      // Listen for current price events:
+      newSocket.on("trade_price", (data: TradePrice) => {
         console.log("Trade Price:", data);
         setTradePrice(data);
-      });
-
-      newSocket.on("transaction_history", (data) => {
-        console.log("Real-time Transaction Update:", data);
-        setTransactions(data.transactions || data);
       });
 
       newSocket.on("error", (error) => {
@@ -140,7 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const existingToken = sessionStorage.getItem("authToken");
       if (existingToken && !isTokenExpired(existingToken)) {
         toast.info("User is already logged in.");
-        return;
+        
       }
 
       const {
@@ -171,9 +169,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       const newSocket = createSocket(access_token);
       setSocket(newSocket);
-      newSocket.emit("get_transaction_history");
-      newSocket.emit("get_trade_history");
       newSocket.emit("get_current_price");
+      newSocket.emit("get_trade_history");
+      newSocket.emit("get_transaction_history");
     } catch (error) {
       setIsLoading(false);
       toast.error("Login failed");
