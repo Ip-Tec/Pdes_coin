@@ -56,9 +56,9 @@ def register_socketio_events(socketio):
     def handle_connect(auth):
         # The connect handler now accepts the auth parameter.
         # Optionally, you could use this auth data for additional logic.
-        handle_get_current_price()
-        handle_get_transaction_history()
-        emit("response", {"message": "Welcome to the server!"})
+        current_price = handle_get_current_price()
+        trade_history = handle_get_transaction_history()
+        emit("response", {"message": "Welcome to the server!", "auth": auth, "current_price": current_price, "trade_history": trade_history})
     
     @socketio.on("disconnect")
     def handle_disconnect():

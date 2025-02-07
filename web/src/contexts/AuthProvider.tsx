@@ -92,17 +92,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
+    // Only create a new socket if one doesn't exist.
     if (!socket) {
       const newSocket = createSocket(token);
       setSocket(newSocket);
 
       newSocket.on("connect", () => {
         console.log("Connected to WebSocket server");
-        // if (newSocket.connected) {
-        //   newSocket.emit("get_transaction_history");
-        //   newSocket.emit("get_trade_history");
-        // }
+        newSocket.emit("get_transaction_history");
+        newSocket.emit("get_trade_history");
+        newSocket.emit("get_current_price");
       });
+      
 
       // Listen for transaction history events:
       newSocket.on("transaction_history", (data) => {
@@ -126,11 +127,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error("WebSocket Error:", error);
       });
 
+      // Cleanup on unmount:
       return () => {
         newSocket.disconnect();
       };
     }
-  }, [isAuth, socket]);
+  }, [isAuth]); // Notice: Only depends on isAuth (and/or token from sessionStorage)
 
   const login = async (email: string, password: string) => {
     try {
@@ -138,7 +140,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const existingToken = sessionStorage.getItem("authToken");
       if (existingToken && !isTokenExpired(existingToken)) {
         toast.info("User is already logged in.");
-        
       }
 
       const {

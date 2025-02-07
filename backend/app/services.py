@@ -19,6 +19,9 @@ def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = request.headers.get("Authorization")
+        # Bypass token checking for OPTIONS requests (preflight)
+        if request.method == "OPTIONS":
+            return jsonify({}), 200
         # print({"services.py NO 14 :====> Authorization Header": token})
 
         if not token:

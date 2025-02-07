@@ -17,8 +17,8 @@ def handle_connect():
 
 # Get Login user info
 @users_bp.route("/users_info", methods=["GET", "OPTIONS"])
-# @token_required
-def get_users():
+@token_required
+def get_users(current_user, *args, **kwargs):
     get_users = UserController.get_user()
     return get_users
 
