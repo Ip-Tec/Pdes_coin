@@ -30,12 +30,14 @@ import AdminTransaction from "./pages/Admin/AdminTransaction";
 import AdminUser from "./pages/Admin/AdminUser";
 import Utility from "./pages/Admin/Utility";
 import Referrals from "./pages/Admin/Referrals";
+import NotFound from "./pages/NotFound";
 
 const App: React.FC = () => {
   const DisplayNavbar: React.FC = () => {
     const location = useLocation();
     const hideNavbarPaths = [
       "/",
+      "*",
       "/login",
       "/about",
       "/support",
@@ -77,11 +79,20 @@ const App: React.FC = () => {
             <Route path="/support" element={<SupportPage />} />
             <Route path="/help-center" element={<HelpCenterPage />} />
             <Route path="/referral/re/:referralCode" element={<Register />} />
+          
             <Route
               path="/deposit"
               element={
                 <ProtectedRoute
-                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
+                  requiredRoles={[
+                    "USER",
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
                 >
                   <Deposit />
                 </ProtectedRoute>
@@ -91,7 +102,15 @@ const App: React.FC = () => {
               path="/trade"
               element={
                 <ProtectedRoute
-                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
+                  requiredRoles={[
+                    "USER",
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
                 >
                   <BuySellCoin />
                 </ProtectedRoute>
@@ -101,7 +120,15 @@ const App: React.FC = () => {
               path="/dashboard"
               element={
                 <ProtectedRoute
-                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
+                  requiredRoles={[
+                    "USER",
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
                 >
                   <Dashboard />
                 </ProtectedRoute>
@@ -111,7 +138,15 @@ const App: React.FC = () => {
               path="/activity"
               element={
                 <ProtectedRoute
-                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
+                  requiredRoles={[
+                    "USER",
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
                 >
                   <Activity />
                 </ProtectedRoute>
@@ -121,7 +156,15 @@ const App: React.FC = () => {
               path="/withdraw"
               element={
                 <ProtectedRoute
-                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
+                  requiredRoles={[
+                    "USER",
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
                 >
                   <Withdraw />
                 </ProtectedRoute>
@@ -131,7 +174,15 @@ const App: React.FC = () => {
               path="/profile"
               element={
                 <ProtectedRoute
-                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
+                  requiredRoles={[
+                    "USER",
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
                 >
                   <Profile />
                 </ProtectedRoute>
@@ -141,7 +192,15 @@ const App: React.FC = () => {
               path="/about"
               element={
                 <ProtectedRoute
-                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
+                  requiredRoles={[
+                    "USER",
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
                 >
                   <AboutPage />
                 </ProtectedRoute>
@@ -151,7 +210,15 @@ const App: React.FC = () => {
               path="/wallet"
               element={
                 <ProtectedRoute
-                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
+                  requiredRoles={[
+                    "USER",
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
                 >
                   <WalletPage />
                 </ProtectedRoute>
@@ -161,7 +228,15 @@ const App: React.FC = () => {
               path="/support"
               element={
                 <ProtectedRoute
-                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
+                  requiredRoles={[
+                    "USER",
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
                 >
                   <SupportPage />
                 </ProtectedRoute>
@@ -171,7 +246,15 @@ const App: React.FC = () => {
               path="/help-center"
               element={
                 <ProtectedRoute
-                  requiredRoles={["USER", "MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
+                  requiredRoles={[
+                    "USER",
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
                 >
                   <HelpCenterPage />
                 </ProtectedRoute>
@@ -182,7 +265,14 @@ const App: React.FC = () => {
               path="/a/dashboard"
               element={
                 <ProtectedRoute
-                  requiredRoles={["MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
+                  requiredRoles={[
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
                 >
                   <AdminDashboard />
                 </ProtectedRoute>
@@ -192,7 +282,14 @@ const App: React.FC = () => {
               path="/a/USER"
               element={
                 <ProtectedRoute
-                  requiredRoles={["MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
+                  requiredRoles={[
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
                 >
                   <AdminUser />
                 </ProtectedRoute>
@@ -202,7 +299,14 @@ const App: React.FC = () => {
               path="/a/transactions"
               element={
                 <ProtectedRoute
-                  requiredRoles={["MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}
+                  requiredRoles={[
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
                 >
                   <AdminTransaction />
                 </ProtectedRoute>
@@ -211,19 +315,50 @@ const App: React.FC = () => {
             <Route
               path="/a/utility"
               element={
-                <ProtectedRoute requiredRoles={["MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}>
+                <ProtectedRoute
+                  requiredRoles={[
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
+                >
                   <Utility />
                 </ProtectedRoute>
               }
-            /> <Route
+            />{" "}
+            <Route
               path="/a/referrals"
               element={
-                <ProtectedRoute requiredRoles={["MODERATOR", "SUPPORT", "admin", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}>
+                <ProtectedRoute
+                  requiredRoles={[
+                    "MODERATOR",
+                    "SUPPORT",
+                    "admin",
+                    "SUPER_ADMIN",
+                    "DEVELOPER",
+                    "OWNER",
+                  ]}
+                >
                   <Referrals />
                 </ProtectedRoute>
               }
             />
           </Routes>
+          <motion.div
+              key={location.pathname}
+              initial="initial"
+              animate="animate"
+              exit="exit"
+              variants={pageVariants}
+            >
+              <Routes location={location}>
+                {/* Existing routes */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </motion.div>
         </motion.div>
       </AnimatePresence>
     );
