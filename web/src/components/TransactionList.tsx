@@ -10,7 +10,6 @@ const TransactionList = () => {
   // Check if transactions is an empty array or not passed at all
   // console.log({ transactions });
   const { transactions } = useAuth();
-  console.log(transactions);
 
   if (!transactions || transactions.length <= 0) {
     return (

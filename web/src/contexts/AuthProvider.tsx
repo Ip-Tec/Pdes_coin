@@ -107,7 +107,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Listen for transaction history events:
       newSocket.on("transaction_history", (data) => {
-        console.log("Transaction History:", data);
         setTransactions(data.transactions || data);
       });
 
@@ -119,7 +118,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Listen for current price events:
       newSocket.on("trade_price", (data: TradePrice) => {
-        console.log("Trade Price:", data);
         setTradePrice(data);
       });
 

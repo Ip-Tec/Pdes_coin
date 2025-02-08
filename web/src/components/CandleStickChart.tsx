@@ -1,12 +1,19 @@
-import { useEffect, useState } from 'react';
-import { Chart as ChartJS, CategoryScale, LinearScale, Title, Tooltip, Legend } from 'chart.js';
-import { Line } from 'react-chartjs-2';
-import { getTradeHistory } from '../services/api';
-import { PriceData } from '../utils/type';
+import { useEffect, useState } from "react";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
+import { Line } from "react-chartjs-2";
+import { getTradeHistory } from "../services/api";
+import { PriceData } from "../utils/type";
 import {
   CandlestickController,
   CandlestickElement,
-} from 'chartjs-chart-financial';
+} from "chartjs-chart-financial";
 
 // Register required components with ChartJS
 ChartJS.register(
@@ -22,21 +29,21 @@ ChartJS.register(
 const CandleStickChart = () => {
   const [data, setData] = useState<PriceData[]>([
     {
-      time: '2023-01-01',
+      time: "2023-01-01",
       buy: 10,
       sell: 15,
     },
     {
-      time: '2023-01-02',
+      time: "2023-01-02",
       buy: 12,
       sell: 20,
     },
     {
-      time: '2023-01-03',
+      time: "2023-01-03",
       buy: 8,
       sell: 18,
     },
-    // Add more data entries
+    // Add more data entries if needed
   ]);
 
   useEffect(() => {
@@ -45,10 +52,9 @@ const CandleStickChart = () => {
         const response = await getTradeHistory();
         console.log({ response });
         console.log(response.price_trend);
-        
-        await setData(response.price_trend);
+        setData(response.price_trend);
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error("Error fetching data:", error);
       }
     };
 
@@ -57,19 +63,20 @@ const CandleStickChart = () => {
 
   // Format the data for the candlestick chart
   const chartData = {
-    labels: data.map((entry) => entry.time),
+    // When using a timeseries scale, labels are typically provided via the data points
+    // so you can omit the separate labels array.
     datasets: [
       {
-        label: 'Candlestick Chart',
+        label: "Candlestick Chart",
         data: data.map((entry) => ({
-          x: entry.time,
-          o: entry.buy,  // Open price
-          h: Math.max(entry.buy, entry.sell),  // High price (max of buy and sell)
-          l: Math.min(entry.buy, entry.sell),  // Low price (min of buy and sell)
-          c: entry.sell,  // Close price
+          x: entry.time, // Must be in a recognized date format (ISO string or Date object)
+          o: entry.buy, // Open price
+          h: Math.max(entry.buy, entry.sell), // High price
+          l: Math.min(entry.buy, entry.sell), // Low price
+          c: entry.sell, // Close price
         })),
-        borderColor: 'green',
-        backgroundColor: 'rgba(0, 255, 0, 0.2)',
+        borderColor: "green",
+        backgroundColor: "rgba(0, 255, 0, 0.2)",
         fill: false,
         borderWidth: 1,
       },
@@ -81,7 +88,7 @@ const CandleStickChart = () => {
     plugins: {
       title: {
         display: true,
-        text: 'Candlestick Chart',
+        text: "Candlestick Chart",
       },
       tooltip: {
         callbacks: {
@@ -93,22 +100,24 @@ const CandleStickChart = () => {
     },
     scales: {
       x: {
-        type: 'category', // Corrected to match Chart.js expected scale type
+        type: "timeseries" as const,
+        time: {
+          unit: "day" as const,
+        },
         title: {
           display: true,
-          text: 'Date', // Label for the x-axis
+          text: "Date",
         },
       },
       y: {
-        type: 'linear', // Ensure this type is specified
+        type: "linear" as const,
         title: {
           display: true,
-          text: 'Price',
+          text: "Price",
         },
       },
     },
   };
-  
 
   return <Line data={chartData} options={options} />;
 };

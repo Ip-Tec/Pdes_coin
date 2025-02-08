@@ -142,9 +142,6 @@ export const loginUser = async (loginData: {
 export const getUser = async (): Promise<User | null> => {
   try {
     const response = await API.get<User>(apiUrl("/users/users_info"));
-
-    console.log(response);
-
     return response.data;
   } catch (error: unknown) {
     if (error instanceof Error) {
@@ -181,7 +178,6 @@ export const getTransactionHistory = async () => {
 export const getTradeHistory = async () => {
   try {
     const response = await API.get(apiUrl("/transactions/trade-history"));
-    console.log(response.data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
