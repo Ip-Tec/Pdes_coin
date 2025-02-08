@@ -26,14 +26,20 @@ function HelpCenterPage() {
   ];
 
   const guides = [
-    { title: "How to set up your wallet", link: "/guides/setup-wallet" },
+    {
+      title: "How to set up your wallet",
+      link: "/support",
+      // link: "/guides/setup-wallet",
+    },
     {
       title: "Understanding cryptocurrency basics",
-      link: "/guides/crypto-basics",
+      link: "/support",
+      // link: "/guides/crypto-basics",
     },
     {
       title: "Troubleshooting transaction issues",
-      link: "/guides/transaction-issues",
+      link: "/support",
+      // link: "/guides/transaction-issues",
     },
   ];
 

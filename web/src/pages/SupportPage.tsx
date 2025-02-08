@@ -86,16 +86,17 @@ function SupportPage() {
             <FaPhone size={32} className="text-primary mx-auto mb-2" />
             <h3 className="font-semibold text-lg">Phone</h3>
             <p className="text-gray-600">+1-234-567-890</p>
+            <p className="text-gray-600">+234-903-379-8890</p>
           </div>
           <div className="text-center">
             <FaEnvelope size={32} className="text-primary mx-auto mb-2" />
             <h3 className="font-semibold text-lg">Email</h3>
-            <p className="text-gray-600">support@pdescoin.com</p>
+            <p className="text-gray-600">support@pedexcoin.site</p>
           </div>
           <div className="text-center">
             <FaMapMarkerAlt size={32} className="text-primary mx-auto mb-2" />
             <h3 className="font-semibold text-lg">Address</h3>
-            <p className="text-gray-600">123 PDES St, Crypto City</p>
+            <p className="text-gray-600">123 Pettson Cassia St,  California, USA</p>
           </div>
         </div>
 
