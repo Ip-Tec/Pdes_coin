@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies and build
         run: |
-          cd web
+          cd frontend
           npm install
           npm run build
 
