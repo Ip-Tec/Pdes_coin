@@ -796,12 +796,17 @@ def handle_sell_pdes(user_id, amount_in_usd, pdes_sell_price):
                 user.referral_reward = 0.0
                 db.session.commit()
 
-            return jsonify({
-                "message": "Sale successful",
-                "new_balance": user_balance.balance,
-                "new_crypto_amount": crypto.amount,
-                "user": user.serialize(),
-            }), 200
+            return (
+                jsonify(
+                    {
+                        "message": "Sale successful",
+                        "new_balance": user_balance.balance,
+                        "new_crypto_amount": crypto.amount,
+                        "user": user.serialize(),
+                    }
+                ),
+                200,
+            )
         else:
             return jsonify({"message": "Insufficient PDES to sell"}), 400
     else:
