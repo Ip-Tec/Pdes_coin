@@ -35,8 +35,17 @@ jobs:
             set -e
             cd /var/www/myapp/backend/ || exit 1
             git pull origin main
+            
+            # Install python3-venv if missing
+            if ! dpkg -l | grep -qw python3-venv; then
+              sudo apt update && sudo apt install -y python3-venv
+            fi
+
             python3 -m venv venv
             source venv/bin/activate
             pip install --upgrade pip
             pip install -r requirements.txt
+
+            # Restart backend service without sudo password prompt
+            echo "${{ secrets.SSH_USER }} ALL=(ALL) NOPASSWD: /bin/systemctl restart backend" | sudo tee /etc/sudoers.d/restart-backend
             sudo systemctl restart backend
