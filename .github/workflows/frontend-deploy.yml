@@ -31,7 +31,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
-            cd /var/www/frontend  # Change to your server path
+            cd /var/www/myapp/frontend  # Change to your server path
             git pull origin main
             npm install
             npm run build
