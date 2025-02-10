@@ -25,6 +25,9 @@ ChartJS.register(
 interface LiveChartProps {
   action?: "buy" | "sell"; // Determines which dataset to display
 }
+interface TooltipItem {
+  label: string;
+}
 
 const LiveChart: React.FC<LiveChartProps> = ({ action = "buy" }) => {
   // Get the transactions data from AuthContext (which is updated via your WebSocket)
@@ -87,7 +90,7 @@ const LiveChart: React.FC<LiveChartProps> = ({ action = "buy" }) => {
       },
       tooltip: {
         callbacks: {
-          title: (tooltipItems: any[]) => tooltipItems[0].label,
+          title: (tooltipItems: TooltipItem[]) => tooltipItems[0].label,
         },
       },
     },
