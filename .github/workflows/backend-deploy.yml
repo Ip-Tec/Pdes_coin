@@ -46,7 +46,7 @@ jobs:
             python3 -m venv venv
             source venv/bin/activate
             pip install --upgrade pip
-            pip install -r requirements.txt
+            pip install --no-cache-dir -r requirements.txt
 
             # Restart backend service without sudo password prompt
             echo "${{ secrets.SSH_USER }} ALL=(ALL) NOPASSWD: /bin/systemctl restart backend" | sudo tee /etc/sudoers.d/restart-backend
