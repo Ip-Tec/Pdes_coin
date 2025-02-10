@@ -38,9 +38,11 @@ jobs:
             
             # Install python3-venv if missing
             if ! dpkg -l | grep -qw python3-venv; then
-              sudo apt update && sudo apt install -y python3-venv
+              echo "python3-venv is missing. Install it manually on the server."
+              exit 1
             fi
 
+            # Install dependencies
             python3 -m venv venv
             source venv/bin/activate
             pip install --upgrade pip
