@@ -14,4 +14,4 @@ if __name__ == "__main__":
     setup_scheduler(app)
 
     # Start the socketio server with eventlet
-    socketio.run(app, debug=True, host="0.0.0.0", port=5000)
+    socketio.run(app, debug=True, host="0.0.0.0", port=8000)
