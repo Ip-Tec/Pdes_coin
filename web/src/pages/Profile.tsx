@@ -77,7 +77,7 @@ function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-mainBG pb-16 mb-28">
+    <div className="min-h-screen bg-mainBG text-gray-600 pb-16 mb-28">
       <ToastContainer />
       <div className="container mx-auto px-4">
         {/* User Info Section */}
@@ -217,13 +217,15 @@ function Profile() {
             )}
           </motion.div>
         )} */}
-        {user?.role !== "USER" && (
+        {["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"].includes(
+          user?.role.toUpperCase() || ""
+        ) ? (
           <Link to="/a/dashboard">
             <button className="mt-4 px-4 py-2 bg-white rounded-lg shadow-md text-center w-full md:w-40 text-gray-700 hover:text-primary">
               Admin Dashboard
             </button>
           </Link>
-        )}
+        ): (`ADMIN STATE ::: ${user?.role}`)}
       </div>
     </div>
   );

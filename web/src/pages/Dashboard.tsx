@@ -9,21 +9,18 @@ import { ToastContainer } from "react-toastify";
 // import { getUser } from "../services/api";
 
 const Dashboard = () => {
-  const { user, setUser, isAuth } = useAuth();
-  const [isLoading] = useState<boolean>(false);
   const navigate = useNavigate();
+  const { user, loading, isAuth } = useAuth();
+  const [isLoading] = useState<boolean>(false);
 
 
   useEffect(() => {
-    // fetchUser();
-
-    if (!isAuth) {
+    if (!isAuth && !loading) {
       navigate("/login");
     }
-    if (!user) {
-      navigate("/login");
-    }
-  }, [isAuth, navigate, setUser, user]);
+  }, [isAuth, loading, navigate]);
+  
+  
 
   if (isLoading) {
     return (

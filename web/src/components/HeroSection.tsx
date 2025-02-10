@@ -1,7 +1,9 @@
 import { Link } from "react-router-dom";
 import phone from "../assets/phone.png";
+import { useAuth } from "../contexts/AuthContext";
 
 const HeroSection = () => {
+  const { isAuth } = useAuth();
   return (
     <section className=" bg-mainBG relative flex items-center justify-center bg-gradient-to-r from-bgColor to-secondary h-screen text-white text-center px-4">
       {/* Background Decorative Waves */}
@@ -43,6 +45,14 @@ const HeroSection = () => {
           >
             Login
           </Link>
+          {isAuth && (
+            <Link
+              to="/dashboard"
+              className="bg-bgColor hover:bg-secondary-dark text-xl text-white py-3 px-8 rounded-lg shadow-lg"
+            >
+              DashBoard
+            </Link>
+          )}
         </div>
       </div>
 

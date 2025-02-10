@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Listen for trade history events:
       newSocket.on("trade_history", (data) => {
-        console.log("Trade History:", data);
+        // console.log("Trade History:", data);
         setTrade(data.trade_history || data);
       });
 
@@ -134,11 +134,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      setIsLoading(true);
       const existingToken = sessionStorage.getItem("authToken");
       if (existingToken && !isTokenExpired(existingToken)) {
         toast.info("User is already logged in.");
       }
+      setIsLoading(true);
 
       const {
         user: userData,
@@ -154,6 +154,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.setItem("authToken", access_token);
       sessionStorage.setItem("refreshToken", refresh_token);
       setIsAuth(true);
+      setIsLoading(false)
 
       if (userData.is_blocked || userData.sticks >= 2) {
         toast.error("Your account is under review or blocked.");
@@ -219,16 +220,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getUser = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const userData = await getUserAPI();
       setUser(userData);
       return userData;
     } catch (error) {
-      setIsLoading(false);
       console.error("Error fetching user", error);
+    } finally {
+      setIsLoading(false);
     }
   };
+  
 
   useEffect(() => {
     const token = sessionStorage.getItem("authToken");

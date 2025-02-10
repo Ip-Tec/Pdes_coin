@@ -18,6 +18,7 @@ import {
   getTransactionTrends,
   getTopUsersByBalance,
 } from "../../services/adminAPI";
+import { useNavigate } from "react-router-dom";
 import PriceChart from "../../components/PriceChart";
 import { useAuth } from "../../contexts/AuthContext";
 
@@ -46,7 +47,8 @@ interface Referral {
 }
 
 const AdminDashboard = () => {
-  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { user, isAuth } = useAuth();
   const [totalDashboard, setTotalDashboard] = useState<
     DashboardData | undefined
   >(undefined);
@@ -66,6 +68,12 @@ const AdminDashboard = () => {
     labels: [],
     datasets: [],
   });
+
+  useEffect(() => {
+    if (!isAuth) {
+      navigate("/login");
+    }
+  }, [isAuth, navigate]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -226,7 +234,9 @@ const AdminDashboard = () => {
               </div>
             </div>
           ) : (
-            <div className="text-3xl w-full m-auto text-black text-center">DashBoard</div>
+            <div className="text-3xl w-full m-auto text-black text-center">
+              DashBoard
+            </div>
           )}
           <div className="flex m-auto justify-center items-center mt-4 w-full p-2">
             <PriceChart />

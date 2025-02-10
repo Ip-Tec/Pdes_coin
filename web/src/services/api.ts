@@ -305,6 +305,7 @@ export const buySellPdes = async (
       price,
     });
     console.log({ response });
+    toast.info(response.data.message);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {

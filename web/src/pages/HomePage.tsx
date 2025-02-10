@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { useNavigate } from "react-router-dom";
+// import { useAuth } from "../contexts/AuthContext";
+// import { useNavigate } from "react-router-dom";
 import AboutContent from "../components/AboutContent";
 import ParallaxEffect from "../components/ParallaxEffect";
 import { FaUser, FaGraduationCap, FaMoneyBillWave } from "react-icons/fa";
@@ -9,14 +9,14 @@ import HeroSection from "../components/HeroSection";
 import Header from "../components/Header";
 
 const HomePage: React.FC = () => {
-  const { isAuth } = useAuth();
+  // const { isAuth } = useAuth();
   const [pdes_left, setPdesLeft] = useState(7900000000);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuth) {
-      navigate("/dashboard");
-    }
+    // if (isAuth) {
+    //   navigate("/dashboard");
+    // }
     const interval = setInterval(() => {
       setPdesLeft((prev) => (prev - 112) % 40000000);
     }, 1000);

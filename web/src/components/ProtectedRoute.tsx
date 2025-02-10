@@ -1,6 +1,7 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import Loading from "../components/Loading";
 
 interface ProtectedRouteProps {
   children: React.ReactElement;
@@ -11,15 +12,23 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   children,
   requiredRoles = [],
 }) => {
-  const { user } = useAuth(); // Get the current user from context
+  const { user, loading } = useAuth(); // Assume we now provide a loading state
+
+  if (loading) {
+    return <Loading isLoading={loading} />;
+  }
 
   if (!user) {
     // If no user is logged in, redirect to the login page
     return <Navigate to="/login" />;
   }
 
-  if (requiredRoles.length > 0 && !requiredRoles.includes(user.role)) {
-    // If the user's role is not allowed, redirect to the home page
+  if (
+    requiredRoles.length > 0 &&
+    !requiredRoles.some(
+      (role) => role.toLowerCase() === user.role.toLowerCase()
+    )
+  ) {
     return <Navigate to="/" />;
   }
 

@@ -1,5 +1,6 @@
 from app import db
 from datetime import datetime
+from flask import request, jsonify
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.types import Enum as SqEnum
 from app.enumValue import TicketPriority, TicketStatus
@@ -658,7 +659,10 @@ def handle_buy_pdes(user_id, amount, pdes_buy_price):
         crypto = Crypto.query.filter_by(user_id=user.id, crypto_name="Pdes").first()
         if not crypto:
             crypto = Crypto(
-                user_id=user.id, crypto_name="Pdes", amount=0.0, account_address=user.username
+                user_id=user.id,
+                crypto_name="Pdes",
+                amount=0.0,
+                account_address=user.username,
             )
             db.session.add(crypto)
         crypto.amount += total_cost  # Ensure the addition here is correct
@@ -700,14 +704,16 @@ def handle_buy_pdes(user_id, amount, pdes_buy_price):
         db.session.add(coin_price_history)
         db.session.commit()
 
-        return {
-            "message": "Purchase successful",
-            "new_balance": user_balance.balance,
-            "new_crypto_amount": crypto.amount,
-            "user": user.serialize(),
-        }
+        return (
+            {
+                "message": "Purchase successful",
+                "new_balance": user_balance.balance,
+                "new_crypto_amount": crypto.amount,
+                "user": user.serialize(),
+            }
+        ), 200
     else:
-        return {"message": "Insufficient funds to buy Pdes"}, 400
+        return jsonify({"message": "Insufficient funds to buy Pdes"}), 400
 
 
 # Function to handle Sell Pdes
@@ -790,18 +796,23 @@ def handle_sell_pdes(user_id, amount_in_usd, pdes_sell_price):
                 user.referral_reward = 0.0
                 db.session.commit()
 
-            return {
+            return jsonify({
                 "message": "Sale successful",
                 "new_balance": user_balance.balance,
                 "new_crypto_amount": crypto.amount,
                 "user": user.serialize(),
-            }
+            }), 200
         else:
-            return {"message": "Insufficient PDES to sell"}
+            return jsonify({"message": "Insufficient PDES to sell"}), 400
     else:
-        return {
-            "message": "Invalid sell request: insufficient balance or price is zero"
-        }
+        return (
+            jsonify(
+                {
+                    "message": "Invalid sell request: insufficient balance or price is zero"
+                }
+            ),
+            400,
+        )
 
 
 def get_pdes_trade_price():
