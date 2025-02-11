@@ -58,7 +58,6 @@ def create_app():
             500,
         )
 
-
     # CORS configuration
     CORS(
         app,
@@ -67,13 +66,14 @@ def create_app():
             r"/*": {
                 "origins": [
                     "https://vercel.app",
+                    "http://localhost:5000",
                     "http://localhost:5173",
+                    "http://102.210.146.148",
                     "https://pdes-coin.vercel.app",
                 ]
             }
         },
     )
-
 
     # Load configuration
     app.config.from_object("app.config.Config")
@@ -107,7 +107,6 @@ def create_app():
         utility,
         support,
     )
-
 
     app.register_blueprint(auth.auth_bp, url_prefix="/api/auth")
     app.register_blueprint(admin.admin_bp, url_prefix="/api/admin")
