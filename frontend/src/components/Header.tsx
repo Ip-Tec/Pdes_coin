@@ -9,7 +9,7 @@ const Header: React.FC = () => {
           <img src={logo} alt="PDES Logo" className="h-8" />
           <span className="hidden md:block md:text-xl font-bold">PDES</span>
         </a>
-        <ul className="flex space-x-6 text-white text-xl">
+        <ul className="flex space-x-6 text-white text-base md:text-xl">
           <li>
             <a href="#about" className="hover:bg-bgColor md:p-2">
               About
