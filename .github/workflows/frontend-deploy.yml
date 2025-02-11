@@ -28,18 +28,19 @@ jobs:
         run: |
           rsync -avz --delete frontend/dist/ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/var/www/myapp/frontend/dist
 
-      - name: Restart PM2
-        uses: appleboy/ssh-action@v0.1.10
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.DEPLOY_KEY }}
-          script: |
-            cd /var/www/myapp/frontend
-            rm -rf node_modules package-lock.json
-            npm i --save-dev @types/react @types/react-dom
-            npm i react react-dom
-            npm ci
-            pm2 delete my-react-app || true
-            pm2 start "serve -s build -l 3000" --name my-react-app
-            pm2 save
+          - name: Restart PM2
+          uses: appleboy/ssh-action@v0.1.10
+          with:
+            host: ${{ secrets.SERVER_IP }}
+            username: ${{ secrets.SSH_USER }}
+            key: ${{ secrets.DEPLOY_KEY }}
+            script: |
+              cd /var/www/myapp/frontend
+              npm ci --omit=dev  # Install only production dependencies
+              pm2 delete my-react-app || true
+              pm2 start "serve -s build -l 3000" --name my-react-app
+              pm2 save
+
+              # Restart frontend service without sudo password prompt
+              # echo "${{ secrets.SSH_USER }} ALL=(ALL) NOPASSWD: /bin/systemctl restart frontend" | sudo tee /etc/sudoers.d/restart-frontend
+              # sudo systemctl restart frontend
