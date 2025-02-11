@@ -1,6 +1,7 @@
 {
-  "name": "PDES coin",
-  "short_name": "PDES",
+  "name": "PEDEX coin",
+  "short_name": "PEDEX",
+  "start_url": "/login",
   "icons": [
     {
       "src": "./android-chrome-192x192.png",
@@ -15,5 +16,7 @@
   ],
   "theme_color": "#ffffff",
   "background_color": "#ffffff",
-  "display": "standalone"
+  "display": "standalone",
+  "scope": "/",
+  "description": "Trade and manage your cryptocurrency with PEDEX Coin."
 }
