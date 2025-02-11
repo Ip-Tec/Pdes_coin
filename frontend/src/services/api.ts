@@ -12,15 +12,16 @@ import { toast } from "react-toastify";
 // Create API instance
 const prod = import.meta.env.PROD;
 export const url = prod
-  ? import.meta.env.REACT_APP_API_URL
+  ? "http://102.210.146.148/api/"
+  // ? import.meta.env.REACT_APP_API_URL
   : import.meta.env.VITE_API_URL;
 
 export const websocketUrl = prod
-  ? import.meta.env.REACT_APP_API_WEBSOCKET_URL
+  ? "ws://102.210.146.148/"
   : import.meta.env.VITE_API_WEBSOCKET_URL;
 
 export const feURL = prod
-  ? import.meta.env.VITE_EF_URL
+  ? "http://102.210.146.148/"
   : import.meta.env.VITE_EF_URL_LOCAL;
 // Create API instance
 const API = axios.create({
