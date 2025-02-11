@@ -51,23 +51,12 @@ def create_app():
             404,
         )
 
-    # @app.after_request
-    # @app.before_request
-    # def add_cors_headers(response):
-    #     allowed_origins = [
-    #         "https://vercel.app",
-    #         "http://localhost:5173",
-    #         "https://pdes-coin.vercel.app",
-    #     ]
-    #     origin = request.headers.get("Origin")
-
-    #     if origin in allowed_origins:
-    #         response.headers["Access-Control-Allow-Origin"] = "Origin"
-    #         response.headers["Access-Control-Allow-Credentials"] = "true"
-    #         response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE"
-    #         response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization"
-
-    #     return response
+    @app.errorhandler(500)
+    def internal_server_error(e):
+        return (
+            jsonify({"error": "Internal Server Error", "message": str(e)}),
+            500,
+        )
 
 
     # CORS configuration
