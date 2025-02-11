@@ -9,7 +9,7 @@ function AboutContent() {
   return (
     <section
       id="about"
-      className="relative py-16 px-6 bg-mainBG text-center h-screen overflow-hidden"
+      className="relative py-16 px-6 bg-mainBG text-center h-auto overflow-hidden"
     >
       {/* Particle Background */}
       {/* <Particles
