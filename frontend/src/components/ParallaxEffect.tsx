@@ -15,7 +15,7 @@ const ParallaxEffect: React.FC = () => {
           <h1 className="text-4xl font-bold text-white text-center">
             The Future of Cryptocurrency
           </h1>
-          <img src={logo} alt="Pdes" className="w-60 absolute bottom-[20%] md:bottom-[5%]" />
+          <img src={logo} alt="Pdes" className="w-60 absolute bottom-[15%] md:bottom-[5%]" />
         </div>
       </section>
 
