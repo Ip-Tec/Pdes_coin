@@ -36,7 +36,9 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             cd /var/www/myapp/frontend
-            rm -rf package-lock.json
+            rm -rf node_modules package-lock.json
+            npm i --save-dev @types/react @types/react-dom
+            npm i react react-dom
             npm ci
             pm2 delete my-react-app || true
             pm2 start "serve -s build -l 3000" --name my-react-app
