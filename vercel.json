@@ -1,0 +1,15 @@
+{
+    "rewrites": [
+      {
+        "source": "/api/:path*",
+        "destination": "http://102.210.146.148/api/:path*"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/sw.js",
+        "headers": [{ "key": "Content-Type", "value": "application/javascript" }]
+      }
+    ]
+  }
+  
