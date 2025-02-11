@@ -26,7 +26,7 @@ from app.models import (
     Balance,
     AccountDetail,
     Utility,
-)
+) 
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 load_dotenv()
@@ -283,7 +283,7 @@ def search_user(current_user):
 # Add a deposit account
 @admin_bp.route("/add-account", methods=["POST"])
 @token_required
-@AccessLevel.role_required(["ADMIN", "DEVELOPER", "SUPER_ADMIN"])
+@AccessLevel.role_required(["ADMIN", "DEVELOPER", "SUPER_ADMIN", "OWNER"])
 def add_account(current_user, *args, **kwargs):
     """
     Admin route to add a deposit account.
