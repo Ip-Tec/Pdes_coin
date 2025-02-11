@@ -27,7 +27,7 @@ jobs:
 
       - name: Deploy build files to server
         run: |
-          rsync -avz -e "ssh -o StrictHostKeyChecking=no" --delete frontend/dist/ deploy@102.210.146.148:/var/www/myapp/frontend/dist
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no" --delete frontend/dist/ ${{secrets.SSH_USER}}@${{secrets.SERVER_IP}}:/var/www/myapp/frontend/dist
 
       - name: Restart PM2
         uses: appleboy/ssh-action@v0.1.10
