@@ -10,7 +10,7 @@ import {
 import { toast } from "react-toastify";
 
 // Create API instance
-const prod = import.meta.env.PROD;
+const prod = import.meta.env.PROD || true;
 export const url = prod
   ? "http://102.210.146.148/api/"
   // ? import.meta.env.REACT_APP_API_URL
