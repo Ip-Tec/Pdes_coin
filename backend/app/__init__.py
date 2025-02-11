@@ -103,7 +103,7 @@ def create_app():
     # Attach Socket.IO to the Flask app
 
     # Setup routes
-    @app.route("/", methods=["GET"])
+    @app.route("/api", methods=["GET"])
     def index():
         return jsonify({"message": "Welcome to the Pdes Wallet API!"}), 200
 
