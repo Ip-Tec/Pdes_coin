@@ -21,7 +21,8 @@ jobs:
       - name: Install dependencies and build
         run: |
           cd frontend
-          npm ci --omit=dev
+          npm ci
+          npm i --save-dev @types/react @types/react-dom
           npm run build
 
       - name: Deploy build files to server
