@@ -36,11 +36,21 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
+            # Use correct Node.js version
+            nvm install 20
+            nvm use 20
+
+            # Move to the project directory
             cd /var/www/myapp/frontend
+
+            # Install dependencies
             npm ci --omit=dev  # Install only production dependencies
-            npm run build
+            npm install -g pm2 typescript  # Ensure PM2 and TypeScript are installed
+            npm run build  # Build the project
+
+            # Restart the application with PM2
             pm2 delete my-react-app || true
-            pm2 start "serve -s frontend/dist -l 3000" --name my-react-app
+            pm2 start "serve -s dist -l 3000" --name my-react-app
             pm2 save
 
             # Restart frontend service without sudo password prompt
