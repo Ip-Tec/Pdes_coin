@@ -26,7 +26,7 @@ jobs:
 
       - name: Deploy build files to server
         run: |
-          rsync -avz --delete ./frontend/build/ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/var/www/myapp/frontend/build
+          rsync -avz --delete frontend/dist/ ${{ secrets.SSH_USER }}@${{ secrets.SERVER_IP }}:/var/www/myapp/frontend/dist
 
       - name: Restart PM2
         uses: appleboy/ssh-action@v0.1.10
@@ -36,5 +36,8 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             cd /var/www/myapp/frontend
-            pm2 restart my-react-app || pm2 start "serve -s build -l 3000" --name my-react-app
+            rm -rf node_modules package-lock.json
+            npm ci
+            pm2 delete my-react-app || true
+            pm2 start "serve -s build -l 3000" --name my-react-app
             pm2 save
