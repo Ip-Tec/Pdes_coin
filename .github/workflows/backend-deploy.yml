@@ -34,7 +34,9 @@ jobs:
           script: |
             set -e
             cd /var/www/myapp/backend/ || exit 1
+            git stash --include-untracked
             git pull origin main
+            git stash pop || true  # Restore changes if necessary
             
             # Install python3-venv if missing
             if ! dpkg -l | grep -qw python3-venv; then
