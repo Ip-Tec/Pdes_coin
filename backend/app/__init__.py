@@ -16,6 +16,7 @@ socketio = SocketIO(
         "https://vercel.app",
         "http://localhost:5173",
         "https://pedex.vercel.app",
+        "https://pedex.duckdns.org",
         "https://pdes-coin.vercel.app",
     ],
     async_mode="eventlet",
@@ -68,6 +69,7 @@ def create_app():
                 "origins": [
                     "http://localhost:5173",
                     "http://pedex.vercel.app",
+                    "https://pedex.duckdns.org",
                     "https://pedex.vercel.app",
                     "https://pdes-coin.vercel.app",
                 ],
