@@ -27,10 +27,10 @@ export const feURL = prod
 const API = axios.create({
   baseURL: url,
   headers: {
+    "Accept": "application/json",
     "Content-Type": "application/json",
-    Accept: "application/json",
   },
-  withCredentials: true, // Include cookies or credentials
+  withCredentials: true,
 });
 
 // Add a request interceptor to include the token in headers
