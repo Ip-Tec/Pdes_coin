@@ -12,7 +12,7 @@ import { toast } from "react-toastify";
 // Create API instance
 const prod = import.meta.env.PROD || true;
 export const url = prod
-  ? "http://102.210.146.148/api"
+  ? "https://102.210.146.148/api"
   // ? import.meta.env.REACT_APP_API_URL
   : import.meta.env.VITE_API_URL;
 
@@ -21,7 +21,7 @@ export const websocketUrl = prod
   : import.meta.env.VITE_API_WEBSOCKET_URL;
 
 export const feURL = prod
-  ? "http://102.210.146.148/"
+  ? "https://102.210.146.148/"
   : import.meta.env.VITE_EF_URL_LOCAL;
 // Create API instance
 const API = axios.create({
