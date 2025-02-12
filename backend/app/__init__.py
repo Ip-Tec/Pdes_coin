@@ -63,7 +63,7 @@ def create_app():
         app,
         supports_credentials=True,
         resources={
-            r"/*": {
+            r"/api/*": {
                 "origins": [
                     "http://vercel.app",
                     "https://vercel.app",
