@@ -12,16 +12,16 @@ import { toast } from "react-toastify";
 // Create API instance
 const prod = import.meta.env.PROD || true;
 export const url = prod
-  ? "https://102.210.146.148/api"
+  ? "https://pedex.duckdns.org/api"
   // ? import.meta.env.REACT_APP_API_URL
   : import.meta.env.VITE_API_URL;
 
 export const websocketUrl = prod
-  ? "ws://102.210.146.148/"
+  ? "ws://pedex.duckdns.org/"
   : import.meta.env.VITE_API_WEBSOCKET_URL;
 
 export const feURL = prod
-  ? "https://102.210.146.148/"
+  ? "https://pedex.duckdns.org/"
   : import.meta.env.VITE_EF_URL_LOCAL;
 // Create API instance
 const API = axios.create({
