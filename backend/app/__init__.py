@@ -65,11 +65,13 @@ def create_app():
         resources={
             r"/*": {
                 "origins": [
+                    "http://vercel.app",
                     "https://vercel.app",
                     "http://localhost:5000",
                     "http://localhost:5173",
                     "http://102.210.146.148",
                     "https://102.210.146.148",
+                    "http://pedex.vercel.app",
                     "https://pedex.vercel.app",
                 ]
             }
