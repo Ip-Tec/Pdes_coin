@@ -20,12 +20,12 @@ export default defineConfig({
         start_url: "/login",
         icons: [
           {
-            src: "./android-chrome-192x192.png",
+            src: "./src/assets/android-chrome-192x192.png",
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "./android-chrome-512x512.png",
+            src: "./src/assets/android-chrome-512x512.png",
             sizes: "512x512",
             type: "image/png",
           },
