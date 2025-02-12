@@ -69,7 +69,8 @@ def create_app():
                     "http://localhost:5000",
                     "http://localhost:5173",
                     "http://102.210.146.148",
-                    "https://pdes-coin.vercel.app",
+                    "https://102.210.146.148",
+                    "https://pedex.vercel.app",
                 ]
             }
         },
