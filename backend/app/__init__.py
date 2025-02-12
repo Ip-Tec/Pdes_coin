@@ -15,6 +15,7 @@ socketio = SocketIO(
     cors_allowed_origins=[
         "https://vercel.app",
         "http://localhost:5173",
+        "https://pedex.vercel.app",
         "https://pdes-coin.vercel.app",
     ],
     async_mode="eventlet",
@@ -73,7 +74,9 @@ def create_app():
                     "https://102.210.146.148",
                     "http://pedex.vercel.app",
                     "https://pedex.vercel.app",
-                ]
+                ],
+                "allow_headers": ["Content-Type", "Authorization"],
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             }
         },
     )
