@@ -26,7 +26,7 @@ const AdminTopbar: React.FC<AdminTopbarProps> = ({ isSidebarCollapsed }) => {
         {/* Profile */}
         <div className="flex items-center gap-2 cursor-pointer hover:text-gray-300">
           <FaUserCircle size={30} />
-          <span className="hidden sm:inline-block">{(user?.role || "").toUpperCase()}</span>
+          <span className="inline-block">{(user?.role || "").toUpperCase()}</span>
         </div>
       </div>
     </div>
