@@ -17,7 +17,7 @@ interface UserCardProps {
 }
 
 const ConfirmTransaction = ({ user }: UserCardProps) => {
-  const [amount] = useState<string>();
+  // const [amount] = useState<string>();
   const [accountName, setAccountName] = useState<string>("");
   const [accountNumber, setAccountNumber] = useState<string>("");
   const [transactionType, setTransactionType] = useState<string>("deposit");
@@ -31,7 +31,7 @@ const ConfirmTransaction = ({ user }: UserCardProps) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ amount, accountName, accountNumber });
+    // console.log({ amount, accountName, accountNumber });
 
 
     if (!accountName || !accountNumber) {
@@ -55,12 +55,13 @@ const ConfirmTransaction = ({ user }: UserCardProps) => {
       ...user,
     };
 
-    console.log(data);
+    // console.log(data);
 
     try {
-      console.log({ data });
-      const response = await confirmUserDeposit(data);
-      console.log("Response:", response.data);
+      // console.log({ data });
+      // const response = 
+      await confirmUserDeposit(data);
+      // console.log("Response:", response.data);
     } catch (error: unknown) {
       if (error instanceof Error) {
         toast.error(error.message || "Something went wrong. Try again.");

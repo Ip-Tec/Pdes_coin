@@ -13,7 +13,7 @@ const AdminWrapper: React.FC<AdminWrapperProps> = ({ children }) => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   const sidebarWidth = isSidebarCollapsed ? "4rem" : "10rem";
-  console.log({ isAuth });
+  // console.log({ isAuth });
 
   if (!isAuth) {
     return Navigate({ to: "/login" });

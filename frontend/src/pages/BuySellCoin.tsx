@@ -8,7 +8,7 @@ import { FaArrowLeft } from "react-icons/fa";
 import { formattedMoneyUSD } from "../utils/helpers";
 import { toast, ToastContainer } from "react-toastify";
 import LiveChart from "../components/LiveChart";
-import CandleStickChart from "../components/CandleStickChart";
+// import CandleStickChart from "../components/CandleStickChart";
 import { TradePrice } from "../utils/type";
 import Loading from "../components/Loading";
 
@@ -293,13 +293,15 @@ function BuySellCoin() {
         </div>
 
         <div className="mt-8">
-          {chartType === "line" ? (
+          {chartType === "line" && (
             <LiveChart action={action}/>
-          ) : (
-            <div className="mt-4">
-              <CandleStickChart />
-            </div>
-          )}
+          ) 
+          // : (
+          //   <div className="mt-4">
+          //     <CandleStickChart />
+          //   </div>
+          // )
+          }
         </div>
 
         <div className="mt-2 text-center">

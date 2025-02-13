@@ -40,7 +40,7 @@ const SearchUsers = ({
         response = await searchUser(e.target.value, "deposits");
       }
 
-      console.log({ response, searchQuery, searchType });
+      // console.log({ response, searchQuery, searchType });
 
       if (response && response.length > 0) {
         setUsers(response);

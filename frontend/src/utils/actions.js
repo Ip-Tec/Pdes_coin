@@ -53,10 +53,10 @@ export const updateUser = async (prevState, formData) => {
 			(key) => updateFields[key] === "" && delete updateFields[key]
 		);
 
-		console.log(updateFields);
+		// console.log(updateFields);
 		await User.findByIdAndUpdate(id, updateFields);
 	} catch (error) {
-		console.log(error);
+		// console.log(error);
 		if (error.message.includes("duplicate")) {
 			return "Username or Email already Exists! Try another one.";
 		}
@@ -78,7 +78,7 @@ export const updateProfileImage = async (userId, imageName, extension, imageFile
       // If the image exists, delete it first
       try {
         await unlinkAsync(newImagePath);
-        console.log("Old image deleted successfully.");
+        // console.log("Old image deleted successfully.");
       } catch (error) {
         console.error("Error deleting old image:", error);
       }
@@ -91,7 +91,7 @@ export const updateProfileImage = async (userId, imageName, extension, imageFile
 
       // Write the image file to disk
       fs.writeFileSync(newImagePath, buffer);
-      console.log("New image saved successfully.");
+    //   console.log("New image saved successfully.");
     } catch (error) {
       console.error("Error saving new image:", error);
     }

@@ -50,8 +50,8 @@ const CandleStickChart = () => {
     const fetchData = async () => {
       try {
         const response = await getTradeHistory();
-        console.log({ response });
-        console.log(response.price_trend);
+        // console.log({ response });
+        // console.log(response.price_trend);
         setData(response.price_trend);
       } catch (error) {
         console.error("Error fetching data:", error);

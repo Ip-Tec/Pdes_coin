@@ -124,7 +124,7 @@ export const loginUser = async (loginData: {
     sessionStorage.setItem("authToken", access_token);
     sessionStorage.setItem("refreshToken", refresh_token);
 
-    console.log({ user, access_token, refresh_token });
+    // console.log({ user, access_token, refresh_token });
 
     return { user, access_token, refresh_token };
   } catch (error) {
@@ -216,7 +216,7 @@ export const depositFunds = async (amount: number) => {
 
 // Withdraw Funds
 export const withdrawFunds = async (accountDetails: AccountDetails) => {
-  console.log({ accountDetails });
+  // console.log({ accountDetails });
 
   try {
     const response = await API.post(apiUrl("/transactions/withdraw"), {
@@ -305,7 +305,7 @@ export const buySellPdes = async (
       amount,
       price,
     });
-    console.log({ response });
+    // console.log({ response });
     toast.info(response.data.message);
     return response.data;
   } catch (error) {
@@ -315,7 +315,7 @@ export const buySellPdes = async (
       }
       const errorData: ErrorResponse = error.response?.data;
       toast.error(errorData?.message);
-      console.log({ errorData });
+      // console.log({ errorData });
 
       throw new Error(errorData?.message || "Buy/Sell transaction failed");
     }
@@ -374,7 +374,7 @@ export const fetchUserReferralList = async () => {
 
     return response.data.referrals;
   } catch (error) {
-    console.log(error);
+    // console.log(error);
 
     if (axios.isAxiosError(error)) {
       if (error.response && error.response.status === 401) {
@@ -540,14 +540,14 @@ export const changePassword = async ({
       newPassword,
     });
 
-    console.log(response);
+    // console.log(response);
 
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const errorData: ErrorResponse = error.response?.data;
-      console.log({ error });
-      console.log({ errorData });
+      // console.log({ error });
+      // console.log({ errorData });
       toast.error(errorData?.message);
 
       throw new Error(errorData?.message || "Failed to change password");
@@ -565,13 +565,13 @@ export const forgetPassword = async ({
       email,
     });
 
-    console.log(response.data);
+    // console.log(response.data);
 
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const errorData: ErrorResponse = error.response?.data;
-      console.log({ errorData });
+      // console.log({ errorData });
       return errorData;
       throw new Error(
         errorData?.message + `/n Failed to send password reset email`
@@ -596,7 +596,7 @@ export const resetPassword = async ({
       newPassword,
     });
 
-    console.log(response);
+    // console.log(response);
 
     return response.data;
   } catch (error) {

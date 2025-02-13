@@ -26,7 +26,7 @@ function Deposit() {
     async function fetchConversionRate() {
       try {
         const response = await API.get(apiUrl("/transactions/conversion-rate"));
-        console.log("Conversion Rate Response:", response.data);
+        // console.log("Conversion Rate Response:", response.data);
         const conversion_rate = response.data.conversion_rate;
         setConversionRate(conversion_rate.conversion_rate);
       } catch (error) {
@@ -45,7 +45,7 @@ function Deposit() {
   // Fetch account details for Naira deposits
   const fetchAccountDetails = async () => {
     const response = await getDepositAccountDetail();
-    console.log(response);
+    // console.log(response);
 
     setAccountDetails(response);
     sessionStorage.setItem("accountDetails", JSON.stringify(response));
@@ -57,7 +57,7 @@ function Deposit() {
       const response = await API.get(
         apiUrl(`/account/get-crypto-address?crypto=${crypto}`)
       );
-      console.log({ response });
+      // console.log({ response });
 
       const address = response.data;
       setCryptoAddress([address]);

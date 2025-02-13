@@ -32,7 +32,7 @@ interface TooltipItem {
 const LiveChart: React.FC<LiveChartProps> = ({ action = "buy" }) => {
   // Get the transactions data from AuthContext (which is updated via your WebSocket)
   const { transactions } = useAuth();
-  console.log({ transactions });
+  // console.log({ transactions });
 
   // Map transactions to the PriceData shape.
   // Adjust the mapping as needed if your actual data differs.

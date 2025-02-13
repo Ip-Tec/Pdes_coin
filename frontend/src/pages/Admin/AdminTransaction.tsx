@@ -21,7 +21,7 @@ const AdminTransaction = () => {
   >(null);
   const [searchType, setSearchType] = useState("");
 
-  console.log({ selectedUser });
+  // console.log({ selectedUser });
 
   const navigationItems = [
     { label: "Confirm Deposit", component: "ConfirmTransaction" },

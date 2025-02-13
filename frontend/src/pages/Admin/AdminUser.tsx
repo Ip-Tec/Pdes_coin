@@ -10,7 +10,7 @@ import { changePassword, updateUser } from "../../services/adminAPI";
 import { toast, ToastContainer } from "react-toastify";
 
 const AdminUser: React.FC = () => {
-  const { user, roles, isAllowed } = useAuth();
+  const { user,  isAllowed } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [password, setPassword] = useState<string>();
@@ -34,7 +34,7 @@ const AdminUser: React.FC = () => {
   });
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [users, setUsers] = useState<User[] | DepositPropsWithUser[]>([]);
-  const allowedRoles = ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"];
+  // const allowedRoles = ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"];
   const roleHierarchy = [
     "USER",
     "SUPPORT",
@@ -48,7 +48,7 @@ const AdminUser: React.FC = () => {
   const userRoleIndex = roleHierarchy.indexOf(
     user?.role.toLocaleUpperCase() || "USER"
   );
-  console.log({ allowedRoles, userRoleIndex, roles, user, users });
+  // console.log({ allowedRoles, userRoleIndex, roles, user, users });
 
   // Open edit modal
   const handleEditClick = (userItem: User | DepositPropsWithUser) => {
@@ -80,7 +80,7 @@ const AdminUser: React.FC = () => {
     e.preventDefault();
     if (!editingUser) return;
 
-    console.log("Sending updated user data:", editingUser);
+    // console.log("Sending updated user data:", editingUser);
 
     try {
       // Call your API to update the user with the updated info
