@@ -57,14 +57,14 @@ def get_totals(current_user, *args, **kwargs):
         db.session.query(func.sum(Transaction.amount))
         .filter(Transaction.transaction_type == "withdrawal")
         .scalar()
-        or 0.0
+        or 00.0
     )
 
     # Total Rewards (sum of rewards from all users' balance)
-    total_rewards = db.session.query(func.sum(Balance.rewards)).scalar() or 0.0
+    total_rewards = db.session.query(func.sum(Balance.rewards)).scalar() or 00.0
 
     # Total Users
-    total_users = db.session.query(func.count(User.id)).scalar() or 0.0
+    total_users = db.session.query(func.count(User.id)).scalar() or 00.0
 
     return jsonify(
         {
