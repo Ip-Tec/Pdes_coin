@@ -6,13 +6,10 @@
       "headers": [{ "key": "Content-Type", "value": "application/javascript" }]
     }
   ],
-  "server": {
-    "proxy": {
-      "/api": {
-        "target": ["https://pedex.duckdns.org/", "https://102.210.146.148/"],
-        "changeOrigin": true,
-        "secure": true
-      }
+  "remotePatterns": [
+    {
+      "protocol": "https",
+      "hostname": "pedex.vercel.app"
     }
-  }
+  ]
 }
