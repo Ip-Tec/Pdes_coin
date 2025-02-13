@@ -43,7 +43,7 @@ export default defineConfig({
     proxy: {
       "/api": {
         target: "https://pedex.duckdns.org/",
-        // target: ["https://pedex.duckdns.org/", "https://102.210.146.148/"],
+        // target: ["https://pedex.duckdns.org/", "https://PEDEX.DUCKDNS.ORG/"],
         changeOrigin: true,
         secure: true,
       },
