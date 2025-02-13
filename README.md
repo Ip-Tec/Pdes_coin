@@ -19,7 +19,7 @@ Embrace the future of digital finance with Pdes Coin.
 
 ## Project Root Directory
 
-pdes-crypto
+pedex-crypto
 ├── backend/
 ├── web/
 ├── mobile/
@@ -47,10 +47,10 @@ backend
 ├── requirements.txt        # Python dependencies
 └── run.py                  # Entry point
 
-## Web Frontend (React.js)
+## Frontend (React.js)
 
-web
-├── public/
+frontend
+|── public/
 │   ├── index.html          # Main HTML file
 │   └── favicon.ico         # App favicon
 ├── src/

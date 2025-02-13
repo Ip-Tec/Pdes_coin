@@ -2,7 +2,7 @@
   "rewrites": [{ "source": "/(.*)", "destination": "/" }],
   "headers": [
     {
-      "source": "./public/sw.js",
+      "source": "/sw.js",
       "headers": [{ "key": "Content-Type", "value": "application/javascript" }]
     }
   ]
