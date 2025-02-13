@@ -17,7 +17,7 @@ export const url = prod
   : import.meta.env.VITE_API_URL;
 
 export const websocketUrl = prod
-  ? "ws://pedex.duckdns.org/"
+  ? "wss://pedex.duckdns.org/"
   : import.meta.env.VITE_API_WEBSOCKET_URL;
 
 export const feURL = prod

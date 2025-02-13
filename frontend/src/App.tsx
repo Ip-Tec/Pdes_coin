@@ -32,7 +32,13 @@ import Utility from "./pages/Admin/Utility";
 import Referrals from "./pages/Admin/Referrals";
 import NotFound from "./pages/NotFound";
 
-const App: React.FC = () => {
+interface AppProps {
+  installPrompt: BeforeInstallPromptEvent | null;
+  isInstalled: boolean;
+  onInstall: () => void;
+}
+
+const App: React.FC<AppProps> = ({ installPrompt, isInstalled, onInstall }) => {
   const DisplayNavbar: React.FC = () => {
     const location = useLocation();
     const hideNavbarPaths = [
@@ -111,6 +117,19 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <Router>
+        {!isInstalled && installPrompt && (
+          <div className="sticky top-0 left-0 z-50 w-full bg-slate-100 shadow-lg p-3 flex justify-between flex-wrap gap-2">
+            <p className="px-4 py-2 mt-2 text-secondary">
+              Install this app for a better experience
+            </p>
+            <button
+              onClick={onInstall}
+              className="bg-bgColor text-white px-4 py-2 rounded-md mt-2"
+            >
+              Install
+            </button>
+          </div>
+        )}
         <AnimatedRoutes />
         <DisplayNavbar />
       </Router>

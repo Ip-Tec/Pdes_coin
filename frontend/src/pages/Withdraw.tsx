@@ -114,7 +114,7 @@ function Withdraw() {
         <span>Back</span>
       </button>
 
-      <div className="min-h-screen bg-mainBG flex items-center justify-center px-4 py-8 md:mb-16">
+      <div className="min-h-screen bg-mainBG flex items-center justify-center px-4 py-8 mb-10 md:mb-16">
         <ToastContainer />
         <div className="absolute top-1 lg:top-4 left-4 z-10">
           <img src={logo} alt="Logo" className="h-34" />
@@ -193,8 +193,10 @@ function Withdraw() {
                 onChange={(e) => setAccountType(e.target.value)}
                 className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-bgColor focus:outline-none"
               >
+                <option value="UBA">UBA</option>
                 <option value="Opay">Opay</option>
                 <option value="Palmpay">Palmpay</option>
+                <option value="MoniePoint">Monie Point</option>
                 <option value="Access Bank">Access Bank</option>
               </select>
 
