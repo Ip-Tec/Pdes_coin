@@ -272,7 +272,7 @@ const AdminDashboard = () => {
             </div>
           </div>
 
-          <div className="flex sm:flex-col md:flex-row w-fullflex-wrap justify-evenly items-center">
+          <div className="flex sm:flex-col md:flex-row w-full flex-wrap justify-evenly items-center">
             {/* Chart Section */}
             <div className="bg-white shadow-md md:w-1/2 rounded-lg p-4 mt-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">
