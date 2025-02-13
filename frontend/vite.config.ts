@@ -45,7 +45,7 @@ export default defineConfig({
         target: "https://pedex.duckdns.org/",
         // target: ["https://pedex.duckdns.org/", "https://102.210.146.148/"],
         changeOrigin: true,
-        
+        secure: true,
       },
     },
   },
