@@ -71,19 +71,19 @@ const SearchUsers = ({
       <h1 className="text-center text-3xl font-semibold mb-6 text-gray-800">
         {title || "Search Users or Transactions"}
       </h1>
-      <div className="flex shadow-md justify-between bg-slate-300 mb-4 border-[#D9D9D9] rounded-3xl">
+      <div className="flex w-full shadow-md justify-between bg-slate-300 mb-4 border-[#D9D9D9] rounded-3xl">
         <input
           type="text"
           placeholder="Search..."
           value={searchQuery}
           onChange={handleSearchChange}
-          className="w-3/4 px-4 py-2 border-none bg-transparent text-textColor placeholder-gray-500
+          className="w-2/3 md:w-3/4 px-4 py-2 border-none bg-transparent text-textColor placeholder-gray-500
            shadow-[#b9b9b9] focus:outline-none focus:ring-0 focus:ring-transparent"
         />
         <select
           value={searchType}
           onChange={handleSearchTypeChange}
-          className="p-3 bg-transparent rounded-lg ml-4 text-textColor placeholder-gray-500 
+          className="p-3 w-2/3 md:w-3/4 bg-transparent rounded-lg ml-4 text-textColor placeholder-gray-500 
           focus:outline-none focus:ring-0 focus:ring-transparent mr-2"
         >
           <option value="user">User</option>
