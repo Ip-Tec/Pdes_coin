@@ -13,8 +13,8 @@ import { toast } from "react-toastify";
 const prod = import.meta.env.PROD || true;
 export const url = prod
   ? "https://pedex.duckdns.org/api"
-  // ? import.meta.env.REACT_APP_API_URL
-  : import.meta.env.VITE_API_URL;
+  : // ? import.meta.env.REACT_APP_API_URL
+    import.meta.env.VITE_API_URL;
 
 export const websocketUrl = prod
   ? "wss://pedex.duckdns.org/"
@@ -27,7 +27,7 @@ export const feURL = prod
 const API = axios.create({
   baseURL: url,
   headers: {
-    "Accept": "application/json",
+    Accept: "application/json",
     "Content-Type": "application/json",
   },
   withCredentials: true,
@@ -124,10 +124,12 @@ export const loginUser = async (loginData: {
     sessionStorage.setItem("authToken", access_token);
     sessionStorage.setItem("refreshToken", refresh_token);
 
-    // console.log({ user, access_token, refresh_token });
+    console.log({ user, access_token, refresh_token });
 
     return { user, access_token, refresh_token };
   } catch (error) {
+    console.log({ error });
+
     if (axios.isAxiosError(error)) {
       if (error.response && error.response.status === 401) {
         window.location.href = "/login";
