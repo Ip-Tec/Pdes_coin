@@ -4,7 +4,7 @@ self.addEventListener("install", (event) => {
   });
   
   self.addEventListener("activate", (event) => {
-    console.log("Service Worker activated!");
+    console.log("Service Worker activated SRC!");
   });
   
   // self.addEventListener("fetch", (event) => {
