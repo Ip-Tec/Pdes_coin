@@ -5,11 +5,5 @@
       "source": "./frontend/src/sw.js",
       "headers": [{ "key": "Content-Type", "value": "application/javascript" }]
     }
-  ],
-  "remotePatterns": [
-    {
-      "protocol": "https",
-      "hostname": "pedex.vercel.app"
-    }
   ]
 }
