@@ -47,7 +47,7 @@ const AdminWrapper: React.FC<AdminWrapperProps> = ({ children }) => {
           onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
         {/* Content Area */}
-        <main className="p-4 overflow-auto ">{children}</main>
+        <main className="p-2 md:p-4 overflow-auto ">{children}</main>
       </div>
     </div>
   );
