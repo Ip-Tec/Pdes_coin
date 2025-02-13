@@ -71,7 +71,7 @@ const SearchUsers = ({
       <h1 className="text-center text-3xl font-semibold mb-6 text-gray-800">
         {title || "Search Users or Transactions"}
       </h1>
-      <div className="flex w-full shadow-md justify-between bg-slate-300 mb-4 border-[#D9D9D9] rounded-3xl">
+      <div className="flex w-full gap-2 shadow-md justify-between bg-slate-300 mb-4 border-[#D9D9D9] rounded-3xl">
         <input
           type="text"
           placeholder="Search..."
@@ -83,7 +83,7 @@ const SearchUsers = ({
         <select
           value={searchType}
           onChange={handleSearchTypeChange}
-          className="p-3 w-2/3 md:w-3/4 bg-transparent rounded-lg ml-4 text-textColor placeholder-gray-500 
+          className="p-3 w-[6rem] md:w-[10rem] bg-transparent rounded-lg md:ml-4 text-textColor placeholder-gray-500 
           focus:outline-none focus:ring-0 focus:ring-transparent mr-2"
         >
           <option value="user">User</option>

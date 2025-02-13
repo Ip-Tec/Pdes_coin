@@ -112,7 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       // Listen for trade history events:
       newSocket.on("trade_history", (data) => {
-        // console.log("Trade History:", data);
+        console.log("Trade History:", data);
         setTrade(data.trade_history || data);
       });
 

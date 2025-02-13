@@ -31,14 +31,14 @@ interface TooltipItem {
 
 const LiveChart: React.FC<LiveChartProps> = ({ action = "buy" }) => {
   // Get the transactions data from AuthContext (which is updated via your WebSocket)
-  const { transactions } = useAuth();
+  const { trade } = useAuth();
   // console.log({ transactions });
 
   // Map transactions to the PriceData shape.
   // Adjust the mapping as needed if your actual data differs.
   const chartDataArray: PriceData[] =
-    transactions && transactions.length > 0
-      ? transactions.map((txn) => ({
+  Array.isArray(trade) && trade.length > 0
+    ? trade.map((txn) => ({
           // Use the transaction's created_at as the time.
           // If created_at might be undefined, you can provide a fallback (like an empty string).
           time: txn.created_at || "Unknown",

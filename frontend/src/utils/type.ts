@@ -217,9 +217,13 @@ export interface RewardSettingFormData {
 }
 
 export interface TradeHistory {
-  time: string;
   buy: number;
+  time: string;
   sell: number;
+  amount: number;
+  created_at: string;
+  updated_at: string;
+  transaction_type: string;
 }
 
 export interface PriceData {
