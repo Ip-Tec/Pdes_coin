@@ -41,6 +41,8 @@ interface AppProps {
 const App: React.FC<AppProps> = ({ installPrompt, isInstalled, onInstall }) => {
   const DisplayNavbar: React.FC = () => {
     const location = useLocation();
+    
+    // Define exact paths where navbar should be hidden
     const hideNavbarPaths = [
       "/",
       "*",
@@ -53,7 +55,16 @@ const App: React.FC<AppProps> = ({ installPrompt, isInstalled, onInstall }) => {
       "/forgot-password",
       "/referral/re/:referralCode",
     ];
-    return hideNavbarPaths.includes(location.pathname) ? null : <Navigation />;
+    // Hide the navbar if:
+    // - The path is in the `hideNavbarPaths` array
+    // - The path starts with `/referral/re/`
+    // - The path is a 404 (not found)
+    const shouldHideNavbar =
+    hideNavbarPaths.includes(location.pathname) ||
+    location.pathname.startsWith("/referral/re/") ||
+    location.pathname !== "/" && !hideNavbarPaths.includes(location.pathname) && !location.pathname.startsWith("/");
+
+    return shouldHideNavbar ? null : <Navigation />;
   };
 
   const pageVariants = {
