@@ -21,7 +21,7 @@ export const websocketUrl = prod
   : import.meta.env.VITE_API_WEBSOCKET_URL;
 
 export const feURL = prod
-  ? "https://pedex.duckdns.org/"
+  ? "https://pedex.vercel.app/"
   : import.meta.env.VITE_EF_URL_LOCAL;
 // Create API instance
 const API = axios.create({
