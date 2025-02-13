@@ -48,7 +48,7 @@ interface Referral {
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const { user, isAuth } = useAuth();
+  const {  isAuth } = useAuth();
   const [totalDashboard, setTotalDashboard] = useState<
     DashboardData | undefined
   >(undefined);
@@ -190,9 +190,9 @@ const AdminDashboard = () => {
         <div className="w-auto px-4 py-20 mb-6">
           {/* Stats Section */}
 
-          {["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"].includes(
+          {/* {["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"].includes(
             user?.role.toUpperCase() || ""
-          ) ? (
+          ) ? ( */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-white shadow-md rounded-lg p-4 text-center">
                 <h3 className="text-lg font-semibold text-gray-700">
@@ -235,18 +235,18 @@ const AdminDashboard = () => {
                 </p>
               </div>
             </div>
-          ) : (
+          {/* ) : (
             <div className="text-3xl w-full m-auto text-black text-center">
               DashBoard
             </div>
-          )}
+          )} */}
           <div className="flex m-auto justify-center items-center mt-4 w-full p-2">
             <PriceChart />
           </div>
 
           <div className="flex sm:flex-col md:flex-row w-full flex-wrap gap-2 justify-evenly items-center">
             {/* Polar Area Chart Section */}
-            <div className="bg-white shadow-md w-1/2 rounded-lg p-4 mt-6">
+            <div className="bg-white shadow-md w-full md:w-1/2 rounded-lg p-4 mt-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">
                 Data Overview (Polar Area)
               </h3>
