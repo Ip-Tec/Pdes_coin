@@ -35,7 +35,7 @@ function Profile() {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex items-center justify-center bg-mainBG">
+      <div className="min-h-screen flex items-center justify-center bg-mainBG">
         <Loading isLoading={isLoading} />
       </div>
     );

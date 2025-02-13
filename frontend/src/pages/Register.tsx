@@ -115,7 +115,7 @@ const Register: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-[#FBF0EC]">
+    <div className="min-h-screen flex items-center justify-center bg-[#FBF0EC]">
       <ToastContainer />
       {loading && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">

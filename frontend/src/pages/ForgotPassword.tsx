@@ -84,7 +84,7 @@ const ForgotPassword: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col items-center w-screen justify-center h-screen bg-mainBG overflow-x-hidden">
+    <div className="flex flex-col items-center w-screen justify-center min-h-screen bg-mainBG overflow-x-hidden">
       <ToastContainer />
       <img
         src={logo}
