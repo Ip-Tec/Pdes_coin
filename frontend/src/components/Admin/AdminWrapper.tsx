@@ -32,7 +32,7 @@ const AdminWrapper: React.FC<AdminWrapperProps> = ({ children }) => {
   }
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex min-h-screen w-full overflow-hidden">
       {/* Topbar */}
       <AdminTopbar isSidebarCollapsed={isSidebarCollapsed} />
 

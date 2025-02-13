@@ -103,7 +103,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex items-center justify-center bg-[#FBF0EC] relative overflow-x-hidden">
+    <div className="min-h-screen flex items-center justify-center bg-[#FBF0EC] relative overflow-x-hidden">
       <ToastContainer />
       {loading && (
         <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
