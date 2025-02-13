@@ -10,6 +10,16 @@ export default defineConfig({
       registerType: "autoUpdate",
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,json}"],
+        runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.destination === "document",
+            handler: "NetworkFirst",
+          },
+          {
+            urlPattern: ({ request }) => request.destination === "script",
+            handler: "CacheFirst",
+          },
+        ],
       },
       devOptions: {
         enabled: true,
@@ -37,7 +47,6 @@ export default defineConfig({
         description: "Trade your cryptocurrency with PEDEX Coin.",
       },
     }),
-    
   ],
 
   server: {
