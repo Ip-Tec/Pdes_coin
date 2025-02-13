@@ -101,8 +101,8 @@ export const searchUser = async (
     const response = await API.get(
       apiUrl(`/admin/${url[path]}?query=${query}`)
     );
-    console.log(response);
-    console.log(response.data);
+    // console.log(response);
+    // console.log(response.data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -123,7 +123,7 @@ export const addAccount = async (data: {
 }) => {
   try {
     const response = await API.post(apiUrl("/admin/add-account"), data);
-    console.log({ response });
+    // console.log({ response });
     toast.success(response.data.message);
     return response.data;
   } catch (error) {
@@ -141,7 +141,7 @@ export const addAccount = async (data: {
 export const addUtility = async (data: UtilityProps) => {
   try {
     const response = await API.post(apiUrl("/admin/utility"), data);
-    console.log({ response });
+    // console.log({ response });
     toast.success(response.data.message);
     return response.data;
   } catch (error) {
@@ -161,7 +161,7 @@ export const confirmUserDeposit = async (data: any) => {
 
   try {
     const response = await API.post(apiUrl("/admin/add-money"), data);
-    console.log({ response });
+    // console.log({ response });
     toast.success(response.data.message);
     return response.data;
   } catch (error) {
@@ -184,7 +184,7 @@ export const confirmUserDeposit = async (data: any) => {
 export const getProportionChart = async (type: string) => {
   try {
     const response = await API.get(apiUrl(`/admin/proportions?type=${type}`));
-    console.log({ response });
+    // console.log({ response });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -201,7 +201,7 @@ export const getProportionChart = async (type: string) => {
 export const distributionOverTime = async () => {
   try {
     const response = await API.get(apiUrl("/admin/distribution-over-time"));
-    console.log({ response });
+    // console.log({ response });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -221,7 +221,7 @@ export const configureRewardSetting = async (data: RewardSettingFormData) => {
       apiUrl("/admin/configure-reward-setting"),
       data
     );
-    console.log({ response });
+    // console.log({ response });
     toast.success(response.data.message);
     return response.data;
   } catch (error) {
@@ -277,7 +277,7 @@ export const handleDownloadApi = async (url: string) => {
 export const updateUser = async (data: User) => {
   try {
     const response = await API.put(apiUrl("/admin/update-user"), data);
-    console.log({ response });
+    // console.log({ response });
     toast.success(response.data.message);
     return response.data;
   } catch (error) {
@@ -298,7 +298,7 @@ export const changePassword = async (data: User, password: string) => {
       ...data,
       password,
     });
-    console.log({ response });
+    // console.log({ response });
     toast.success(response.data.message);
     return response.data;
   } catch (error) {

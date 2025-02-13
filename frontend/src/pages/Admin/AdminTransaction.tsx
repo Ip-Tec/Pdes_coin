@@ -117,7 +117,7 @@ const AdminTransaction = () => {
           setParentSearchType={setSearchType}
           //  Dynamic Navigation
           component={
-            <div>
+            <div className="w-full overflow-x-auto no-scrollbar scrollbar-hide">
               <ul className="flex justify-center space-x-4 mb-8">
                 {navigationItems.map((item) => (
                   <li
