@@ -29,7 +29,7 @@ function Withdraw() {
       try {
         const response = await API.get(apiUrl("/transactions/conversion-rate"));
         const conversion_rate = response.data.conversion_rate;
-        console.log({ conversion_rate });
+        // console.log({ conversion_rate });
 
         setConversionRate(conversion_rate.conversion_rate);
       } catch (error) {

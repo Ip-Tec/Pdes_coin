@@ -33,7 +33,6 @@ const ConfirmTransaction = ({ user }: UserCardProps) => {
     e.preventDefault();
     // console.log({ amount, accountName, accountNumber });
 
-
     if (!accountName || !accountNumber) {
       toast.error("Please fill in all fields.");
       return;
@@ -46,7 +45,7 @@ const ConfirmTransaction = ({ user }: UserCardProps) => {
     }
 
     const data = {
-      user_id: "user_id" in user ? user.user_id : user.id,
+      user_id: "user_id" in user ? user.user_id.toString() : user.id.toString(),
       crypto_name: cryptoName,
       amount: "amount" in user && user.amount,
       account_name: accountName,
@@ -57,9 +56,11 @@ const ConfirmTransaction = ({ user }: UserCardProps) => {
 
     // console.log(data);
 
+    // Convert user_id to string
+    data.user_id = data.user_id.toString();
+
     try {
-      // console.log({ data });
-      // const response = 
+      // const response =
       await confirmUserDeposit(data);
       // console.log("Response:", response.data);
     } catch (error: unknown) {

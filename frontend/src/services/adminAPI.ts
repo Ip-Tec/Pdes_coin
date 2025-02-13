@@ -2,6 +2,7 @@ import axios from "axios";
 import API, { apiUrl } from "./api";
 import { toast } from "react-toastify";
 import {
+  confirmUserDepositProps,
   ErrorResponse,
   RewardSettingFormData,
   User,
@@ -156,7 +157,7 @@ export const addUtility = async (data: UtilityProps) => {
 };
 
 // Add utility data
-export const confirmUserDeposit = async (data: any) => {
+export const confirmUserDeposit = async (data: confirmUserDepositProps) => {
   console.log({ data });
 
   try {

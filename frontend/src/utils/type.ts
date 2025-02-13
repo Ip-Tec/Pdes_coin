@@ -251,3 +251,34 @@ export interface TradePrice {
   pdes_total_supply: number;
   error?: string;
 }
+
+export interface confirmUserDepositProps {
+  id: number;
+  role?: string;
+  email?: string;
+  full_name?: string;
+  username?: string;
+  balance?: number;
+  crypto_balance?: number | undefined;
+  referral_code?: string | null;
+  total_referrals?: number;
+  sticks?: number;
+  is_blocked?: boolean;
+  correct_balance?: number;
+  referral_reward?: number;
+  user?: User;
+  amount: number | false;
+  status?: string;
+  user_id: number | string;
+  currency?: string;
+  updated_at?: string;
+  created_at?: string;
+  transaction_id?: string;
+  deposit_method?: string;
+  session_id?: string | null;
+  crypto_name: string;
+  account_name: string;
+  account_number: string;
+  transaction_type: string;
+}
+
