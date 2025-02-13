@@ -111,8 +111,8 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <Router>
-        <DisplayNavbar />
         <AnimatedRoutes />
+        <DisplayNavbar />
       </Router>
     </AuthProvider>
   );
