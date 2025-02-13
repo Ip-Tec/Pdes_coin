@@ -34,7 +34,7 @@ export default defineConfig({
         background_color: "#ffffff",
         display: "standalone",
         scope: "/",
-        description: "Trade and manage your cryptocurrency with PEDEX Coin.",
+        description: "Trade your cryptocurrency with PEDEX Coin.",
       },
     }),
   ],

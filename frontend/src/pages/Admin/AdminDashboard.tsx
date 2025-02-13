@@ -224,7 +224,7 @@ const AdminDashboard = () => {
                 </h3>
                 <p className="text-2xl font-bold text-gray-900">
                   {totalDashboard?.total_rewards
-                    ? totalDashboard.total_rewards.toFixed(2)
+                    ? totalDashboard.total_rewards
                     : "Loading..."}
                 </p>
               </div>
