@@ -6,32 +6,39 @@ from app.models import User
 from dotenv import load_dotenv
 from app.controller import user_controller
 from flask import Blueprint, request, jsonify, current_app
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 from app.services import (
     generate_password_reset_token,
     generate_refresh_token,
     token_required,
 )
 
-
 load_dotenv()
 
 auth_bp = Blueprint("auth", __name__)
 SECRET_KEY = os.getenv("SECRET_KEY")
 
+# Initialize Flask-Limiter
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=current_app,
+    default_limits=["15 per hour"]
+)
 
-# Login router
+# Login router with rate limiting
 @auth_bp.route("/login", methods=["POST"])
+@limiter.limit("5 per minute")
 def login():
     user = user_controller.UserController.login()
     return user
 
-
-# Register router
+# Register router with rate limiting
 @auth_bp.route("/register", methods=["POST"])
+@limiter.limit("3 per minute") 
 def register():
     user = user_controller.UserController.register()
     return user
-
 
 # Logout router
 @auth_bp.route("/logout", methods=["POST"])
@@ -53,6 +60,7 @@ def logout(current_user, *args, **kwargs):
 
 # Forgot Password router
 @auth_bp.route("/forgot-password", methods=["POST"])
+@limiter.limit("3 per hour") 
 def forgot_password():
     data = request.json
     email = data.get("email")
@@ -62,6 +70,7 @@ def forgot_password():
 
 # Reset Password router
 @auth_bp.route("/forget-password", methods=["POST"])
+@limiter.limit("5 per hour")
 def forget_password():
     data = request.json
     email = data.get("email")
@@ -95,6 +104,8 @@ def reset_password():
 
 # Change Password (Authenticated Users Only)
 @auth_bp.route("/change-password", methods=["POST"])
+@token_required
+@limiter.limit("10 per hour")
 @token_required
 def change_password(current_user, *args, **kwargs):
     data = request.json
@@ -130,6 +141,7 @@ def resend_verification():
 
 # Refresh Token Router
 @auth_bp.route("/refresh-token", methods=["POST"])
+@limiter.limit("5 per hour")
 def refresh_token():
     data = request.json
     payload = {

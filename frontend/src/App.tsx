@@ -129,7 +129,7 @@ const App: React.FC<AppProps> = ({ installPrompt, isInstalled, onInstall }) => {
     <AuthProvider>
       <Router>
         {!isInstalled && installPrompt && (
-          <div className="sticky top-0 left-0 z-50 w-full bg-slate-100 shadow-lg p-3 flex justify-between flex-wrap gap-2">
+          <div className="sticky top-0 h-auto left-0 z-50 w-full bg-slate-100 shadow-lg p-3 flex justify-between flex-wrap gap-2">
             <p className="px-4 py-2 mt-2 text-secondary">
               Install this app for a better experience
             </p>

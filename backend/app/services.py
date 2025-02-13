@@ -49,7 +49,7 @@ def generate_token(user_id):
     payload = {
         "user_id": user_id,
         "exp": datetime.datetime.now(datetime.timezone.utc)
-        + datetime.timedelta(hours=1),  # Use full datetime reference
+        + datetime.timedelta(days=7, hours=1),  # Use full datetime reference
         "iat": datetime.datetime.now(datetime.timezone.utc),  # Issued at time
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
@@ -67,7 +67,7 @@ def decode_token(token):
 def generate_access_token(user_id):
     payload = {
         "user_id": user_id,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=7, hours=1),
         "iat": datetime.datetime.utcnow(),
     }
     return jwt.encode(payload, SECRET_KEY, algorithm="HS256")
