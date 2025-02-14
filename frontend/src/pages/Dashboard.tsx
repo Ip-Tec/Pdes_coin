@@ -42,9 +42,9 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="bg-mainBG pb-16 overflow-hidden mb-18 md:mb-2">
+    <div className="bg-mainBG pb-16 md:h-screen overflow-hidden mb-18 md:mb-2">
       <ToastContainer />
-      <div className="md:flex relative md:space-x-6 m-2 overflow-hidden">
+      <div className="md:flex md:h-screen md:space-x-6 m-2 md:m-0 overflow-hidden">
         {/* Left Section - Fixed on md screens only */}
         <div className="md:w-1/2 md:sticky md:top-4 md:mt-[15%] lg:static lg:top-auto">
           <BalanceCard {...user} />
@@ -52,7 +52,7 @@ const Dashboard = () => {
         </div>
 
         {/* Right Section - Transactions (Takes full width on small screens) */}
-        <div className="md:w-1/2 md:ml-[34%] m-2 h-auto overflow-scroll no-scrollbar">
+        <div className="md:w-1/2 md:ml-[34%] m-2 h-auto md:h-screen overflow-scroll no-scrollbar">
           <TransactionList />
         </div>
       </div>

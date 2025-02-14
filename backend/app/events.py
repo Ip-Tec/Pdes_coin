@@ -77,7 +77,7 @@ def register_socketio_events(socketio):
         # Directly assign the returned data:
         transactions = UserTransactionsController.get_all_transactions_socket()
         print(f"transactions::::{transactions}")
-        emit("transaction_history", {"transactions": transactions})
+        emit("get_transaction_history", {"transactions": transactions})
 
     
     @socketio.on("get_trade_history")

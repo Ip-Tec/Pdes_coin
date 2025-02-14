@@ -9,7 +9,7 @@ import {
   loginUser,
   getUser as getUserAPI,
   websocketUrl,
-  LogoutUser,
+  // LogoutUser,
 } from "../services/api";
 import {
   TradeHistory,
@@ -105,15 +105,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         newSocket.emit("get_trade_history");
         newSocket.emit("get_current_price");
       });
-      
 
       // Listen for transaction history events:
-      newSocket.on("transaction_history", (data) => {
+      newSocket.on("get_transaction_history", (data) => {
         setTransactions(data.transactions || data);
+        console.log("Transaction History:", { data });
       });
 
       // Listen for trade history events:
-      newSocket.on("trade_history", (data) => {
+      newSocket.on("get_trade_history", (data) => {
         console.log("Trade History:", data);
         setTrade(data.trade_history || data);
       });
@@ -156,7 +156,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       sessionStorage.setItem("authToken", access_token);
       sessionStorage.setItem("refreshToken", refresh_token);
       setIsAuth(true);
-      setIsLoading(false)
+      setIsLoading(false);
 
       if (userData.is_blocked || userData.sticks >= 2) {
         toast.error("Your account is under review or blocked.");
@@ -174,6 +174,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       newSocket.emit("get_current_price");
       newSocket.emit("get_trade_history");
       newSocket.emit("get_transaction_history");
+      console.log("Auth Provider:", { userData, access_token, refresh_token });
+      return userData;
     } catch (error) {
       setIsLoading(false);
       toast.error("Login failed");
@@ -183,20 +185,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      const response = await LogoutUser();
-      if (response.message) {
-        toast.success(response.message);
+      // const response = await LogoutUser();
+      // if (response.message) {
+        // toast.success(response.message);
         setIsLoading(true);
         sessionStorage.removeItem("authToken");
         sessionStorage.removeItem("refreshToken");
         setIsAuth(false);
         setUser(null);
-        setTransactions([]);
         if (socket) {
           socket.disconnect();
           setSocket(null);
         }
-      }
+      // }
     } catch (error: unknown | Error) {
       setIsLoading(false);
       console.error("Logout failed:", error);
@@ -233,7 +234,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     }
   };
-  
 
   useEffect(() => {
     const token = sessionStorage.getItem("authToken");

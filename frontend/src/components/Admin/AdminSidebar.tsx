@@ -38,7 +38,7 @@ const menuItems = [
     to: "/a/referrals",
     icon: FaCoins,
     label: "Referrals",
-    isAllowed: ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER", "MODERATOR", "SUPPORT"],
+    isAllowed: ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER",],
   },
   {
     to: "/a/utility",

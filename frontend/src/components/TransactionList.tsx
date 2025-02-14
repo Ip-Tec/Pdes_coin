@@ -10,31 +10,31 @@ const TransactionList = () => {
   // Check if transactions is an empty array or not passed at all
   // console.log({ transactions });
   const { transactions } = useAuth();
-
+  console.log({ transactions });
   if (!transactions || transactions.length <= 0) {
     return (
       <div className="mt-6">
         <h3 className="text-lg font-bold text-slate-700">Transactions</h3>
         <p className="text-center text-gray-500">
-          You have no transactions yet.
+          There are no transactions yet.
         </p>
       </div>
     );
   }
 
   return (
-    <div className="mb-48 overflow-y-auto no-scrollbar ">
+    <div className="w-full h-full md:mb-32">
       <div className="flex justify-between items-center mt-6 text-black min-h-fit">
         <h3 className="text-lg font-bold">Transactions</h3>
         {/* <Link to="#" className="text-primary hover:underline">
           See All
         </Link> */}
       </div>
-      <div className="mt-3 space-y-3 flex flex-col">
+      <div className="mt-3 space-y-3 md:mb-48 md:overflow-y-scrool md:no-scrollbar md:h-screen flex flex-col">
         {transactions.map((transaction) => (
           <div
             key={transaction.id}
-            className={`flex group text-white justify-between items-center p-4 rounded-lg shadow ${
+            className={`flex group  text-white justify-between items-center p-4 rounded-lg shadow ${
               transaction.transaction_type
                 .toString()
                 .toLowerCase()
