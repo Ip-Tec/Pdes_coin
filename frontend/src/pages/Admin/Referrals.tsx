@@ -9,14 +9,22 @@ import {
   getReferrerAndReward,
   getReferrersInRange,
 } from "../../services/adminAPI";
-import { useAuth } from "../../contexts/AuthContext";
+// import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "react-toastify";
 
 const Referrals = () => {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [referrals, setReferrals] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [referralRewards, setReferralRewards] = useState([]);
+  const [filteredReferrers, setFilteredReferrers] = useState<User[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  console.log({ referralRewards });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -24,9 +32,13 @@ const Referrals = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch top referrers
         const referrers = await getTopReferrersAdminPage(10);
-        setReferrals(referrers);
+        setReferrals(referrers as User[]);
+        const rewards = await getReferrerAndReward();
+        setReferralRewards(rewards);
+        
+        const allReferrals = await getReferrals();
+        setReferrals(allReferrals as User[]);
       } catch (err) {
         console.error("Error fetching referrals:", err);
         setError("Failed to load referrals");
@@ -39,23 +51,34 @@ const Referrals = () => {
     fetchData();
   }, []);
 
-  // User Permissions
-  const userRole = user?.role || "";
-  const canEdit = ["ADMIN", "SUPER_ADMIN", "OWNER"].includes(userRole);
-  const canDelete = ["ADMIN", "SUPER_ADMIN", "OWNER"].includes(userRole);
-  const canExport = ["ADMIN", "SUPER_ADMIN", "OWNER"].includes(userRole);
-  const canViewStats = ["SUPPORT", "MODERATOR", "ADMIN", "SUPER_ADMIN", "OWNER"].includes(userRole);
+  const fetchReferrersInRange = async () => {
+    if (!startDate || !endDate) {
+      toast.error("Please select both start and end dates");
+      return;
+    }
+    try {
+      setLoading(true);
+      setError(null);
+      const filteredReferrers = await getReferrersInRange(startDate, endDate);
+      setFilteredReferrers(filteredReferrers as User[]);
+    } catch (err) {
+      console.error("Error fetching referrers in range:", err);
+      setError("Failed to load filtered referrers");
+      toast.error("Failed to load filtered referrers");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Chart Data
   const chartData = {
-    labels: referrals.map((r) => r.full_name),
+    labels: referrals.map((ref) => ref.full_name),
     datasets: [
       {
-        label: "Total Referrals",
-        data: referrals.map((r) => r.total_referrals),
-        backgroundColor: "#6366F1",
-        borderColor: "#4F46E5",
-        borderWidth: 2,
+        label: "Referral Rewards",
+        data: referrals.map((ref) => ref.referral_reward),
+        backgroundColor: "rgba(54, 162, 235, 0.6)",
+        borderColor: "rgba(54, 162, 235, 1)",
+        borderWidth: 1,
       },
     ],
   };
@@ -64,19 +87,48 @@ const Referrals = () => {
     <AdminWrapper>
       <div className="p-6 mb-4 md:p-10 min-h-screen w-full text-gray-800">
         <h2 className="text-3xl font-bold my-6 text-bgColor">Referrals</h2>
-
-        {canExport && (
-          <button className="bg-primary-light hover:bg-bgColor text-white px-4 py-2 rounded mb-4">
-            Export Data
+        <div className="flex items-center gap-4 mb-4">
+          <input
+            type="text"
+            placeholder="Search referrals..."
+            className="border p-2 rounded w-1/3"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button
+            className="bg-primary-light hover:bg-bgColor text-white px-4 py-2 rounded"
+            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+          >
+            Sort {sortOrder === "asc" ? "Descending" : "Ascending"}
           </button>
-        )}
-
-        {/* Error and Loading States */}
+        </div>
+        <div className="flex items-center gap-4 mb-4">
+          <input
+            type="date"
+            className="border p-2 rounded"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+          <input
+            type="date"
+            className="border p-2 rounded"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+          <button
+            className="bg-primary-light hover:bg-bgColor text-white px-4 py-2 rounded"
+            onClick={fetchReferrersInRange}
+          >
+            Filter by Date
+          </button>
+        </div>
+        <div className="my-6">
+          <h3 className="text-2xl font-bold">Referral Rewards Chart</h3>
+          <Bar data={chartData} />
+        </div>
         {loading && <p className="text-gray-500">Loading referrals...</p>}
         {error && <p className="text-red-500">{error}</p>}
-
-        {/* Table */}
-        {!loading && !error && referrals.length > 0 ? (
+        {!loading && !error && filteredReferrers.length > 0 ? (
           <div className="overflow-x-auto shadow-lg rounded-lg">
             <table className="w-full text-sm text-left text-gray-600 border-collapse">
               <thead className="bg-primary-light text-white uppercase text-sm">
@@ -85,11 +137,10 @@ const Referrals = () => {
                   <th className="p-3">Email</th>
                   <th className="p-3">Referral Code</th>
                   <th className="p-3">Referral Reward</th>
-                  {canEdit && <th className="p-3">Actions</th>}
                 </tr>
               </thead>
               <tbody>
-                {referrals.map((referral: User, index) => (
+                {filteredReferrers.map((referral: User, index) => (
                   <tr
                     key={referral.id}
                     className={`${index % 2 === 0 ? "bg-gray-100" : "bg-white"} hover:bg-gray-200`}
@@ -100,18 +151,6 @@ const Referrals = () => {
                     <td className="p-3 font-bold text-primary-light">
                       {referral.referral_reward}
                     </td>
-                    {canEdit && (
-                      <td className="p-3">
-                        <button className="text-blue-500 hover:text-blue-700 mr-2">
-                          Edit
-                        </button>
-                        {canDelete && (
-                          <button className="text-red-500 hover:text-red-700">
-                            Delete
-                          </button>
-                        )}
-                      </td>
-                    )}
                   </tr>
                 ))}
               </tbody>
@@ -119,14 +158,6 @@ const Referrals = () => {
           </div>
         ) : (
           !loading && <p className="text-gray-500">No referrals found.</p>
-        )}
-
-        {/* Chart Section */}
-        {canViewStats && referrals.length > 0 && (
-          <div className="mt-8 p-4 bg-white shadow-md rounded-lg">
-            <h3 className="text-xl font-semibold text-gray-700">Referral Statistics</h3>
-            <Bar data={chartData} />
-          </div>
         )}
       </div>
     </AdminWrapper>

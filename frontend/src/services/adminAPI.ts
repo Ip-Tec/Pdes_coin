@@ -331,7 +331,7 @@ export const getReferrerAndReward = async () => {
 };
 
 // 2️⃣ Get all referrals of a specific user
-export const getReferrals = async (userId: number) => {
+export const getReferrals = async (userId: number = 6) => {
   try {
     const response = await API.get<{ referrals: User[] }>(
       apiUrl(`/admin/referrals/${userId}`)
