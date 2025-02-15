@@ -5,6 +5,10 @@ node_modules/
 app/__pycache__/
 app/routes/__pycache__/ 
 
+__pycache__/
+*.pyc
+
+
 # Logs
 logs
 *.log
