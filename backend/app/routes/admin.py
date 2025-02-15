@@ -1325,3 +1325,96 @@ def update_user(current_user, *args, **kwargs):
     except SQLAlchemyError as e:
         db.session.rollback()
         return jsonify({"error": f"Database error: {str(e)}"}), 500
+
+
+# Dummy token_required decorator (Replace with your real authentication system)
+
+@admin_bp.route("/referrals", methods=["GET"])
+@token_required
+def get_referrals(current_user):
+    """ Get all users that the current user has referred """
+    referrals = User.query.filter_by(referrer_id=current_user.id).all()
+    serialized_referrals = [referral.serialize() for referral in referrals]
+    return jsonify({"referrals": serialized_referrals}), 200
+
+
+@admin_bp.route("/referrer/<int:user_id>", methods=["GET"])
+@token_required
+def get_referrer_and_reward(user_id):
+    """ Get referrer details and reward """
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    if not user.referrer:
+        return jsonify({"message": "This user was not referred by anyone"}), 404
+
+    referrer = user.referrer
+    return jsonify({
+        "referrer_id": referrer.id,
+        "referrer_name": referrer.name,
+        "referrer_email": referrer.email,
+        "referral_reward": referrer.referral_reward,
+        "total_referrals": referrer.total_referrals,
+    }), 200
+
+
+@admin_bp.route("/top-referrers", methods=["GET"])
+def get_top_referrers():
+    """ Get top referrers """
+    limit = request.args.get("limit", default=10, type=int)
+    top_referrers = (
+        User.query.filter(User.total_referrals > 0)
+        .order_by(User.total_referrals.desc())
+        .limit(limit)
+        .all()
+    )
+    return jsonify({
+        "top_referrers": [
+            {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "total_referrals": user.total_referrals,
+                "referral_reward": user.referral_reward,
+            }
+            for user in top_referrers
+        ]
+    }), 200
+
+
+@admin_bp.route("/referrers-in-range", methods=["GET"])
+def get_referrers_in_range():
+    """ Get referrers within a date range """
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+
+    try:
+        start_date = datetime.strptime(start_date, "%Y-%m-%d")
+        end_date = datetime.strptime(end_date, "%Y-%m-%d")
+    except ValueError:
+        return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+    referrers = (
+        User.query.filter(
+            User.created_at >= start_date,
+            User.created_at <= end_date,
+            User.total_referrals > 0,
+        )
+        .order_by(User.total_referrals.desc())
+        .all()
+    )
+
+    return jsonify({
+        "referrers": [
+            {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "total_referrals": user.total_referrals,
+                "referral_reward": user.referral_reward,
+                "created_at": user.created_at.isoformat(),
+            }
+            for user in referrers
+        ]
+    }), 200

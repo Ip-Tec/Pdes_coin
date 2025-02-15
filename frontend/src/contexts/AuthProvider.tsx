@@ -174,7 +174,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       newSocket.emit("get_current_price");
       newSocket.emit("get_trade_history");
       newSocket.emit("get_transaction_history");
-      console.log("Auth Provider:", { userData, access_token, refresh_token });
+      // console.log("Auth Provider:", { userData, access_token, refresh_token });
       return userData;
     } catch (error) {
       setIsLoading(false);

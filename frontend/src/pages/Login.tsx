@@ -82,8 +82,8 @@ const Login: React.FC = () => {
           formData.password
         );
         // const  = user;
-        const { user, access_token, refresh_token } = loginResponse;
-        console.log("Login page:",{ user, access_token, refresh_token });
+        // const { user, access_token, refresh_token } = loginResponse;
+        // console.log("Login page:",{ user, access_token, refresh_token });
         if (loginResponse?.user?.role !== "user") {
           navigate("/a/dashboard");
         } else {

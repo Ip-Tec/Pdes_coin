@@ -312,3 +312,77 @@ export const changePassword = async (data: User, password: string) => {
     throw new Error("Network error. Please try again.");
   }
 };
+
+// 1️⃣ Get user referrer and reward
+export const getReferrerAndReward = async () => {
+  try {
+    const response = await API.get(apiUrl("/admin/referrals"));
+    toast.success("Referrer details fetched successfully");
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.error);
+      console.error(errorData);
+      return errorData;
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// 2️⃣ Get all referrals of a specific user
+export const getReferrals = async (userId: number) => {
+  try {
+    const response = await API.get<{ referrals: User[] }>(
+      apiUrl(`/admin/referrals/${userId}`)
+    );
+    toast.success("Referrals fetched successfully");
+    return response.data.referrals;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.error);
+      console.error(errorData);
+      return errorData;
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// 3️⃣ Get top referrers (default limit: 10)
+export const getTopReferrersAdminPage = async (limit: number = 10) => {
+  try {
+    const response = await API.get<{ top_referrers: User[] }>(
+      apiUrl(`/admin/top-referrers?limit=${limit}`)
+    );
+    toast.success("Top referrers fetched successfully");
+    return response.data.top_referrers;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.error);
+      console.error(errorData);
+      return errorData;
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// 4️⃣ Get referrers within a date range
+export const getReferrersInRange = async (startDate: string, endDate: string) => {
+  try {
+    const response = await API.get<{ referrers: User[] }>(
+      apiUrl(`/admin/referrers-in-range?start_date=${startDate}&end_date=${endDate}`)
+    );
+    toast.success("Referrers in range fetched successfully");
+    return response.data.referrers;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.error);
+      console.error(errorData);
+      return errorData;
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
