@@ -7,10 +7,11 @@ import InputField from "../components/InputField";
 import { FaArrowLeft } from "react-icons/fa";
 import { formattedMoneyUSD } from "../utils/helpers";
 import { toast, ToastContainer } from "react-toastify";
-import LiveChart from "../components/LiveChart";
+// import LiveChart from "../components/LiveChart";
 // import CandleStickChart from "../components/CandleStickChart";
 import { TradePrice } from "../utils/type";
 import Loading from "../components/Loading";
+import PriceChart from "../components/PriceChart";
 
 function BuySellCoin() {
   const { isAuth, user, setUser, tradePrice } = useAuth();
@@ -294,11 +295,12 @@ function BuySellCoin() {
 
         <div className="mt-8">
           {chartType === "line" && (
-            <LiveChart action={action}/>
+            <PriceChart />
+            // <LiveChart action={action}/>
           ) 
           // : (
           //   <div className="mt-4">
-          //     <CandleStickChart />
+          //     <PriceChart />
           //   </div>
           // )
           }

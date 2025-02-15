@@ -8,28 +8,35 @@ interface PriceHistoryItem {
   close_price: number;
 }
 
-const PriceChart: React.FC = () => {
+interface PriceChartProps {
+  showTimestamp?: boolean; // Prop to control timestamp visibility
+}
+
+const PriceChart: React.FC<PriceChartProps> = ({ showTimestamp = false }) => {
   const [chartData, setChartData] = useState<ChartData<"line"> | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch price history from the backend
-    API
-    .get<PriceHistoryItem[]>(url + "/transactions/price-history")
+    API.get<PriceHistoryItem[]>(url + "/transactions/price-history")
       .then((response) => {
         const data = response.data;
 
-        // Prepare data for the chart
-        const timestamps = data.map((item) =>
-          new Date(item.timestamp).toLocaleString()
-        );
+        // If timestamps should be shown, format them; otherwise, use empty labels
+        const timestamps = showTimestamp
+          ? data.map((item) => new Date(item.timestamp).toLocaleString())
+          : data.map(() => ""); // Hide timestamps
+
+        const labelTexts = showTimestamp
+          ? "Close Price"
+          : "";
+
         const closePrices = data.map((item) => item.close_price);
 
         setChartData({
           labels: timestamps,
           datasets: [
             {
-              label: "Close Price",
+              label: labelTexts,
               data: closePrices,
               borderColor: "rgba(75,192,192,1)",
               backgroundColor: "rgba(75,192,192,0.2)",
@@ -42,13 +49,13 @@ const PriceChart: React.FC = () => {
         console.error("Error fetching price history:", error);
         setError("Failed to fetch price data. Please try again later.");
       });
-  }, []);
+  }, [showTimestamp]);
 
   if (error) return <p>{error}</p>;
   if (!chartData) return <p>Loading...</p>;
 
   return (
-    <div className="text-gray-600 bg-white w-full rounded-lg shadow-lg p-6">
+    <div className="text-gray-600 bg-white w-full">
       <h2>PDES Trading Chart</h2>
       <Line data={chartData} options={{ responsive: true }} />
     </div>

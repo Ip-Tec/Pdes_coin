@@ -191,7 +191,7 @@ function Deposit() {
                 {accountDetails &&
                   accountDetails.max_deposit_amount &&
                   [
-                    5000, 10000, 20000, 30000, 50000, 70000, 100000, 300000,
+                    2000, 5000, 10000, 20000, 30000, 50000, 70000, 100000, 300000,
                     500000,
                   ]
                     .filter(
