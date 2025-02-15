@@ -318,6 +318,7 @@ export const getReferrerAndReward = async (userId: number) => {
   try {
     const response = await API.get(apiUrl(`/admin/referrer/${userId}`));
     toast.success("Referrer details fetched successfully");
+    console.log({response});
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -337,6 +338,7 @@ export const getReferrals = async (userId: number = 6) => {
       apiUrl(`/admin/referrals/${userId}`)
     );
     toast.success("Referrals fetched successfully");
+    console.log({response});
     return response.data.referrals;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -356,6 +358,7 @@ export const getTopReferrersAdminPage = async (limit: number = 10) => {
       apiUrl(`/admin/top-referrers?limit=${limit}`)
     );
     toast.success("Top referrers fetched successfully");
+    console.log({response});
     return response.data.top_referrers;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -375,6 +378,7 @@ export const getReferrersInRange = async (startDate: string, endDate: string) =>
       apiUrl(`/admin/referrers-in-range?start_date=${startDate}&end_date=${endDate}`)
     );
     toast.success("Referrers in range fetched successfully");
+    console.log({response});
     return response.data.referrers;
   } catch (error) {
     if (axios.isAxiosError(error)) {

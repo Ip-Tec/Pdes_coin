@@ -1,160 +1,111 @@
 import { useState, useEffect } from "react";
 import { User } from "../../utils/type";
 import AdminWrapper from "../../components/Admin/AdminWrapper";
-import { Bar } from "react-chartjs-2";
-import "chart.js/auto";
 import {
-  getTopReferrersAdminPage,
+  getReferrals,
   getReferrerAndReward,
   getReferrersInRange,
+  getTopReferrersAdminPage,
 } from "../../services/adminAPI";
 import { useAuth } from "../../contexts/AuthContext";
-import { toast } from "react-toastify";
+import { AxiosError } from "axios";
 
 const Referrals = () => {
   const { user } = useAuth();
   const [referrals, setReferrals] = useState<User[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [referralRewards, setReferralRewards] = useState([]);
-  const [filteredReferrers, setFilteredReferrers] = useState<User[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [sortOrder, setSortOrder] = useState("asc");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-
-  console.log({ referralRewards });
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
-      setError(null);
-      try {
-        const referrers = await getTopReferrersAdminPage(10);
-        setReferrals(referrers as User[]);
+      setError(null); // Clear any previous errors
 
-        const rewards = await getReferrerAndReward(user!.id);
-        setReferralRewards(rewards);
-      }  catch (err) {
-        setError("Failed to load referrals");
-        toast.error("Failed to load referrals");
+      try {
+        //  These calls need to be handled individually and their data processed.
+        //  The current code overwrites the referrals state repeatedly.  I'm assuming
+        // you want ALL the referral data, not just the last call's data.
+
+        const referralsData = await getReferrals();
+        const rangeData = await getReferrersInRange("1", "222"); // You'll need to handle the range data
+        const topReferrers = await getTopReferrersAdminPage(); // And the top referrers
+        const referrerReward = await getReferrerAndReward(user!.id); // And the referrer reward
+
+        // Example combining data (adjust as needed based on your API responses)
+        // Check if referralsData is an array
+        if (Array.isArray(referralsData) && Array.isArray(rangeData) && Array.isArray(topReferrers)) {
+          const allReferrals = [
+            ...referralsData,
+            ...rangeData,
+            ...topReferrers,
+            referrerReward,
+          ];
+          setReferrals(allReferrals);
+        } else {
+          // Handle the case where referralsData is not an array (i.e., it's an ErrorResponse)
+          setError("Failed to fetch referrals.");
+
+          console.error("Error fetching referrals:", referralsData);
+        }
+      } catch (err: AxiosError) {
+        // Catch potential errors
+        setError(err.message || "Failed to fetch referrals.");
         console.error("Error fetching referrals:", err);
       } finally {
         setLoading(false);
       }
     };
+
     fetchData();
-  }, [user, user?.id]);
+  }, [user]); // Add user to dependency array
 
-  const fetchReferrersInRange = async () => {
-    if (!startDate || !endDate) {
-      toast.error("Please select both start and end dates");
-      return;
-    }
-    try {
-      setLoading(true);
-      setError(null);
-      const filteredReferrers = await getReferrersInRange(startDate, endDate);
-      setFilteredReferrers(filteredReferrers as User[]);
-    } catch (err) {
-      console.error("Error fetching referrers in range:", err);
-      setError("Failed to load filtered referrers");
-      toast.error("Failed to load filtered referrers");
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (loading) {
+    return <AdminWrapper>Loading referrals...</AdminWrapper>;
+  }
 
-  const chartData = {
-    labels: referrals.map((ref) => ref.full_name),
-    datasets: [
-      {
-        label: "Referral Rewards",
-        data: referrals.map((ref) => ref.referral_reward),
-        backgroundColor: "rgba(54, 162, 235, 0.6)",
-        borderColor: "rgba(54, 162, 235, 1)",
-        borderWidth: 1,
-      },
-    ],
-  };
+  if (error) {
+    return (
+      <AdminWrapper>
+        <div className="text-red-500">Error: {error}</div>
+      </AdminWrapper>
+    );
+  }
 
   return (
     <AdminWrapper>
-      <div className="p-6 mb-4 md:p-10 min-h-screen w-full text-gray-800">
-        <h2 className="text-3xl font-bold my-6 text-bgColor">Referrals</h2>
-        <div className="flex items-center gap-4 mb-4">
-          <input
-            type="text"
-            placeholder="Search referrals..."
-            className="border p-2 rounded w-1/3"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-          <button
-            className="bg-primary-light hover:bg-bgColor text-white px-4 py-2 rounded"
-            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
-          >
-            Sort {sortOrder === "asc" ? "Descending" : "Ascending"}
-          </button>
-        </div>
-        <div className="flex items-center gap-4 mb-4">
-          <input
-            type="date"
-            className="border p-2 rounded"
-            value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
-          />
-          <input
-            type="date"
-            className="border p-2 rounded"
-            value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
-          />
-          <button
-            className="bg-primary-light hover:bg-bgColor text-white px-4 py-2 rounded"
-            onClick={fetchReferrersInRange}
-          >
-            Filter by Date
-          </button>
-        </div>
-        <div className="my-6">
-          <h3 className="text-2xl font-bold">Referral Rewards Chart</h3>
-          <Bar data={chartData} />
-        </div>
-        {loading && <p className="text-gray-500">Loading referrals...</p>}
-        {error && <p className="text-red-500">{error}</p>}
-        {!loading && !error && filteredReferrers.length > 0 ? (
-          <div className="overflow-x-auto shadow-lg rounded-lg">
-            <table className="w-full text-sm text-left text-gray-600 border-collapse">
-              <thead className="bg-primary-light text-white uppercase text-sm">
-                <tr>
-                  <th className="p-3">User</th>
-                  <th className="p-3">Email</th>
-                  <th className="p-3">Referral Code</th>
-                  <th className="p-3">Referral Reward</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredReferrers.map((referral: User, index) => (
-                  <tr
-                    key={referral.id}
-                    className={`${
-                      index % 2 === 0 ? "bg-gray-100" : "bg-white"
-                    } hover:bg-gray-200`}
-                  >
-                    <td className="p-3">{referral.full_name}</td>
-                    <td className="p-3">{referral.email}</td>
-                    <td className="p-3">{referral.referral_code}</td>
-                    <td className="p-3 font-bold text-primary-light">
-                      {referral.referral_reward}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+      <div className="p-4 md:p-8 min-h-screen my-16 w-auto relative text-gray-600">
+        <h2 className="text-2xl font-semibold mb-4">Referrals</h2>
+
+        {referrals.length === 0 ? (
+          <p>No referrals found.</p>
         ) : (
-          !loading && <p className="text-gray-500">No referrals found.</p>
+          <table className="min-w-full border border-collapse table-auto">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="border px-4 py-2">User</th>
+                <th className="border px-4 py-2">Referred User</th>{" "}
+                {/*  If available */}
+                <th className="border px-4 py-2">Referral Code</th>{" "}
+                {/* If available */}
+                <th className="border px-4 py-2">Referral Reward</th>
+                {/* Add more columns as needed */}
+              </tr>
+            </thead>
+            <tbody>
+              {referrals.map((referral: User) => (
+                <tr key={referral.id} className="border-b hover:bg-gray-50">
+                  <td className="border px-4 py-2">{referral.full_name}</td>
+                  <td className="border px-4 py-2">{referral.email}</td>{" "}
+                  {/* Or referred user name */}
+                  <td className="border px-4 py-2">{referral.referral_code}</td>
+                  <td className="border px-4 py-2">
+                    {referral.referral_reward}
+                  </td>
+                  {/* Add more data cells as needed */}
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
     </AdminWrapper>

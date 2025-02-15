@@ -1342,45 +1342,25 @@ def get_referrals(current_user):
 def get_referrer_and_reward(user_id):
     """ Get referrer details and reward """
     user = User.query.get(user_id)
-    if not user:
-        return jsonify({"error": "User not found"}), 404
+    try:
+        user = User.query.get(user_id)
+        if not user:
+            return jsonify({"error": "User not found"}), 404
 
-    if not user.referrer:
-        return jsonify({"message": "This user was not referred by anyone"}), 404
+        if not user.referrer:
+            return jsonify({"message": "This user was not referred by anyone"}), 404
 
-    referrer = user.referrer
-    return jsonify({
-        "referrer_id": referrer.id,
-        "referrer_name": referrer.name,
-        "referrer_email": referrer.email,
-        "referral_reward": referrer.referral_reward,
-        "total_referrals": referrer.total_referrals,
-    }), 200
-
-
-@admin_bp.route("/top-referrers", methods=["GET"])
-def get_top_referrers():
-    """ Get top referrers """
-    limit = request.args.get("limit", default=10, type=int)
-    top_referrers = (
-        User.query.filter(User.total_referrals > 0)
-        .order_by(User.total_referrals.desc())
-        .limit(limit)
-        .all()
-    )
-    return jsonify({
-        "top_referrers": [
-            {
-                "id": user.id,
-                "name": user.name,
-                "email": user.email,
-                "total_referrals": user.total_referrals,
-                "referral_reward": user.referral_reward,
-            }
-            for user in top_referrers
-        ]
-    }), 200
-
+        referrer = user.referrer
+        return jsonify({
+            "referrer_id": referrer.id,
+            "referrer_name": referrer.name,
+            "referrer_email": referrer.email,
+            "referral_reward": referrer.referral_reward,
+            "total_referrals": referrer.total_referrals,
+        }), 200
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+   
 
 @admin_bp.route("/referrers-in-range", methods=["GET"])
 def get_referrers_in_range():
