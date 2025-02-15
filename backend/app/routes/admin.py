@@ -1327,7 +1327,6 @@ def update_user(current_user, *args, **kwargs):
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
 
-# Dummy token_required decorator (Replace with your real authentication system)
 
 @admin_bp.route("/referrals", methods=["GET"])
 @token_required
@@ -1418,3 +1417,4 @@ def get_referrers_in_range():
             for user in referrers
         ]
     }), 200
+

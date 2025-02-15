@@ -4,16 +4,15 @@ import AdminWrapper from "../../components/Admin/AdminWrapper";
 import { Bar } from "react-chartjs-2";
 import "chart.js/auto";
 import {
-  getReferrals,
   getTopReferrersAdminPage,
   getReferrerAndReward,
   getReferrersInRange,
 } from "../../services/adminAPI";
-// import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../contexts/AuthContext";
 import { toast } from "react-toastify";
 
 const Referrals = () => {
-  // const { user } = useAuth();
+  const { user } = useAuth();
   const [referrals, setReferrals] = useState<User[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,28 +27,24 @@ const Referrals = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      setLoading(true);
+      setError(null);
       try {
-        setLoading(true);
-        setError(null);
-
         const referrers = await getTopReferrersAdminPage(10);
         setReferrals(referrers as User[]);
-        const rewards = await getReferrerAndReward();
+
+        const rewards = await getReferrerAndReward(user!.id);
         setReferralRewards(rewards);
-        
-        const allReferrals = await getReferrals();
-        setReferrals(allReferrals as User[]);
-      } catch (err) {
-        console.error("Error fetching referrals:", err);
+      }  catch (err) {
         setError("Failed to load referrals");
         toast.error("Failed to load referrals");
+        console.error("Error fetching referrals:", err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
-  }, []);
+  }, [user, user?.id]);
 
   const fetchReferrersInRange = async () => {
     if (!startDate || !endDate) {
@@ -143,7 +138,9 @@ const Referrals = () => {
                 {filteredReferrers.map((referral: User, index) => (
                   <tr
                     key={referral.id}
-                    className={`${index % 2 === 0 ? "bg-gray-100" : "bg-white"} hover:bg-gray-200`}
+                    className={`${
+                      index % 2 === 0 ? "bg-gray-100" : "bg-white"
+                    } hover:bg-gray-200`}
                   >
                     <td className="p-3">{referral.full_name}</td>
                     <td className="p-3">{referral.email}</td>

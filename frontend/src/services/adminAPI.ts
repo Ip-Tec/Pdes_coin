@@ -314,9 +314,9 @@ export const changePassword = async (data: User, password: string) => {
 };
 
 // 1️⃣ Get user referrer and reward
-export const getReferrerAndReward = async () => {
+export const getReferrerAndReward = async (userId: number) => {
   try {
-    const response = await API.get(apiUrl("/admin/referrals"));
+    const response = await API.get(apiUrl(`/admin/referrer/${userId}`));
     toast.success("Referrer details fetched successfully");
     return response.data;
   } catch (error) {
