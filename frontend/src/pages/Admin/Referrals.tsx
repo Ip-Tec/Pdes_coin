@@ -47,10 +47,13 @@ const Referrals = () => {
 
           console.error("Error fetching referrals:", referralsData);
         }
-      } catch (err: AxiosError) {
-        // Catch potential errors
-        setError(err.message || "Failed to fetch referrals.");
-        console.error("Error fetching referrals:", err);
+      } catch (err: unknown) {
+        if (err instanceof AxiosError) {
+          setError(err.message || "Failed to fetch referrals.");
+          console.error("Error fetching referrals:", err);
+        } else {
+          // Handle other types of errors
+        }
       } finally {
         setLoading(false);
       }
