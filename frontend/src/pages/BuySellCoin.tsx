@@ -21,9 +21,9 @@ function BuySellCoin() {
   const [isLoading, setIsLoading] = useState(true);
   const [buttonLoading, setButtonLoading] = useState(false);
   const [conversionMessage, setConversionMessage] = useState<string>("");
-  const [chartType, setChartType] = useState<"line" | "candlestick">("line");
+  // const [chartType, setChartType] = useState<"line" | "candlestick">("line");
   const [useUsd, setUseUsd] = useState(true);
-  
+
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -31,11 +31,17 @@ function BuySellCoin() {
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
     // If URL contains "?sell" or the pathname includes "sell", set action to sell.
-    if (searchParams.has("sell") || location.pathname.toLowerCase().includes("sell")) {
+    if (
+      searchParams.has("sell") ||
+      location.pathname.toLowerCase().includes("sell")
+    ) {
       setAction("sell");
     }
     // Otherwise, if it contains "?buy" or pathname includes "buy", set action to buy.
-    else if (searchParams.has("buy") || location.pathname.toLowerCase().includes("buy")) {
+    else if (
+      searchParams.has("buy") ||
+      location.pathname.toLowerCase().includes("buy")
+    ) {
       setAction("buy");
     }
   }, [location]);
@@ -153,20 +159,20 @@ function BuySellCoin() {
     }
   };
 
-  const handleChartTypeChange = () => {
-    setChartType(chartType === "line" ? "candlestick" : "line");
-  };
+  // const handleChartTypeChange = () => {
+  //   setChartType(chartType === "line" ? "candlestick" : "line");
+  // };
 
   if (isLoading) {
     return (
-      <div className="text-center flex justify-center items-center text-gray-600">
-        Loading coin price...
+      <div className="animate-bounce text-2xl text-center flex h-screen justify-center items-center text-gray-600">
+        Loading coin...
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen md:mb-32 bg-mainBG text-neutral-600 p-4 overflow-y-auto">
+    <div className="h-auto md:mb-32 bg-mainBG text-neutral-600 p-4">
       <ToastContainer />
       <button
         className="flex items-center text-lg text-primary mb-5 px-3 py-4 md:hidden z-20"
@@ -175,145 +181,155 @@ function BuySellCoin() {
         <FaArrowLeft className="mr-2" />
         <span>Back</span>
       </button>
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow-lg p-6 mb-16">
-        <h1 className="text-2xl font-semibold text-center mb-6">
-          Buy and Sell PDES Coin
-        </h1>
+      <div className="w-full flex flex-col lg:flex-row items-start justify-between gap-2 bg-white rounded-lg shadow-lg p-6">
+        <main className="md:w-[70%] w-full h-full m-auto">
+          <h1 className="text-2xl font-semibold text-center mb-6">
+            Buy and Sell PDES Coin
+          </h1>
 
-        <div className="flex my-4 overflow-x-auto no-scrollbar flex-row justify-evenly items-center gap-6 p-4 bg-gray-100 rounded-lg shadow-md">
-          <div className="text-center flex flex-col items-center border-r border-green-500 pr-6">
-            <span className="text-sm font-medium text-gray-700">
-              PDES Price:
-            </span>
-            <span className="text-green-500 text-lg font-semibold">
-              {action === "buy"
-                ? formattedMoneyUSD(price?.pdes_buy_price || 0)
-                : formattedMoneyUSD(price?.pdes_sell_price || 0)}
-            </span>
+          <div className="flex my-4 overflow-x-auto no-scrollbar flex-row justify-evenly items-center gap-6 p-4 bg-gray-100 rounded-lg shadow-md">
+            <div className="text-center flex flex-col items-center border-r border-green-500 pr-6">
+              <span className="text-sm font-medium text-gray-700">
+                PDES Price:
+              </span>
+              <span className="text-green-500 text-lg font-semibold">
+                {action === "buy"
+                  ? formattedMoneyUSD(price?.pdes_buy_price || 0)
+                  : formattedMoneyUSD(price?.pdes_sell_price || 0)}
+              </span>
+            </div>
+
+            <div className="text-center flex flex-col items-center border-r border-blue-500 pr-6">
+              <span className="text-sm font-medium text-gray-700">
+                Balance:
+              </span>
+              <span className="text-blue-500 text-lg font-semibold">
+                {formattedMoneyUSD(Number(user?.balance.toFixed(4)) || 0)}
+              </span>
+            </div>
+
+            <div className="text-center flex flex-col items-center border-r border-blue-500 pr-6">
+              <span className="text-sm font-medium text-gray-700">
+                PDES Balance:
+              </span>
+              <span className="text-blue-500 text-lg font-semibold">
+                {user?.crypto_balance?.toFixed(8)}
+              </span>
+            </div>
+
+            <div className="text-center flex flex-col items-center">
+              <span className="text-sm font-medium text-gray-700">
+                {action === "buy" ? "Buy at:" : "Sell at:"}
+              </span>
+              <span
+                className={`text-lg font-semibold ${
+                  action === "buy" ? "text-green-500" : "text-red-500"
+                }`}
+              >
+                {action === "buy"
+                  ? formattedMoneyUSD(price?.pdes_buy_price || 0)
+                  : formattedMoneyUSD(price?.pdes_sell_price || 0)}
+              </span>
+            </div>
           </div>
 
-          <div className="text-center flex flex-col items-center border-r border-blue-500 pr-6">
-            <span className="text-sm font-medium text-gray-700">Balance:</span>
-            <span className="text-blue-500 text-lg font-semibold">
-              {formattedMoneyUSD(Number(user?.balance))}
-            </span>
-          </div>
+          <div className="text-justify my-4">{conversionMessage}</div>
 
-          <div className="text-center flex flex-col items-center border-r border-blue-500 pr-6">
-            <span className="text-sm font-medium text-gray-700">
-              PDES Balance:
-            </span>
-            <span className="text-blue-500 text-lg font-semibold">
-              {user?.crypto_balance?.toFixed(8)}
-            </span>
-          </div>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="flex justify-between items-center">
+              <InputField
+                required
+                name="amount"
+                type="number"
+                value={amount}
+                label={useUsd ? "Amount in USD" : "Amount of PDES"}
+                onChange={handleAmountChange}
+              />
+            </div>
 
-          <div className="text-center flex flex-col items-center">
-            <span className="text-sm font-medium text-gray-700">
-              {action === "buy" ? "Buy at:" : "Sell at:"}
-            </span>
-            <span
-              className={`text-lg font-semibold ${
-                action === "buy" ? "text-green-500" : "text-red-500"
-              }`}
-            >
-              {action === "buy"
-                ? formattedMoneyUSD(price?.pdes_buy_price || 0)
-                : formattedMoneyUSD(price?.pdes_sell_price || 0)}
-            </span>
-          </div>
-        </div>
+            <div className="flex justify-between gap-4 items-center">
+              <button
+                type="button"
+                onClick={() => handleActionChange("buy")}
+                className={`w-1/2 py-2 rounded-lg ${
+                  action === "buy"
+                    ? "bg-primary text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
+                Buy PDES
+              </button>
 
-        <div className="text-justify my-4">{conversionMessage}</div>
+              <button
+                type="button"
+                onClick={() => handleActionChange("sell")}
+                className={`w-1/2 py-2 rounded-lg ${
+                  action === "sell"
+                    ? "bg-red-600 text-white"
+                    : "bg-gray-200 text-gray-700"
+                }`}
+              >
+                Sell PDES
+              </button>
+            </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex justify-between items-center">
-            <InputField
-              required
-              name="amount"
-              type="number"
-              value={amount}
-              label={useUsd ? "Amount in USD" : "Amount of PDES"}
-              onChange={handleAmountChange}
-            />
-          </div>
+            <div className="mt-4">
+              <button
+                type="submit"
+                disabled={buttonLoading}
+                className={`w-full py-2 bg-primary text-white rounded-lg hover:bg-primary-dark ${
+                  action === "sell" && "bg-red-600 text-white hover:bg-red-700"
+                }`}
+              >
+                {buttonLoading ? (
+                  <div className="flex items-center justify-center">
+                    <Loading isLoading={true} />
+                    <span className="ml-2">Processing...</span>
+                  </div>
+                ) : (
+                  action.charAt(0).toUpperCase() + action.slice(1) + " PDES"
+                )}
+              </button>
+            </div>
+          </form>
+          <p className="text-sm text-gray-500 text-center">
+            By buying or selling PDES, you agree to the{" "}
+          </p>
 
-          <div className="flex justify-between gap-4 items-center">
+          <div className="flex justify-center mt-4">
             <button
-              type="button"
-              onClick={() => handleActionChange("buy")}
-              className={`w-1/2 py-2 rounded-lg ${
-                action === "buy"
-                  ? "bg-primary text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
+              onClick={handleUsdToggle}
+              className="py-2 px-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300"
             >
-              Buy PDES
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleActionChange("sell")}
-              className={`w-1/2 py-2 rounded-lg ${
-                action === "sell"
-                  ? "bg-red-600 text-white"
-                  : "bg-gray-200 text-gray-700"
-              }`}
-            >
-              Sell PDES
+              Toggle to {useUsd ? "PDES" : "USD"}
             </button>
           </div>
-
-          <div className="mt-4">
-            <button
-              type="submit"
-              disabled={buttonLoading}
-              className={`w-full py-2 bg-primary text-white rounded-lg hover:bg-primary-dark ${
-                action === "sell" && "bg-red-600 text-white hover:bg-red-700"
-              }`}
-            >
-              {buttonLoading ? (
-                <div className="flex items-center justify-center">
-                  <Loading isLoading={true} />
-                  <span className="ml-2">Processing...</span>
-                </div>
-              ) : (
-                action.charAt(0).toUpperCase() + action.slice(1) + " PDES"
-              )}
-            </button>
-          </div>
-        </form>
-
-        <div className="flex justify-center mt-4">
-          <button
-            onClick={handleUsdToggle}
-            className="py-2 px-4 bg-gray-200 text-black rounded-lg hover:bg-gray-300"
-          >
-            Toggle to {useUsd ? "PDES" : "USD"}
-          </button>
-        </div>
-
-        <div className="mt-8">
-          {chartType === "line" && (
+        </main>
+        <aside className="lg:w-1/2 h-auto w-full m-auto">
+          <div className="mt-8 w-full h-96">
             <PriceChart />
-            // <LiveChart action={action}/>
-          ) 
-          // : (
-          //   <div className="mt-4">
-          //     <PriceChart />
-          //   </div>
-          // )
-          }
-        </div>
+            {/* {
+              chartType === "line" && (
+                <PriceChart />
+                // <LiveChart action={action}/>
+              )
+              // : (
+              //   <div className="mt-4">
+              //     <PriceChart />
+              //   </div>
+              // )
+            } */}
+          </div>
 
-        <div className="mt-2 text-center">
-          <button
-            onClick={handleChartTypeChange}
-            className="py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary-dark"
-          >
-            Switch to {chartType === "line" ? "Candlestick" : "Line"} Chart
-          </button>
-        </div>
+          {/* <div className="mt-2 text-center">
+            <button
+              onClick={handleChartTypeChange}
+              className="py-2 px-4 bg-primary text-white rounded-lg hover:bg-primary-dark"
+            >
+              Switch to {chartType === "line" ? "Candlestick" : "Line"} Chart
+            </button>
+          </div> */}
+        </aside>
       </div>
     </div>
   );
