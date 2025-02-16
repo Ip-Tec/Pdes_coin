@@ -124,7 +124,7 @@ export const loginUser = async (loginData: {
     sessionStorage.setItem("authToken", access_token);
     sessionStorage.setItem("refreshToken", refresh_token);
 
-    console.log({ user, access_token, refresh_token });
+    // console.log({ user, access_token, refresh_token });
 
     return { user, access_token, refresh_token };
   } catch (error) {
