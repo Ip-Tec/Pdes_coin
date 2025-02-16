@@ -6,7 +6,7 @@ export const formatCurrency = (amount: number): string => {
 };
 
 export const formattedMoneyUSD = (number: number): string => {
-  const truncated = Math.floor(number * 100) / 100; // Keep only two decimal places without rounding up
+  const truncated = Math.floor(number * 100) / 100;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
