@@ -176,6 +176,24 @@ export const getTransactionHistory = async () => {
     return [];
   }
 };
+// Get Transaction History Socket
+export const getTransactionHistorySocket = async () => {
+  try {
+    const response = await API.get(apiUrl("/transactions/history-socket"));
+    return response.data.transactions;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      if (error.response && error.response.status === 401) {
+        window.location.href = "/login";
+      }
+      const errorData: ErrorResponse = error.response?.data;
+      console.error(errorData?.message || "Failed to fetch transactions");
+      return [];
+    }
+    console.error("Network error. Please try again.");
+    return [];
+  }
+};
 
 // Get Trade History
 export const getTradeHistory = async () => {

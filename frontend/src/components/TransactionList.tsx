@@ -1,5 +1,8 @@
 // import { Link } from "react-router-dom";
+import { useState } from "react";
 import { useAuth } from "../contexts/AuthContext";
+import { TransactionHistory } from "../utils/type";
+import { getTransactionHistorySocket } from "../services/api";
 // import { TransactionHistory } from "../utils/type";
 
 // interface TransactionListProps {
@@ -10,7 +13,17 @@ const TransactionList = () => {
   // Check if transactions is an empty array or not passed at all
   // console.log({ transactions });
   const { transactions } = useAuth();
-  if (!transactions || transactions.length <= 0) {
+  const [localTransactions, setLocalTransactions] = useState<
+    TransactionHistory[]
+  >([]);
+
+  const getTransactionHistory = async () => {
+    const transactions = await getTransactionHistorySocket();
+    setLocalTransactions(transactions);
+  };
+
+  getTransactionHistory();
+  if (!transactions || transactions.length <= 0 || !localTransactions) {
     return (
       <div className="mt-6">
         <h3 className="text-lg font-bold text-slate-700">Transactions</h3>

@@ -40,6 +40,12 @@ def transaction_history():
     transactions = UserTransactionsController.get_transactions()
     return transactions
 
+# Get Transaction history socket
+@txn_bp.route("/history-socket", methods=["GET"])
+def transaction_history_socket():
+    transactions = UserTransactionsController.get_all_transactions_socket()
+    socketio.emit("transaction_history", transactions)
+    return  jsonify({"transactions": transactions}), 200
 
 # Transaction Deposit router
 # @txn_bp.route("/deposit", methods=["POST"])
