@@ -109,12 +109,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       // Listen for transaction history events:
       newSocket.on("get_transaction_history", (data) => {
         setTransactions(data.transactions || data);
-        console.log("Transaction History:", { data });
+        // console.log("Transaction History:", { data });
       });
 
       // Listen for trade history events:
       newSocket.on("get_trade_history", (data) => {
-        console.log("Trade History:", data);
+        // console.log("Trade History:", data);
         setTrade(data.trade_history || data);
       });
 
