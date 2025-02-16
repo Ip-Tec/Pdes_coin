@@ -26,7 +26,7 @@ from app.models import (
     Balance,
     AccountDetail,
     Utility,
-)
+) 
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
 load_dotenv()
@@ -158,49 +158,21 @@ def get_top_users_by_balance(current_user, *args, **kwargs):
 
     try:
         # Query the users ordered by balance in descending order
-        users = User.query.all()  # Fetch all users
-
+        users = [user.serialize() for user in User.query.all()] # Fetch all users
+        
         top_users_by_balance_data = []
         top_users_by_crypto_balance_data = []
 
         for user in users:
-            # Get the user's total balance from the Balance table
-            balance = getattr(user.balance, "balance", 0.0)
+            balance = getattr(user.balance, "balance", 0.0)  # Safe access
+            crypto_balance = getattr(user.balance, "crypto_balance", 0.0)  # Safe access
 
-            # Get the user's total crypto balance from the Crypto table
-            total_crypto_balance = (
-                db.session.query(db.func.sum(Crypto.amount))
-                .filter(Crypto.user_id == user.id)
-                .scalar()
-                or 0.0
-            )
-
-            top_users_by_balance_data.append(
-                {
-                    "id": user.id,
-                    "name": user.name,
-                    "username": user.username,
-                    "balance": balance,
-                }
-            )
-            top_users_by_crypto_balance_data.append(
-                {
-                    "id": user.id,
-                    "name": user.name,
-                    "username": user.username,
-                    "crypto_balance": total_crypto_balance,
-                }
-            )
+            top_users_by_balance_data.append({"id":user.id, "name": user.name, "username": user.username, "balance": balance})
+            top_users_by_crypto_balance_data.append({"id":user.id, "name": user.name, "username": user.username, "crypto_balance": crypto_balance})
 
         # Sort both lists
-        top_users_by_balance_data = sorted(
-            top_users_by_balance_data, key=lambda x: x["balance"], reverse=True
-        )
-        top_users_by_crypto_balance_data = sorted(
-            top_users_by_crypto_balance_data,
-            key=lambda x: x["crypto_balance"],
-            reverse=True,
-        )
+        top_users_by_balance_data = sorted(top_users_by_balance_data, key=lambda x: x["balance"], reverse=True)
+        top_users_by_crypto_balance_data = sorted(top_users_by_crypto_balance_data, key=lambda x: x["crypto_balance"], reverse=True)
 
         return jsonify(
             {
@@ -208,7 +180,6 @@ def get_top_users_by_balance(current_user, *args, **kwargs):
                 "top_users_by_crypto_balance": top_users_by_crypto_balance_data,
             }
         )
-
     except Exception as e:
         return jsonify({"error": "Server Error", "message": str(e)}), 500
 
@@ -373,6 +344,7 @@ def change_password(current_user, *args, **kwargs):
     user_email = data.get("email")
     user_username = data.get("username")
     user_password = data.get("password")
+    
 
     # Validate input
     if not all([user_id, user_email, user_username, user_password]):
@@ -1329,10 +1301,11 @@ def update_user(current_user, *args, **kwargs):
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
 
+
 @admin_bp.route("/referrals", methods=["GET"])
 @token_required
 def get_referrals(current_user):
-    """Get all users that the current user has referred"""
+    """ Get all users that the current user has referred """
     referrals = User.query.filter_by(referrer_id=current_user.id).all()
     serialized_referrals = [referral.serialize() for referral in referrals]
     return jsonify({"referrals": serialized_referrals}), 200
@@ -1341,7 +1314,7 @@ def get_referrals(current_user):
 @admin_bp.route("/referrer/<int:user_id>", methods=["GET"])
 @token_required
 def get_referrer_and_reward(user_id):
-    """Get referrer details and reward"""
+    """ Get referrer details and reward """
     user = User.query.get(user_id)
     try:
         user = User.query.get(user_id)
@@ -1352,25 +1325,20 @@ def get_referrer_and_reward(user_id):
             return jsonify({"message": "This user was not referred by anyone"}), 404
 
         referrer = user.referrer
-        return (
-            jsonify(
-                {
-                    "referrer_id": referrer.id,
-                    "referrer_name": referrer.name,
-                    "referrer_email": referrer.email,
-                    "referral_reward": referrer.referral_reward,
-                    "total_referrals": referrer.total_referrals,
-                }
-            ),
-            200,
-        )
+        return jsonify({
+            "referrer_id": referrer.id,
+            "referrer_name": referrer.name,
+            "referrer_email": referrer.email,
+            "referral_reward": referrer.referral_reward,
+            "total_referrals": referrer.total_referrals,
+        }), 200
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
-
+   
 
 @admin_bp.route("/referrers-in-range", methods=["GET"])
 def get_referrers_in_range():
-    """Get referrers within a date range"""
+    """ Get referrers within a date range """
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
 
@@ -1390,21 +1358,17 @@ def get_referrers_in_range():
         .all()
     )
 
-    return (
-        jsonify(
+    return jsonify({
+        "referrers": [
             {
-                "referrers": [
-                    {
-                        "id": user.id,
-                        "name": user.name,
-                        "email": user.email,
-                        "total_referrals": user.total_referrals,
-                        "referral_reward": user.referral_reward,
-                        "created_at": user.created_at.isoformat(),
-                    }
-                    for user in referrers
-                ]
+                "id": user.id,
+                "name": user.name,
+                "email": user.email,
+                "total_referrals": user.total_referrals,
+                "referral_reward": user.referral_reward,
+                "created_at": user.created_at.isoformat(),
             }
-        ),
-        200,
-    )
+            for user in referrers
+        ]
+    }), 200
+
