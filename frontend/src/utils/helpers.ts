@@ -1,8 +1,11 @@
 export const formatCurrency = (amount: number): string => {
+  const truncated = Math.floor(amount * 100) / 100;
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
-  }).format(amount);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(truncated);
 };
 
 export const formattedMoneyUSD = (number: number): string => {
@@ -16,8 +19,11 @@ export const formattedMoneyUSD = (number: number): string => {
 };
 
 export const formattedMoneyNGN = (amount: number) => {
+  const truncated = Math.floor(amount * 100) / 100;
   return new Intl.NumberFormat("en-NG", {
     style: "currency",
     currency: "NGN",
-  }).format(amount);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(truncated);
 };

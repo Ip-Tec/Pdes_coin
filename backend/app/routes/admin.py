@@ -158,47 +158,21 @@ def get_top_users_by_balance(current_user, *args, **kwargs):
 
     try:
         # Query the users ordered by balance in descending order
-        top_users_by_balance = (
-            db.session.query(User)
-            .join(Balance, User.id == Balance.user_id)
-            .order_by(desc(Balance.balance))
-            .limit(10)
-            .all()
-        )
+        users = User.query.all()  # Fetch all users
+        
+        top_users_by_balance_data = []
+        top_users_by_crypto_balance_data = []
 
-        # Query the users ordered by crypto_balance in descending order
-        top_users_by_crypto_balance = (
-            db.session.query(User)
-            .join(Balance, User.id == Balance.user_id)
-            .order_by(desc(Balance.crypto_balance))  # Use desc explicitly
-            .limit(10)
-            .all()
-        )
+        for user in users:
+            balance = getattr(user.balance, "balance", 0.0)  # Safe access
+            crypto_balance = getattr(user.balance, "crypto_balance", 0.0)  # Safe access
 
-        # Serialize the results
-        top_users_by_balance_data = [
-            {
-                "id": user.id,
-                "name": user.name,
-                "username": user.username,
-                "balance": (
-                    user.balance.balance if user.balance else 0
-                ),  # Extract balance
-            }
-            for user in top_users_by_balance
-        ]
+            top_users_by_balance_data.append({"id":user.id, "name": user.name, "username": user.username, "balance": balance})
+            top_users_by_crypto_balance_data.append({"id":user.id, "name": user.name, "username": user.username, "crypto_balance": crypto_balance})
 
-        top_users_by_crypto_balance_data = [
-            {
-                "id": user.id,
-                "name": user.name,
-                "username": user.username,
-                "crypto_balance": (
-                    user.balance.crypto_balance if user.balance else 0
-                ),  # Extract crypto balance
-            }
-            for user in top_users_by_crypto_balance
-        ]
+        # Sort both lists
+        top_users_by_balance_data = sorted(top_users_by_balance_data, key=lambda x: x["balance"], reverse=True)
+        top_users_by_crypto_balance_data = sorted(top_users_by_crypto_balance_data, key=lambda x: x["crypto_balance"], reverse=True)
 
         return jsonify(
             {

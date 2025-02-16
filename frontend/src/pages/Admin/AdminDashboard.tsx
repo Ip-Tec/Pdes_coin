@@ -88,6 +88,8 @@ const AdminDashboard = () => {
       // Get Top Users with the highest Balance
       const topUsersByBalance = await getTopUsersByBalance();
 
+      console.log({ topUsersByBalance });
+
       setPolarData(dataOverview);
       setTopReferrers(getReferrers);
       setTotalDashboard(getDashboard);
@@ -114,7 +116,7 @@ const AdminDashboard = () => {
           {
             label: "Crypto Balance",
             data: top_users_by_crypto_balance.map(
-              (user: { crypto_balance: number }) => user.crypto_balance
+              (user: { crypto_balance: number }) => user.crypto_balance || 0
             ),
             backgroundColor: "#36A2EB",
             borderColor: "#36A2EB",
@@ -243,8 +245,7 @@ const AdminDashboard = () => {
 
           <div className="flex m-auto justify-center items-center mt-4 w-full p-2">
             <div className="bg-white w-full rounded-lg shadow-lg p-6">
-
-            <PriceChart showTimestamp={true} />
+              <PriceChart showTimestamp={true} />
             </div>
           </div>
 
