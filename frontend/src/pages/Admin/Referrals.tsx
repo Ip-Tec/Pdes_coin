@@ -30,10 +30,17 @@ const Referrals = () => {
         const rangeData = await getReferrersInRange("1", "222"); // You'll need to handle the range data
         const topReferrers = await getTopReferrersAdminPage(); // And the top referrers
         const referrerReward = await getReferrerAndReward(user!.id); // And the referrer reward
+        console.log({ referrerReward, topReferrers, rangeData, referralsData });
+        
+        console.log("user_id:", user?.id);
 
         // Example combining data (adjust as needed based on your API responses)
         // Check if referralsData is an array
-        if (Array.isArray(referralsData) && Array.isArray(rangeData) && Array.isArray(topReferrers)) {
+        if (
+          Array.isArray(referralsData) &&
+          Array.isArray(rangeData) &&
+          Array.isArray(topReferrers)
+        ) {
           const allReferrals = [
             ...referralsData,
             ...rangeData,

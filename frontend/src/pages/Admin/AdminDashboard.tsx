@@ -52,7 +52,10 @@ const AdminDashboard = () => {
   const [totalDashboard, setTotalDashboard] = useState<
     DashboardData | undefined
   >(undefined);
-  const [transactionTrends, setTransactionTrends] = useState([]);
+  const [transactionTrends, setTransactionTrends] = useState<{
+    transaction_trends: number[];
+    months: string[];
+  }>({ months: [], transaction_trends: [] });
   const [topReferrers, setTopReferrers] = useState<Referral[]>([]);
   const [polarData, setPolarData] = useState();
   const [topchartData, setTopChartData] = useState<{
@@ -88,12 +91,12 @@ const AdminDashboard = () => {
       // Get Top Users with the highest Balance
       const topUsersByBalance = await getTopUsersByBalance();
 
-      console.log({ topUsersByBalance });
-
       setPolarData(dataOverview);
       setTopReferrers(getReferrers);
       setTotalDashboard(getDashboard);
       setTransactionTrends(getTransaction);
+
+      console.log({ getTransaction });
 
       const { top_users_by_balance, top_users_by_crypto_balance } =
         topUsersByBalance;
@@ -160,26 +163,13 @@ const AdminDashboard = () => {
       },
     ],
   };
-
+  
   const chartData = {
-    labels: [
-      "Jan",
-      "Feb",
-      "Mar",
-      "Apr",
-      "May",
-      "Jun",
-      "Jul",
-      "Aug",
-      "Sep",
-      "Oct",
-      "Nov",
-      "Dec",
-    ],
+    labels: transactionTrends.months,
     datasets: [
       {
         label: "Transactions",
-        data: transactionTrends,
+        data: transactionTrends.transaction_trends,
         borderColor: "rgba(75, 192, 192, 1)",
         backgroundColor: "rgba(75, 192, 192, 0.2)",
       },
@@ -251,7 +241,7 @@ const AdminDashboard = () => {
 
           <div className="flex sm:flex-col md:flex-row w-full flex-wrap gap-2 justify-evenly items-center">
             {/* Polar Area Chart Section */}
-            <div className="bg-white shadow-md w-full md:w-1/2 rounded-lg p-4 mt-6">
+            <div className="bg-white shadow-md w-full md:max-w-md rounded-lg p-4 mt-6">
               <h3 className="text-lg font-semibold text-gray-700 mb-4">
                 Data Overview (Polar Area)
               </h3>
@@ -263,7 +253,7 @@ const AdminDashboard = () => {
               <h3 className="text-lg font-semibold text-gray-700 mb-4">
                 User with the highest balance and crypto balance
               </h3>
-              <div>
+              <div className="h-auto w-auto">
                 <h2>Top Users by Balance and Crypto Balance</h2>
                 {topchartData.datasets.length > 0 ? (
                   <Bar data={topchartData} options={chartOptions} />

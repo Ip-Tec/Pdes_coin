@@ -158,14 +158,14 @@ def get_top_users_by_balance(current_user, *args, **kwargs):
     try:
         # Query the users and serialize them
         users = [user.serialize() for user in User.query.all()]
-        print(f"{users=}")  # Debugging output
+        # print(f"{users=}")  # Debugging output
 
         top_users_by_balance_data = []
         top_users_by_crypto_balance_data = []
 
         for user in users:
-            balance = user.get("balance", 0.0)  # ✅ Use dictionary key
-            crypto_balance = user.get("crypto_balance", 0.0)  # ✅ Use dictionary key
+            balance = user.get("balance", 0.0)
+            crypto_balance = user.get("crypto_balance", 0.0)
 
             top_users_by_balance_data.append({
                 "id": user["id"], 
@@ -1346,14 +1346,15 @@ def get_referrer_and_reward(user_id):
    
 
 @admin_bp.route("/referrers-in-range", methods=["GET"])
+@token_required
 def get_referrers_in_range():
     """ Get referrers within a date range """
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
 
     try:
-        start_date = datetime.strptime(start_date, "%Y-%m-%d")
-        end_date = datetime.strptime(end_date, "%Y-%m-%d")
+        start_date = dt.strptime(start_date, "%Y-%m-%d")
+        end_date = dt.strptime(end_date, "%Y-%m-%d")
     except ValueError:
         return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
 
