@@ -182,7 +182,7 @@ function BuySellCoin() {
         <span>Back</span>
       </button>
       <div className="w-full flex flex-col lg:flex-row items-start justify-between gap-2 bg-white rounded-lg shadow-lg p-6">
-        <main className="md:w-[70%] w-full h-full m-auto">
+        <main className="md:w-[50%] w-full h-full m-auto">
           <h1 className="text-2xl font-semibold text-center mb-6">
             Buy and Sell PDES Coin
           </h1>
@@ -308,7 +308,7 @@ function BuySellCoin() {
           </div>
         </main>
         <aside className="lg:w-1/2 h-auto w-full m-auto">
-          <div className="mt-8 w-full h-96">
+          <div className="mt-8 w-full h-screen">
             <PriceChart />
             {/* {
               chartType === "line" && (
