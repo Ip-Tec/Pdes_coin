@@ -40,12 +40,14 @@ def transaction_history():
     transactions = UserTransactionsController.get_transactions()
     return transactions
 
+
 # Get Transaction history socket
 @txn_bp.route("/history-socket", methods=["GET"])
 def transaction_history_socket():
     transactions = UserTransactionsController.get_all_transactions_socket()
     socketio.emit("transaction_history", transactions)
-    return  jsonify({"transactions": transactions}), 200
+    return jsonify({"transactions": transactions}), 200
+
 
 # Transaction Deposit router
 # @txn_bp.route("/deposit", methods=["POST"])
@@ -121,7 +123,17 @@ def buy_sell(current_user):
     if action == "buy":
         return PdesService.buy_pdes()
     elif action == "sell":
-        return PdesService.sell_pdes()
+        return (
+            jsonify(
+                {
+                    "error": "INVALID_ACTION",
+                    "message": "Invalid action for selling PDES coin",
+                }
+            ),
+            400,
+        )
+
+        # return PdesService.sell_pdes()
 
     return (
         jsonify(

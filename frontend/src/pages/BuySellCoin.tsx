@@ -260,7 +260,7 @@ function BuySellCoin() {
                 Buy PDES
               </button>
 
-              <button
+              {/* <button
                 type="button"
                 onClick={() => handleActionChange("sell")}
                 className={`w-1/2 py-2 rounded-lg ${
@@ -270,7 +270,7 @@ function BuySellCoin() {
                 }`}
               >
                 Sell PDES
-              </button>
+              </button> */}
             </div>
 
             <div className="mt-4">
