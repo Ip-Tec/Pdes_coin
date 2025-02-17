@@ -101,7 +101,7 @@ const AdminUser: React.FC = () => {
   return (
     <AdminWrapper>
       <ToastContainer />
-      <div className="p-2 md:p-8 my-16 w-full text-gray-800 relative">
+      <div className="w-wull md:px-4 py-20 mb-6 overflow-x-clip">
         {/* Search Bar with Suggestions */}
         <SearchUsers title="Admin User Page" setUsers={setUsers} />
 

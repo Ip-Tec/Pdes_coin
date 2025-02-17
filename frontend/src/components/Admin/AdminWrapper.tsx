@@ -32,13 +32,13 @@ const AdminWrapper: React.FC<AdminWrapperProps> = ({ children }) => {
   }
 
   return (
-    <div className="flex min-h-screen w-full overflow-hidden">
+    <div className="flex w-screen md:w-lvw mg:max-w-xl overflow-hidden">
       {/* Topbar */}
       <AdminTopbar isSidebarCollapsed={isSidebarCollapsed} />
 
       {/* Main Content */}
       <div
-        className="w-full flex flex-col transition-all duration-300"
+        className="flex flex-col transition-all duration-300"
         style={{ marginLeft: sidebarWidth }}
       >
         {/* Sidebar */}
@@ -47,7 +47,12 @@ const AdminWrapper: React.FC<AdminWrapperProps> = ({ children }) => {
           onToggle={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
         />
         {/* Content Area */}
-        <main className="p-2 md:p-4 overflow-auto ">{children}</main>
+        <main
+          className="flex-1 md:p-4 overflow-auto "
+          style={{ width: `calc(100vw - ${sidebarWidth})` }}
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

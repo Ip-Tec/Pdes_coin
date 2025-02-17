@@ -109,7 +109,7 @@ const AdminTransaction = () => {
   return (
     <AdminWrapper>
       <ToastContainer />
-      <div className="my-16 max-w-4xl text-gray-600 mx-auto px-6">
+      <div className="my-10 text-gray-600 mx-auto md:px-6">
         {/* Search Bar */}
         <SearchUsers
           title="Admin Transaction"
@@ -117,8 +117,8 @@ const AdminTransaction = () => {
           setParentSearchType={setSearchType}
           //  Dynamic Navigation
           component={
-            <div className="w-full overflow-x-auto no-scrollbar scrollbar-hide">
-              <ul className="flex justify-center space-x-4 mb-8">
+            <div className="w-full overflow-hidden z-[90] mt-10">
+              <ul className="w-full flex justify-center p-2 overflow-x-scroll no-scrollbar mb-8">
                 {navigationItems.map((item) => (
                   <li
                     key={item.label}
@@ -141,12 +141,12 @@ const AdminTransaction = () => {
         {renderActiveComponent()}
 
         {/* User Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="flex flex-wrap justify-center items-center gap-2">
           {users.map((user) => (
             <UserCard key={user.id} user={user} onSelect={handleSelectUser} />
           ))}
         </div>
-        <div className="flex">
+        <div className="flex w-full">
           <ChartWithToggle />
         </div>
       </div>

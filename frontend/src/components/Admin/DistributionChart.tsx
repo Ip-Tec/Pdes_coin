@@ -60,7 +60,7 @@ const DistributionChart: React.FC = () => {
     ],
   };
 
-  return <div className="w-full"><Line data={data} />;</div>
+  return <div className="w-full h-auto"><Line data={data} />;</div>
 };
 
 export default DistributionChart;

@@ -172,8 +172,8 @@ function Utility() {
   return (
     <AdminWrapper>
       <ToastContainer />
-      <div className="my-16 max-w-4xl text-gray-600 mx-auto px-6">
-        <ul className="flex justify-around mb-6">
+      <div className="my-16 w-full text-gray-600 mx-auto px-6">
+        <ul className="flex justify-around mb-6 overflow-x-scroll no-scrollbar">
           {navigationItems.map((item) => (
             <li
               key={item.label}

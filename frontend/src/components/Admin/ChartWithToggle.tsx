@@ -14,7 +14,7 @@ const ChartWithToggle: React.FC = () => {
   };
 
   return (
-    <div className="w-full">
+    <div className="w-auto px-3 h-auto">
       <div className="flex w-full items-center justify-between mb-4">
         <button
           onClick={toggleChartType}
@@ -28,13 +28,9 @@ const ChartWithToggle: React.FC = () => {
         </p>
       </div>
 
-      <div className="flex w-full m-auto justify-evenly items-center flex-wrap md:flex-nowrap gap-4">
-        <div className="w-2/3">
-          <DistributionChart />
-        </div>
-        <div className="w-1/3">
-          <ProportionChart type={chartType} />
-        </div>
+      <div className="bg-white shadow-md w-full md:max-w-md rounded-lg p-4 mt-6">
+        <DistributionChart />
+        <ProportionChart type={chartType} />
       </div>
     </div>
   );

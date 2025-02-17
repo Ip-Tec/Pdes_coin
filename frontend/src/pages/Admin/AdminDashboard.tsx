@@ -21,6 +21,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import PriceChart from "../../components/PriceChart";
 import { useAuth } from "../../contexts/AuthContext";
+import { FaExchangeAlt, FaArrowUp, FaArrowDown, FaGift, FaUsers } from "react-icons/fa";
 
 // Register chart.js components
 ChartJS.register(
@@ -96,8 +97,6 @@ const AdminDashboard = () => {
       setTotalDashboard(getDashboard);
       setTransactionTrends(getTransaction);
 
-      console.log({ getTransaction });
-
       const { top_users_by_balance, top_users_by_crypto_balance } =
         topUsersByBalance;
 
@@ -163,7 +162,7 @@ const AdminDashboard = () => {
       },
     ],
   };
-  
+
   const chartData = {
     labels: transactionTrends.months,
     datasets: [
@@ -179,52 +178,76 @@ const AdminDashboard = () => {
   return (
     <>
       <AdminWrapper>
-        <div className="w-auto px-4 py-20 mb-6">
+        <div className="w-wull md:px-4 py-20 mb-6 overflow-x-clip">
           {/* Stats Section */}
 
           {["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"].includes(
             user?.role?.toUpperCase() || ""
           ) ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white shadow-md rounded-lg p-4 text-center">
-                <h3 className="text-lg font-semibold text-gray-700">
-                  Total Transactions
-                </h3>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totalDashboard?.total_transactions ?? "Loading..."}
-                </p>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2">
+              {/* Total Transactions */}
+              <div className="bg-gradient-to-br from-blue-400 to-blue-600 p-1 rounded-lg shadow-lg">
+                <div className="bg-white bg-opacity-40 backdrop-blur-md rounded-lg p-2 text-center transition-transform transform hover:scale-105">
+                  <FaExchangeAlt className="mx-auto text-3xl text-white" />
+                  <h3 className="mt-4 text-lg font-semibold text-white">
+                    Total Transactions
+                  </h3>
+                  <p className="mt-2 text-2xl font-bold text-white">
+                    {totalDashboard?.total_transactions ?? "Loading..."}
+                  </p>
+                </div>
               </div>
-              <div className="bg-white shadow-md rounded-lg p-4 text-center">
-                <h3 className="text-lg font-semibold text-gray-700">
-                  Total Deposits
-                </h3>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totalDashboard?.total_deposits ?? "Loading..."}
-                </p>
+
+              {/* Total Deposits */}
+              <div className="bg-gradient-to-br from-green-400 to-green-600 p-1 rounded-lg shadow-lg">
+                <div className="bg-white bg-opacity-40 backdrop-blur-md rounded-lg p-2 text-center transition-transform transform hover:scale-105">
+                  <FaArrowUp className="mx-auto text-3xl text-white" />
+                  <h3 className="mt-4 text-lg font-semibold text-white">
+                    Total Deposits
+                  </h3>
+                  <p className="mt-2 text-2xl font-bold text-white">
+                    {totalDashboard?.total_deposits ?? "Loading..."}
+                  </p>
+                </div>
               </div>
-              <div className="bg-white shadow-md rounded-lg p-4 text-center">
-                <h3 className="text-lg font-semibold text-gray-700">
-                  Total Withdrawals
-                </h3>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totalDashboard?.total_withdrawals ?? "Loading..."}
-                </p>
+
+              {/* Total Withdrawals */}
+              <div className="bg-gradient-to-br from-red-400 to-red-600 p-1 rounded-lg shadow-lg">
+                <div className="bg-white bg-opacity-40 backdrop-blur-md rounded-lg p-2 text-center transition-transform transform hover:scale-105">
+                  <FaArrowDown className="mx-auto text-3xl text-white" />
+                  <h3 className="mt-4 text-lg font-semibold text-white">
+                    Total Withdrawals
+                  </h3>
+                  <p className="mt-2 text-2xl font-bold text-white">
+                    {totalDashboard?.total_withdrawals ?? "Loading..."}
+                  </p>
+                </div>
               </div>
-              <div className="bg-white shadow-md rounded-lg p-4 text-center">
-                <h3 className="text-lg font-semibold text-gray-700">
-                  Total Rewards
-                </h3>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totalDashboard?.total_rewards ?? "Loading..."}
-                </p>
+
+              {/* Total Rewards */}
+              <div className="bg-gradient-to-br from-purple-400 to-purple-600 p-1 rounded-lg shadow-lg">
+                <div className="bg-white bg-opacity-40 backdrop-blur-md rounded-lg p-2 text-center transition-transform transform hover:scale-105">
+                  <FaGift className="mx-auto text-3xl text-white" />
+                  <h3 className="mt-4 text-lg font-semibold text-white">
+                    Total Rewards
+                  </h3>
+                  <p className="mt-2 text-2xl font-bold text-white">
+                    {totalDashboard?.total_rewards ?? "Loading..."}
+                  </p>
+                </div>
               </div>
-              <div className="bg-white shadow-md rounded-lg p-4 text-center">
-                <h3 className="text-lg font-semibold text-gray-700">
-                  Total Users
-                </h3>
-                <p className="text-2xl font-bold text-gray-900">
-                  {totalDashboard?.total_users ?? "Loading..."}
-                </p>
+
+              {/* Total Users */}
+              <div className="bg-gradient-to-br from-indigo-400 to-indigo-600 p-1 rounded-lg shadow-lg">
+                <div className="bg-white bg-opacity-40 backdrop-blur-md rounded-lg p-2 text-center transition-transform transform hover:scale-105">
+                  <FaUsers className="mx-auto text-3xl text-white" />
+                  <h3 className="mt-4 text-lg font-semibold text-white">
+                    Total Users
+                  </h3>
+                  <p className="mt-2 text-2xl font-bold text-white">
+                    {totalDashboard?.total_users ?? "Loading..."}
+                  </p>
+                </div>
               </div>
             </div>
           ) : (
