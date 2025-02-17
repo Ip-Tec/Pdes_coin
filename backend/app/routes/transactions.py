@@ -1,7 +1,7 @@
 from app import db, socketio
 from app.services import token_required
 from app.models import Balance, CoinPriceHistory
-from backend.app.access_level import AccessLevel
+from app.access_level import AccessLevel
 from flask import Blueprint, request, jsonify
 from app.controller.user_transactions import (
     AccountService,

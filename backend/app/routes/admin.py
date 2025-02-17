@@ -1310,7 +1310,6 @@ def update_user(current_user, *args, **kwargs):
         return jsonify({"error": f"Database error: {str(e)}"}), 500
 
 
-
 @admin_bp.route("/referrals", methods=["GET"])
 @token_required
 def get_referrals(current_user):
@@ -1318,7 +1317,6 @@ def get_referrals(current_user):
     referrals = User.query.filter_by(referrer_id=current_user.id).all()
     serialized_referrals = [referral.serialize() for referral in referrals]
     return jsonify({"referrals": serialized_referrals}), 200
-
 
 @admin_bp.route("/referrer/<int:user_id>", methods=["GET"])
 @token_required
@@ -1344,7 +1342,7 @@ def get_referrer_and_reward(user_id):
     except Exception as e:
         return jsonify({"error": f"An error occurred: {str(e)}"}), 500
    
-
+   
 @admin_bp.route("/referrers-in-range", methods=["GET"])
 @token_required
 def get_referrers_in_range():

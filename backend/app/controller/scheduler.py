@@ -30,13 +30,11 @@ def reward_pdes_holders():
     except Exception as e:
         print(f"Error during reward distribution: {e}")
 
-
 def correct_user_balance_with_context(app):
     """Run the correct_user_balance function inside the app context."""
     with app.app_context():
         flagged_accounts = correct_user_balance()
         print(f"Flagged accounts: {flagged_accounts}")
-
 
 def calculate_weekly_rewards(app):
     """Distribute weekly rewards for PDES purchases."""
@@ -46,16 +44,57 @@ def calculate_weekly_rewards(app):
             print("No valid reward setting configured!")
             return
 
-        # Calculate daily rate
-        daily_rate = reward_setting.weekly_percentage / 7 / 100  # Convert to decimal
+        # Calculate daily rate (weekly_percentage divided by 7 days and converted to decimal)
+        daily_rate = reward_setting.weekly_percentage / 7 / 100
 
         # Fetch eligible users
         users = User.query.filter(User.last_reward_date.isnot(None)).all()
         for user in users:
             if user.balance and user.balance.balance > 0:
-                days_since_reward = (
-                    datetime.datetime.utcnow() - user.last_reward_date
-                ).days
+                # Use total_seconds() to capture fractional days
+                time_delta = datetime.datetime.utcnow() - user.last_reward_date
+                days_since_reward = time_delta.total_seconds() / 86400  # seconds in a day
+                
+                # If days_since_reward is very small, you might want to skip to avoid negligible rewards
+                if days_since_reward < 0.01:
+                    continue
+
+                reward_amount = user.balance.balance * daily_rate * days_since_reward
+
+                # Update user balance and rewards
+                user.balance.balance += reward_amount
+                user.balance.rewards += reward_amount
+                user.last_reward_date = datetime.datetime.utcnow()
+                
+                print(f"User {user.id} rewarded: {reward_amount:.4f} PDES (for {days_since_reward:.2f} days)")
+
+        # Commit all changes at once
+        db.session.commit()
+        print("Weekly rewards calculation completed.")
+
+def calculate_daily_rewards(app):
+    """Distribute daily rewards for PDES purchases."""
+    with app.app_context():
+        reward_setting = RewardSetting.query.first()
+        if not reward_setting or reward_setting.daily_percentage <= 0:
+            print("No valid reward setting configured!")
+            return
+
+        # Calculate daily rate (daily_percentage divided by 100)
+        daily_rate = reward_setting.daily_percentage / 100
+
+        # Fetch eligible users
+        users = User.query.filter(User.last_reward_date.isnot(None)).all()
+        for user in users:
+            if user.balance and user.balance.balance > 0:
+                # Use total_seconds() to capture fractional days
+                time_delta = datetime.datetime.utcnow() - user.last_reward_date
+                days_since_reward = time_delta.total_seconds() / 86400  # seconds in a day
+
+                # If days_since_reward is very small, you might want to skip to avoid negligible rewards
+                if days_since_reward < 0.01:
+                    continue
+
                 reward_amount = user.balance.balance * daily_rate * days_since_reward
 
                 # Update user balance and rewards
@@ -63,10 +102,11 @@ def calculate_weekly_rewards(app):
                 user.balance.rewards += reward_amount
                 user.last_reward_date = datetime.datetime.utcnow()
 
+                print(f"User {user.id} rewarded: {reward_amount:.4f} PDES (for {days_since_reward:.2f} days)")
+
         # Commit all changes at once
         db.session.commit()
-        print("Weekly rewards calculation completed.")
-
+        print("Daily rewards calculation completed.")
 
 def setup_scheduler(app):
     """Setup the task scheduler."""
@@ -83,7 +123,8 @@ def setup_scheduler(app):
     )  # Daily check for stored balance
 
     scheduler.add_job(
-        calculate_weekly_rewards, "interval", hours=0.02, args=[app]
+        calculate_weekly_rewards, "interval", hours=6, args=[app]
     )  # Passing app to the function
     scheduler.start()
     print("Scheduler started!")
+
