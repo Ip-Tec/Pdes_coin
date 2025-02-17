@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  FaTag,
+  // FaTag,
   FaFacebook,
   FaTwitter,
   FaLinkedin,
@@ -41,7 +41,7 @@ const QuickActions = () => {
   const actions = [
     { icon: <FiCreditCard />, label: "Withdraw" },
     { icon: <AiOutlineShoppingCart />, label: "Buy" },
-    { icon: <FaTag />, label: "Sale" },
+    // { icon: <FaTag />, label: "Sale" },
     { icon: <HiOutlineViewGridAdd />, label: "More" },
   ];
 
