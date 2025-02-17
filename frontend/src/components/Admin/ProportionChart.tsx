@@ -53,7 +53,7 @@ const ProportionChart: React.FC<ProportionChartProps> = ({ type }) => {
     labels: chartData.labels, // Transaction types or currencies
     datasets: [
       {
-        label: `Proportions by ${type}`,
+        label: `Proportions by ${chartData.labels}`,
         data: chartData.data, // Proportions
         backgroundColor: [
           "#FF6384",

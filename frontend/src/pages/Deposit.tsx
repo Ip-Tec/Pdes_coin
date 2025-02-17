@@ -144,7 +144,7 @@ function Deposit() {
         <span>Back</span>
       </button>
 
-      <div className="min-h-screen bg-mainBG text-gray-700 overflow-y-auto flex items-center mb-0 justify-center px-4 py-8">
+      <div className="min-h-screen bg-mainBG text-gray-700 overflow-y-auto flex items-center mb-0 justify-center px-4 py-8 pb-16">
         <ToastContainer />
         <div className="absolute top-4 left-4 z-10">
           <img src={logo} alt="Logo" className="h-34" />

@@ -14,11 +14,19 @@ const SlideInPanel = ({
 
   useEffect(() => {
     setIsVisible(true); // Trigger the slide-in animation when the component mounts
+
+    // Disable background scrolling
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      // Restore scrolling when component unmounts
+      document.body.style.overflow = "auto";
+    };
   }, []);
 
   const handleClose = () => {
     setIsVisible(false); // Trigger the slide-out animation
-    setTimeout(onClose, 300); // Wait for the animation to complete before closing
+    setTimeout(onClose, 300); // Wait for animation to complete before closing
   };
 
   return (
@@ -31,20 +39,23 @@ const SlideInPanel = ({
 
       {/* Panel */}
       <div
-        className={`fixed top-0 right-0 w-full md:w-[40%] h-screen bg-white shadow-lg transition-transform duration-300 transform ${
+        className={`fixed top-0 right-0 w-full md:w-[30%] h-screen bg-white shadow-lg transition-transform duration-300 transform ${
           isVisible ? "translate-x-0" : "translate-x-full"
-        }`}
+        } flex flex-col`}
       >
-        <div className="p-4 border-b relative">
+        {/* Header */}
+        <div className="p-4 border-b flex items-center justify-between">
           <h2 className="text-xl font-bold">{title}</h2>
           <button
-            className="absolute top-4 right-4 text-red-600 hover:text-red-800"
+            className="text-red-600 hover:text-red-800"
             onClick={handleClose}
           >
             <FiX size={24} />
           </button>
         </div>
-        <div className="p-4">{children}</div>
+
+        {/* Scrollable Content */}
+        <div className="flex-1 overflow-y-auto p-4 pb-28 h-auto no-scrollbar">{children}</div>
       </div>
     </div>
   );

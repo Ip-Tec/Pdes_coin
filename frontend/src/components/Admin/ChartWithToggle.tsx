@@ -4,7 +4,7 @@ import ProportionChart from "./ProportionChart"; // Import your ProportionChart
 
 const ChartWithToggle: React.FC = () => {
   const [chartType, setChartType] = useState<"currency" | "transaction_type">(
-    "currency"
+    "transaction_type"
   );
 
   const toggleChartType = () => {
@@ -24,7 +24,7 @@ const ChartWithToggle: React.FC = () => {
         </button>
         <p className="text-lg">
           Current Chart Type:{" "}
-          {chartType === "currency" ? "Currency" : "Transaction Type"}
+          {chartType === "currency" ? "Currency" : "Withdrawal/Deposit"}
         </p>
       </div>
 

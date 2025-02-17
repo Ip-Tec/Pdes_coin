@@ -4,6 +4,8 @@ import {
   FaEnvelope,
   FaMapMarkerAlt,
   FaArrowLeft,
+  FaWhatsapp,
+  FaTelegramPlane,
 } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
@@ -81,7 +83,7 @@ function SupportPage() {
         </p>
 
         {/* Contact Information */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
           <div className="text-center">
             <FaPhone size={32} className="text-primary mx-auto mb-2" />
             <h3 className="font-semibold text-lg">Phone</h3>
@@ -96,7 +98,36 @@ function SupportPage() {
           <div className="text-center">
             <FaMapMarkerAlt size={32} className="text-primary mx-auto mb-2" />
             <h3 className="font-semibold text-lg">Address</h3>
-            <p className="text-gray-600">123 Pettson Cassia St,  California, USA</p>
+            <p className="text-gray-600">
+              123 Pettson Cassia St, California, USA
+            </p>
+          </div>
+          <div className="text-center">
+            <a
+              href="https://whatsapp.com/channel/0029Vb1ORaCJJhzXdrlym00G"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-600 hover:text-primary"
+            >
+              <FaWhatsapp size={32} className="text-primary mx-auto mb-2" />
+              <h3 className="font-semibold text-lg">WhatsApp</h3>
+              <p> WhatsApp Channel</p>
+            </a>
+          </div>
+          <div className="text-center">
+            <a
+              href="https://t.me/pdescoin"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-gray-600 hover:text-primary"
+            >
+              <FaTelegramPlane
+                size={32}
+                className="text-primary mx-auto mb-2"
+              />
+              <h3 className="font-semibold text-lg">Telegram</h3>
+              <p> Telegram Channel</p>
+            </a>
           </div>
         </div>
 
@@ -136,7 +167,7 @@ function SupportPage() {
               onChange={handleChange}
               rows={4}
               className="w-full px-4 py-2 border border-[#D9D9D9] rounded-3xl 
-        bg-slate-300 text-textColor placeholder-gray-500 shadow-[#b9b9b9] shadow-md focus:outline-none focus:ring-2 focus:ring-bgColor"
+                bg-slate-300 text-textColor placeholder-gray-500 shadow-[#b9b9b9] shadow-md focus:outline-none focus:ring-2 focus:ring-bgColor"
               placeholder="Type your message here"
             ></textarea>
           </div>

@@ -124,7 +124,7 @@ function Profile() {
             </h3>
             <button
               onClick={() => navigate("/support")}
-              className="mt-2 w-full flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md text-gray-700 hover:text-primary"
+              className="mt-2 w-full flex items-center justify-between px-4 py-5 md:py-2 bg-gray-100 rounded-md text-gray-700 hover:text-primary"
             >
               <span className="flex items-center gap-2">
                 <FaQuestionCircle size={20} /> Support
@@ -133,7 +133,7 @@ function Profile() {
             </button>
             <button
               onClick={() => navigate("/help-center")}
-              className="mt-2 w-full flex items-center justify-between px-4 py-2 bg-gray-100 rounded-md text-gray-700 hover:text-primary"
+              className="mt-2 w-full flex items-center justify-between px-4 py-5 md:py-2 bg-gray-100 rounded-md text-gray-700 hover:text-primary"
             >
               <span className="flex items-center gap-2">
                 <FaInfoCircle size={20} /> Help Center
@@ -173,7 +173,7 @@ function Profile() {
             <button
               key={index}
               onClick={item.action}
-              className={`flex items-center justify-between px-4 py-2 bg-white rounded-lg shadow-md text-center w-full md:w-40 text-gray-700 hover:text-primary ${
+              className={`flex items-center justify-between px-4 py-5 md:py-2 bg-white rounded-lg shadow-md text-center w-full md:w-40 text-gray-700 hover:text-primary ${
                 item.style || ""
               }`}
             >
