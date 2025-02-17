@@ -117,7 +117,7 @@ const AdminTransaction = () => {
           setParentSearchType={setSearchType}
           //  Dynamic Navigation
           component={
-            <div className="w-full overflow-hidden z-[90] mt-10">
+            <div className="w-full overflow-hidden mt-10">
               <ul className="w-full flex justify-center p-2 overflow-x-scroll no-scrollbar mb-8">
                 {navigationItems.map((item) => (
                   <li
@@ -146,7 +146,7 @@ const AdminTransaction = () => {
             <UserCard key={user.id} user={user} onSelect={handleSelectUser} />
           ))}
         </div>
-        <div className="flex w-full">
+        <div className="w-full">
           <ChartWithToggle />
         </div>
       </div>

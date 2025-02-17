@@ -28,7 +28,7 @@ const ChartWithToggle: React.FC = () => {
         </p>
       </div>
 
-      <div className="bg-white shadow-md w-full md:max-w-md rounded-lg p-4 mt-6">
+      <div className="bg-white flex gap-2 flex-wrap md:flex-nowrap justify-between items-center shadow-md w-full rounded-lg p-4 mt-6 mt-14">
         <DistributionChart />
         <ProportionChart type={chartType} />
       </div>
