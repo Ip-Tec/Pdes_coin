@@ -1,6 +1,7 @@
 from app import db, socketio
 from app.services import token_required
 from app.models import Balance, CoinPriceHistory
+from backend.app.access_level import AccessLevel
 from flask import Blueprint, request, jsonify
 from app.controller.user_transactions import (
     AccountService,
@@ -93,55 +94,57 @@ def buy_sell(current_user):
 
     print(f"{data=}")
 
-    action = data["action"]  # 'buy' or 'sell'
-    amount = data["amount"]
-    price = data["price"].get("price")  # Current price of PDES coin
-    # Select the correct price based on the action
-    if action == "buy":
-        price = data["price"]["pdes_buy_price"]
-        total = amount / price
-    elif action == "sell":
-        price = data["price"]["pdes_sell_price"]
-        total = amount * price
-    else:
-        raise ValueError(f"Invalid action: {action}")
-
-    # Validate price (you can fetch this from an external API or use static)
-    current_price = 50  # Example static price, replace with dynamic price if needed
-    # if price != current_price:
-    #     return (
-    #         jsonify(
-    #             {
-    #                 "error": "INVALID_PRICE",
-    #                 "message": "Price doesn't match the current market price",
-    #             }
-    #         ),
-    #         400,
-    #     )
-
-    # Call the controller method for buying or selling PDES coins
-    if action == "buy":
-        return PdesService.buy_pdes()
-    elif action == "sell":
+    action = data.get("action")  # 'buy' or 'sell'
+    amount = data.get("amount")
+    
+    if not action or not amount:
         return (
-            jsonify(
-                {
-                    "error": "INVALID_ACTION",
-                    "message": "Invalid action for selling PDES coin",
-                }
-            ),
+            jsonify({
+                "error": "MISSING_DATA",
+                "message": "Action and amount are required."
+            }),
             400,
         )
 
-        # return PdesService.sell_pdes()
-
-    return (
-        jsonify(
-            {
+    # Determine the correct price based on the action
+    if action == "buy":
+        price = data["price"].get("pdes_buy_price")
+        total = amount / price
+    elif action == "sell":
+        price = data["price"].get("pdes_sell_price")
+        total = amount * price
+    else:
+        return (
+            jsonify({
                 "error": "INVALID_ACTION",
-                "message": "Invalid action for buying/selling PDES coin",
-            }
-        ),
+                "message": f"Invalid action: {action}",
+            }),
+            400,
+        )
+
+   
+
+    # Execute the correct transaction
+    if action == "buy":
+        return PdesService.buy_pdes()
+    elif action == "sell":
+        # Check if the current user is allowed to sell
+        if current_user.role not in ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]:
+            return (
+                jsonify({
+                    "error": "FORBIDDEN",
+                    "message": "You are not authorized to sell PDES coin.",
+                }),
+                403,
+            )
+        return PdesService.sell_pdes()
+
+    # Fallback error in case none of the conditions are met
+    return (
+        jsonify({
+            "error": "INVALID_ACTION",
+            "message": "Invalid action for buying/selling PDES coin",
+        }),
         400,
     )
 

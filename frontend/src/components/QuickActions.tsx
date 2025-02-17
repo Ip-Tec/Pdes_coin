@@ -1,6 +1,6 @@
 import { useState } from "react";
 import {
-  // FaTag,
+  FaTag,
   FaFacebook,
   FaTwitter,
   FaLinkedin,
@@ -21,6 +21,9 @@ const QuickActions = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [link] = useState(feURL + "referral/re/" + user?.username);
 
+  // Define allowed roles as an array
+  const allowedRoles = ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"];
+
   const handleAction = (label: string) => {
     if (label === "Withdraw") {
       navigate("/withdraw");
@@ -38,10 +41,13 @@ const QuickActions = () => {
     toast.success("Link copied to clipboard!");
   };
 
+  // Build actions array with conditional inclusion of the "Sale" action.
   const actions = [
     { icon: <FiCreditCard />, label: "Withdraw" },
     { icon: <AiOutlineShoppingCart />, label: "Buy" },
-    // { icon: <FaTag />, label: "Sale" },
+    ...(allowedRoles.includes(user?.role || "USER")
+      ? [{ icon: <FaTag />, label: "Sale" }]
+      : []),
     { icon: <HiOutlineViewGridAdd />, label: "More" },
   ];
 
@@ -73,7 +79,9 @@ const QuickActions = () => {
 
             {/* Link and Copy Button */}
             <div className="flex flex-col items-center mb-4">
-              <p className="text-sm break-all shadow-inner p-3 bg-bgColor rounded-lg text-gray-300">{link}</p>
+              <p className="text-sm break-all shadow-inner p-3 bg-bgColor rounded-lg text-gray-300">
+                {link}
+              </p>
               <button
                 onClick={handleCopyLink}
                 className="bg-secondary text-white px-4 py-2 mt-2 rounded-lg hover:bg-bgColor"

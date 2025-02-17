@@ -260,17 +260,19 @@ function BuySellCoin() {
                 Buy PDES
               </button>
 
-              {/* <button
-                type="button"
-                onClick={() => handleActionChange("sell")}
-                className={`w-1/2 py-2 rounded-lg ${
-                  action === "sell"
-                    ? "bg-red-600 text-white"
-                    : "bg-gray-200 text-gray-700"
-                }`}
-              >
-                Sell PDES
-              </button> */}
+              {user?.role != "USER" && (
+                <button
+                  type="button"
+                  onClick={() => handleActionChange("sell")}
+                  className={`w-1/2 py-2 rounded-lg ${
+                    action === "sell"
+                      ? "bg-red-600 text-white"
+                      : "bg-gray-200 text-gray-700"
+                  }`}
+                >
+                  Sell PDES
+                </button>
+              )}
             </div>
 
             <div className="mt-4">

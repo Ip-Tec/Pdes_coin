@@ -319,10 +319,10 @@ export const buySellPdes = async (
   amount: number,
   price: { pdes_sell_price: number; pdes_buy_price: number }
 ) => {
-  if (action == "sell") {
-    toast.error("You can't sell PDES");
-    return { error: "You can't sell PDES" };
-  }
+  // if (action == "sell") {
+  //   toast.error("You can't sell PDES");
+  //   return { error: "You can't sell PDES" };
+  // }
   try {
     const response = await API.post(apiUrl("/transactions/buy_sell"), {
       action,
