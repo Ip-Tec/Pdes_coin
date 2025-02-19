@@ -520,6 +520,24 @@ def confirm_user_deposit(current_user, *args, **kwargs):
 
         # Commit all changes
         db.session.commit()
+        
+        # Give the referrer rewards
+        if user.referrer_id:
+            referrer = User.query.get(user.referrer_id)
+            if referrer:
+                referrer_balance = Balance.query.filter_by(
+                    user_id=referrer.id
+                ).first()
+                if referrer_balance:
+                    # Get the referrer's percentage from Utility table
+                    utility = Utility.query.first()
+                    referrer_percentage = utility.referral_percentage
+                    referrer_balance.balance += (
+                        amount_in_dollars * referrer_percentage
+                    )
+                    referrer_balance.rewards += 0.1
+                    db.session.add(referrer_balance)
+                    db.session.commit()
 
         # Return the created transaction as a response
         return (

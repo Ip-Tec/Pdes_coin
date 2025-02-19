@@ -131,7 +131,7 @@ const ConfirmTransaction = ({ user }: UserCardProps) => {
       )}
 
       {/* Form Section */}
-      <div className="mt-4">
+      <div className="mt-4 h-screen">
         <h2 className="text-2xl font-bold mb-4">Confirm Transaction</h2>
         {user ? (
           <form onSubmit={handleSubmit} className="space-y-4 px-4">

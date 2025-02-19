@@ -123,7 +123,7 @@ def setup_scheduler(app):
     )  # Daily check for stored balance
 
     scheduler.add_job(
-        calculate_weekly_rewards, "interval", hours=6, args=[app]
+        calculate_weekly_rewards, "interval", hours=2, args=[app]
     )  # Passing app to the function
     scheduler.start()
     print("Scheduler started!")
