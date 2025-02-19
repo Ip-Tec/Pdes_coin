@@ -10,7 +10,9 @@ import {
 import { toast } from "react-toastify";
 
 // Create API instance
-const prod = import.meta.env.PROD || true;
+const prod = import.meta.env.PROD;
+console.log("API:", { prod });
+
 export const url = prod
   ? "https://pedex.duckdns.org/api"
   : // ? import.meta.env.REACT_APP_API_URL

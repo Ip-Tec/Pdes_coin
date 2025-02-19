@@ -122,6 +122,12 @@ def setup_scheduler(app):
         lambda: correct_user_balance_with_context(app), "interval", days=4
     )  # Daily check for stored balance
 
+    # Calculate daily rewards
+    scheduler.add_job(
+        calculate_daily_rewards, "interval", hours=24, args=[app]
+    )  # Passing app to the function
+
+    # Calculate weekly rewards
     scheduler.add_job(
         calculate_weekly_rewards, "interval", hours=6, args=[app]
     )  # Passing app to the function

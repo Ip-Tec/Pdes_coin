@@ -66,10 +66,7 @@ const Login: React.FC = () => {
   ): Promise<LoginResponse> => {
     await login(email, password);
     const user = await getUser();
-    if (!user) {
-      throw new Error("User not found");
-    }
-    return { user };
+    return user ? { user } : { user: null };
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,10 +81,12 @@ const Login: React.FC = () => {
         // const  = user;
         // const { user, access_token, refresh_token } = loginResponse;
         // console.log("Login page:",{ user, access_token, refresh_token });
-        if (loginResponse?.user?.role !== "user") {
-          navigate("/a/dashboard");
-        } else {
-          navigate("/dashboard");
+        if (loginResponse?.user) {
+          if (loginResponse?.user?.role !== "user") {
+            navigate("/a/dashboard");
+          } else {
+            navigate("/dashboard");
+          }
         }
       } catch (error: unknown) {
         if (error instanceof Error) {
