@@ -474,7 +474,7 @@ def confirm_user_deposit(current_user, *args, **kwargs):
 
         conversion_rate = float(conversion_rate_entry.conversion_rate)
         amount_in_dollars = data["amount"] / conversion_rate
-        print(f"Converted amount: {amount_in_dollars} USD")
+        # print(f"Converted amount: {amount_in_dollars} USD")
 
         # Add deposit transaction to the Transaction table
         transaction = Transaction(

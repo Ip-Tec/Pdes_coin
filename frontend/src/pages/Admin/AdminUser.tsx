@@ -26,6 +26,7 @@ const AdminUser: React.FC = () => {
     role: "",
     balance: 0,
     sticks: 0,
+    reward: 0,
     is_blocked: false,
     created_at: "",
     referral_code: null,
@@ -107,7 +108,7 @@ const AdminUser: React.FC = () => {
 
         {/* Floating Search Results */}
         {users.length > 0 && (
-          <div className="my-24 w-auto flex flex-wrap gap-2 text-gray-600 mx-auto px-6">
+          <div className="my-24 w-auto flex flex-wrap justify-center items-center gap-2 text-gray-600 mx-auto px-6">
             {users.map(
               (userItem: User | DepositPropsWithUser, index: number) => {
                 // Extract user data whether it's a direct User or wrapped in DepositPropsWithUser

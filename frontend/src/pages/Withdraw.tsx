@@ -129,6 +129,7 @@ function Withdraw() {
               {formattedMoneyUSD(userBalance)}
             </span>
           </p>
+
           <p className="text-center text-gray-600 mb-4">
             Current Conversion Rate:{" "}
             <span className="font-bold">
