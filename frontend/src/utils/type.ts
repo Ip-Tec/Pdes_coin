@@ -32,7 +32,9 @@ export interface User {
   total_referrals: number;
   sticks?: number;
   is_blocked?: boolean;
+  last_reward_date?: string;
   correct_balance?: number;
+  referrer_id?: number;
   referral_reward: number;
   created_at: string;
 }

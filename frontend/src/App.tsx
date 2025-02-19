@@ -31,6 +31,7 @@ import AdminUser from "./pages/Admin/AdminUser";
 import Utility from "./pages/Admin/Utility";
 import Referrals from "./pages/Admin/Referrals";
 import NotFound from "./pages/NotFound";
+import AdminUserTransaction from "./pages/Admin/AdminUserTransaction";
 
 interface AppProps {
   installPrompt: BeforeInstallPromptEvent | null;
@@ -114,6 +115,7 @@ const App: React.FC<AppProps> = ({ installPrompt, isInstalled, onInstall }) => {
             {/* Admin Routes */}
             <Route path="/a/dashboard" element={<ProtectedRoute requiredRoles={["MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/a/user" element={<ProtectedRoute requiredRoles={["MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><AdminUser /></ProtectedRoute>} />
+            <Route path="/a/user/transaction" element={<ProtectedRoute requiredRoles={["MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><AdminUserTransaction /></ProtectedRoute>} />
             <Route path="/a/transactions" element={<ProtectedRoute requiredRoles={["MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><AdminTransaction /></ProtectedRoute>} />
             <Route path="/a/utility" element={<ProtectedRoute requiredRoles={["MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><Utility /></ProtectedRoute>} />
             <Route path="/a/referrals" element={<ProtectedRoute requiredRoles={["MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><Referrals /></ProtectedRoute>} />

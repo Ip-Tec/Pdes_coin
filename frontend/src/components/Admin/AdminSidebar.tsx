@@ -15,8 +15,52 @@ import {
   FaDatabase,
   FaFileUpload,
   FaFileDownload,
+  FaTicketAlt,
+  FaClipboardList,
+  FaMoneyBillWave,
 } from "react-icons/fa";
 import { useAuth } from "../../contexts/AuthContext";
+
+// Allowed roles arrays for different functionalities
+const allowedDashboardRoles = [
+  "MODERATOR",
+  "ADMIN",
+  "SUPER_ADMIN",
+  "DEVELOPER",
+  "OWNER",
+];
+const allowedUserRoles = [
+  "MODERATOR",
+  "ADMIN",
+  "SUPER_ADMIN",
+  "DEVELOPER",
+  "OWNER",
+];
+const allowedTransactionRoles = ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"];
+const allowedReferralRoles = [
+  "MODERATOR",
+  "ADMIN",
+  "SUPER_ADMIN",
+  "DEVELOPER",
+  "OWNER",
+];
+const allowedUtilityRoles = ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"];
+const allowedRewardSettingsRoles = [
+  "ADMIN",
+  "SUPER_ADMIN",
+  "DEVELOPER",
+  "OWNER",
+];
+const allowedSupportTicketRoles = [
+  "SUPPORT",
+  "MODERATOR",
+  "ADMIN",
+  "SUPER_ADMIN",
+  "DEVELOPER",
+  "OWNER",
+];
+const allowedAuditLogsRoles = ["SUPER_ADMIN", "DEVELOPER", "OWNER"];
+const allowedDataRoles = ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"];
 
 interface AdminSidebarProps {
   isCollapsed: boolean;
@@ -28,6 +72,14 @@ interface SidebarItemProps {
   icon?: React.ComponentType<{ size: number }>;
   label: string;
   isCollapsed: boolean;
+  allowedRoles?: string[];
+}
+
+interface DropdownItemChild {
+  to: string;
+  icon: React.ComponentType<{ size: number }>;
+  label: string;
+  allowedRoles?: string[];
 }
 
 interface DropdownItemProps {
@@ -36,15 +88,12 @@ interface DropdownItemProps {
   isOpen: boolean;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   isCollapsed: boolean;
-  childrenItems: {
-    to: string;
-    icon: React.ComponentType<{ size: number }>;
-    label: string;
-  }[];
+  childrenItems: DropdownItemChild[];
+  allowedRoles?: string[];
 }
 
 const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
-  const { logout } = useAuth();
+  const { logout} = useAuth();
   const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
   const [isTransactionOpen, setIsTransactionOpen] = useState(false);
   const [isDataOpen, setIsDataOpen] = useState(false);
@@ -70,6 +119,7 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
           icon={FaChartLine}
           label="Dashboard"
           isCollapsed={isCollapsed}
+          allowedRoles={allowedDashboardRoles}
         />
 
         <DropdownItem
@@ -78,14 +128,26 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
           isOpen={isUserDropdownOpen}
           setIsOpen={setIsUserDropdownOpen}
           isCollapsed={isCollapsed}
+          allowedRoles={allowedUserRoles}
           childrenItems={[
-            { to: "/a/user", icon: FaUserEdit, label: "Manage Users" },
+            {
+              to: "/a/user",
+              icon: FaUserEdit,
+              label: "Manage Users",
+              allowedRoles: allowedUserRoles,
+            },
             {
               to: "/a/user/transaction",
               icon: FaHistory,
               label: "User Transactions",
+              allowedRoles: allowedUserRoles,
             },
-            { to: "/a/user/deposit", icon: FaWallet, label: "User Deposits" },
+            {
+              to: "/a/user/deposit",
+              icon: FaWallet,
+              label: "User Deposits",
+              allowedRoles: allowedUserRoles,
+            },
           ]}
         />
 
@@ -95,31 +157,67 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
           isOpen={isTransactionOpen}
           setIsOpen={setIsTransactionOpen}
           isCollapsed={isCollapsed}
+          allowedRoles={allowedTransactionRoles}
           childrenItems={[
             {
               to: "/a/transactions/confirm-deposit",
               icon: FaWallet,
               label: "Confirm Deposit",
+              allowedRoles: allowedTransactionRoles,
+            },
+            {
+              to: "/a/transactions/add-account",
+              icon: FaWallet,
+              label: "Add Account",
+              allowedRoles: allowedTransactionRoles,
             },
             {
               to: "/a/transactions/history",
               icon: FaHistory,
-              label: "History",
+              label: "Transaction History",
+              allowedRoles: allowedTransactionRoles,
             },
           ]}
         />
 
         <SidebarItem
-          to="/a/referrals"
+          to="/a/referral"
           icon={FaCoins}
           label="Referrals"
           isCollapsed={isCollapsed}
+          allowedRoles={allowedReferralRoles}
         />
+
         <SidebarItem
           to="/a/utility"
           icon={FaToolbox}
           label="Utility"
           isCollapsed={isCollapsed}
+          allowedRoles={allowedUtilityRoles}
+        />
+
+        <SidebarItem
+          to="/a/reward-settings"
+          icon={FaMoneyBillWave}
+          label="Reward Settings"
+          isCollapsed={isCollapsed}
+          allowedRoles={allowedRewardSettingsRoles}
+        />
+
+        <SidebarItem
+          to="/a/support-tickets"
+          icon={FaTicketAlt}
+          label="Support Tickets"
+          isCollapsed={isCollapsed}
+          allowedRoles={allowedSupportTicketRoles}
+        />
+
+        <SidebarItem
+          to="/a/logs"
+          icon={FaClipboardList}
+          label="Audit Logs"
+          isCollapsed={isCollapsed}
+          allowedRoles={allowedAuditLogsRoles}
         />
 
         <DropdownItem
@@ -128,19 +226,26 @@ const AdminSidebar = ({ isCollapsed, onToggle }: AdminSidebarProps) => {
           isOpen={isDataOpen}
           setIsOpen={setIsDataOpen}
           isCollapsed={isCollapsed}
+          allowedRoles={allowedDataRoles}
           childrenItems={[
-            { to: "/a/data/upload", icon: FaFileUpload, label: "Upload Data" },
+            {
+              to: "/a/data/upload",
+              icon: FaFileUpload,
+              label: "Upload Data",
+              allowedRoles: allowedDataRoles,
+            },
             {
               to: "/a/data/download",
               icon: FaFileDownload,
               label: "Download Data",
+              allowedRoles: allowedDataRoles,
             },
           ]}
         />
 
-        <li className="absolute -bottom-40 w-full">
+        <li className="-bottom-40 w-full">
           <p
-            onClick={e => {
+            onClick={(e) => {
               e.preventDefault();
               logout();
             }}
@@ -160,8 +265,16 @@ const SidebarItem = ({
   icon: Icon,
   label,
   isCollapsed,
+  allowedRoles,
 }: SidebarItemProps) => {
+  const { user } = useAuth();
   const location = useLocation();
+
+  // Only render if the user has access.
+  if (allowedRoles && !allowedRoles.includes(user!.role)) {
+    return null;
+  }
+
   return (
     <li>
       <Link
@@ -184,7 +297,15 @@ const DropdownItem = ({
   setIsOpen,
   isCollapsed,
   childrenItems,
+  allowedRoles,
 }: DropdownItemProps) => {
+  const { user } = useAuth();
+
+  // Only render if the user has access.
+  if (allowedRoles && !allowedRoles.includes(user!.role)) {
+    return null;
+  }
+
   return (
     <li>
       <div
@@ -192,12 +313,7 @@ const DropdownItem = ({
         onClick={() => setIsOpen(!isOpen)}
       >
         <Icon size={20} />
-        {!isCollapsed &&
-          (label === "Users" ? (
-            <Link to="/a/user">Users</Link>
-          ) : (
-            <span>{label}</span>
-          ))}
+        {!isCollapsed && <span>{label}</span>}
         {!isCollapsed && (
           <FaChevronDown
             className={`ml-auto transition-transform ${
@@ -208,15 +324,23 @@ const DropdownItem = ({
       </div>
       {isOpen && (
         <ul className="ml-6 space-y-1">
-          {childrenItems.map(({ to, icon: ChildIcon, label }) => (
-            <SidebarItem
-              key={to}
-              to={to}
-              icon={ChildIcon}
-              label={label}
-              isCollapsed={isCollapsed}
-            />
-          ))}
+          {childrenItems.map(
+            ({
+              to,
+              icon: ChildIcon,
+              label,
+              allowedRoles: childAllowedRoles,
+            }) => (
+              <SidebarItem
+                key={to}
+                to={to}
+                icon={ChildIcon}
+                label={label}
+                isCollapsed={isCollapsed}
+                allowedRoles={childAllowedRoles}
+              />
+            )
+          )}
         </ul>
       )}
     </li>

@@ -1,23 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Draggable from "react-draggable";
 import InputField from "../../components/InputField";
-import { useAuth } from "../../contexts/AuthContext";
-import SearchUsers from "../../components/Admin/SearchUsers";
 import AdminWrapper from "../../components/Admin/AdminWrapper";
 import SlideInPanel from "../../components/Admin/SlideInPanel";
-import { DepositPropsWithUser, User } from "../../utils/type";
-import { changePassword, updateUser } from "../../services/adminAPI";
+import { User } from "../../utils/type";
+import { changePassword, getUsers, updateUser } from "../../services/adminAPI";
 import { toast, ToastContainer } from "react-toastify";
+import { useAuth } from "../../contexts/AuthContext";
+import SearchUsers from "../../components/Admin/SearchUsers";
 
 const AdminUser: React.FC = () => {
-  const { user,  isAllowed } = useAuth();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [password, setPassword] = useState<string>();
-  // selectedUser is kept for potential future use
+  const { user } = useAuth();
+
+  // Modal & editing states
+  const [isModalOpen, setIsModalOpen] = useState(false); // For Edit Password modal
+  const [isEditing, setIsEditing] = useState(false); // For editing user info
+  const [password, setPassword] = useState<string>("");
   const [selectedUser] = useState<User | null>(null);
-  const [isDraggable, setIsDraggable] = useState(false);
-  const [supportVisible, setSupportVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>({
     id: 0,
     full_name: "",
@@ -32,10 +31,20 @@ const AdminUser: React.FC = () => {
     referral_code: null,
     total_referrals: 0,
     referral_reward: 0,
+    crypto_balance: 0,
   });
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const [users, setUsers] = useState<User[] | DepositPropsWithUser[]>([]);
-  // const allowedRoles = ["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"];
+  // const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  // State for paginated list with filter
+  const [usersData, setUsersData] = useState<User[]>([]);
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [filter, setFilter] = useState<string>("");
+
+  // Other states
+  const [isDraggable, setIsDraggable] = useState(false);
+  const [supportVisible, setSupportVisible] = useState(false);
+
   const roleHierarchy = [
     "USER",
     "SUPPORT",
@@ -46,27 +55,52 @@ const AdminUser: React.FC = () => {
     "OWNER",
   ];
 
+  // Fetch paginated users whenever currentPage changes
+  useEffect(() => {
+    const getUsersAsync = async () => {
+      try {
+        const res = await getUsers(currentPage);
+        // Expecting res: { users: User[], total_pages: number }
+        setUsersData(res.users);
+        setTotalPages(res.total_pages);
+        console.log({ res });
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+    getUsersAsync();
+  }, [currentPage]);
+
+  // Filter users by full_name, email, or role (case-insensitive)
+  const filteredUsers = usersData.filter((user) => {
+    if ("full_name" in user) {
+      return [
+        user.full_name,
+        user.email,
+        user.role,
+        user.username,
+        user.id,
+        user.referral_code,
+        user.last_reward_date,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(filter.toLowerCase());
+    }
+    return false;
+  });
+
   const userRoleIndex = roleHierarchy.indexOf(
     user?.role.toLocaleUpperCase() || "USER"
   );
-  // console.log({ allowedRoles, userRoleIndex, roles, user, users });
 
-  // Open edit modal
-  const handleEditClick = (userItem: User | DepositPropsWithUser) => {
-    if ("full_name" in userItem) {
-      setEditingUser(userItem);
-    } else {
-      setEditingUser(userItem.user);
-    }
+  // Open the Edit User modal (for updating user info)
+  const handleEditClick = (userItem: User) => {
+    setEditingUser(userItem);
     setIsEditing(true);
   };
 
-  // Toggle accordion for user details
-  const toggleAccordion = (index: number) => {
-    setActiveIndex(activeIndex === index ? null : index);
-  };
-
-  // Close the modal
+  // Close the edit user modal
   const closeEditModal = () => {
     setIsEditing(false);
     setEditingUser(null);
@@ -77,19 +111,16 @@ const AdminUser: React.FC = () => {
     setSupportVisible(!supportVisible);
   };
 
+  // Submit edited user info
   const handleSubmitUser = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingUser) return;
 
-    // console.log("Sending updated user data:", editingUser);
-
     try {
-      // Call your API to update the user with the updated info
       const response = await updateUser(editingUser);
       toast.success(response.message);
       setEditingUser(null);
-
-      // Optionally, refresh your users list or show a success message here
+      // Optionally, refresh the users list here
     } catch (error: unknown) {
       if (error instanceof Error) {
         toast.error(error.message || "Error updating user");
@@ -102,134 +133,154 @@ const AdminUser: React.FC = () => {
   return (
     <AdminWrapper>
       <ToastContainer />
-      <div className="w-wull md:px-4 py-20 mb-6 overflow-x-clip">
-        {/* Search Bar with Suggestions */}
-        <SearchUsers title="Admin User Page" setUsers={setUsers} />
+      <div className="w-full md:px-4 py-20 mb-6 overflow-x-clip text-gray-800">
+        <h1 className="text-3xl font-bold mb-6"></h1>
+        <SearchUsers
+          title={"User Management"}
+          setUsers={(users) => {
+            if (
+              (users as User[]).every(
+                (user) =>
+                  "role" in user &&
+                  "email" in user &&
+                  "full_name" in user &&
+                  "username" in user
+              )
+            ) {
+              setUsersData(users as User[]);
+            } else {
+              const transformedUsers = (users as User[]).map((user: User) => ({
+                ...user,
+                role: "", // default value for role
+                email: "", // default value for email
+                full_name: "", // default value for full_name
+                username: "", // default value for username
+                // Add other properties that are present in User but not in DepositPropsWithUser
+              }));
+              setUsersData(transformedUsers);
+            }
+          }}
+        />
+        <div className="p-6 max-w-7xl mx-auto">
+          {/* Filter Input */}
+          <div className="mb-4">
+            <input
+              type="text"
+              placeholder="Filter by name, email, or role"
+              className="w-full px-4 py-2 border bg-slate-300 border-gray-300 rounded focus:outline-none focus:ring focus:border-blue-300"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            />
+          </div>
 
-        {/* Floating Search Results */}
-        {users.length > 0 && (
-          <div className="my-24 w-auto flex flex-wrap justify-center items-center gap-2 text-gray-600 mx-auto px-6">
-            {users.map(
-              (userItem: User | DepositPropsWithUser, index: number) => {
-                // Extract user data whether it's a direct User or wrapped in DepositPropsWithUser
-                const userData =
-                  "full_name" in userItem ? userItem : userItem.user;
-                return (
-                  <div
-                    key={userData.id}
-                    className="cursor-pointer mb-4 p-4 border rounded-lg shadow bg-gray-50 hover:bg-gray-100"
-                  >
-                    <div onClick={() => toggleAccordion(index)}>
-                      <p>
-                        <strong>Name:</strong> {userData.full_name}
-                      </p>
-                      <p>
-                        <strong>Email:</strong> {userData.email}
-                      </p>
-                      <p>
-                        <strong>Username:</strong> {userData.username}
-                      </p>
-                      <p>
-                        <strong>Role:</strong> {userData.role}
-                      </p>
-                      <p>
-                        <strong>Sticks:</strong> {userData.sticks}
-                      </p>
-                      <p>
-                        <strong>Is Blocked:</strong> {userData.is_blocked}
-                      </p>
-                      <p>
-                        <strong>Balance:</strong> {userData.balance}
-                      </p>
-                    </div>
-
-                    {/* Accordion Content */}
-                    {/* Check if user has access to edit user */}
-                    <div className="flex justify-between gap-1 bg-primary-light m-2 w-full rounded-lg">
-                      {activeIndex === index &&
-                        isAllowed(user?.role as string) && (
-                          <button
-                            onClick={() => handleEditClick(userItem)}
-                            className="m-2 text-white"
-                          >
-                            Edit User
-                          </button>
-                        )}
-                      <div>
-                        <button
-                          onClick={() => {
-                            setEditingUser(userData); // Store selected user
-                            setIsModalOpen(true); // Open modal
-                          }}
-                          className="m-2 text-white"
-                        >
-                          Edit Password
-                        </button>
-                      </div>
-                    </div>
-                    {/* Change Password Modal */}
-                    {isModalOpen && (
-                      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                        <div className="bg-white rounded-lg p-6 shadow-lg w-80">
-                          <h2 className="text-lg font-bold mb-4">
-                            Change Password for {editingUser?.full_name}
-                          </h2>
-
-                          <InputField
-                            type="text"
-                            name="Password"
-                            label={"Password"}
-                            value={password ?? ""}
-                            placeholder="Enter new password"
-                            onChange={(e) => setPassword(e.target.value)}
-                          />
-
-                          <button
-                            onClick={async () => {
-                              if (editingUser) {
-                                try {
-                                  await changePassword(editingUser, password!);
-                                  setIsModalOpen(false); // Close modal
-                                  setPassword(""); // Clear input
-                                } catch (error: unknown) {
-                                  if (error instanceof Error) {
-                                    toast.error(
-                                      `Failed to change password: ${error.message}`
-                                    );
-                                  } else {
-                                    toast.error("An unknown error occurred");
-                                  }
-                                }
-                              }
-                            }}
-                            className="bg-bgColor hover:bg-secondary text-white px-4 py-2 mt-6 rounded-lg w-full"
-                          >
-                            Set Password
-                          </button>
-                          <button
-                            onClick={() => setIsModalOpen(false)}
-                            className="text-gray-100 rounded-md bg-secondary-dark mt-4 text-sm p-3 hover:bg-bgColor hover:text-white"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      </div>
+          {/* Users Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((userItem) => (
+                <div
+                  key={userItem.id}
+                  className="bg-white p-6 rounded-lg shadow hover:shadow-lg transition duration-300"
+                >
+                  <h2 className="text-xl font-bold mb-2">
+                    {"full_name" in userItem && userItem.full_name}
+                  </h2>
+                  <p className="text-gray-600 mb-1">
+                    <strong>Email:</strong>{" "}
+                    {"user" in userItem && userItem.email}
+                  </p>
+                  <p className="text-gray-600 mb-1">
+                    <strong>Role:</strong> {"role" in userItem && userItem.role}
+                  </p>
+                  <p className="text-gray-600 mb-1">
+                    <strong>Balance:</strong>{" "}
+                    {"user" in userItem && userItem.balance}
+                  </p>
+                  <p className="text-gray-600 mb-1">
+                    <strong>Crypto:</strong>{" "}
+                    {"crypto_balance" in userItem && userItem.crypto_balance}
+                  </p>
+                  <p className="text-gray-600 mb-1">
+                    <strong>Last Reward:</strong>{" "}
+                    {"last_reward_date" in userItem &&
+                      userItem.last_reward_date}
+                  </p>
+                  <p className="text-gray-600 mb-1">
+                    <strong>Total Referrals:</strong>{" "}
+                    {"total_referrals" in userItem && userItem.total_referrals}
+                  </p>
+                  <p className="text-gray-600 mb-1">
+                    <strong>Referrer ID:</strong>{" "}
+                    {"referrer_id" in userItem && userItem.referrer_id}
+                  </p>
+                  <p className="text-gray-600 mb-1">
+                    <strong>Status:</strong>{" "}
+                    {"is_blocked" in userItem && userItem.is_blocked ? (
+                      <span className="text-red-500 font-semibold">
+                        Blocked
+                      </span>
+                    ) : (
+                      <span className="text-green-500 font-semibold">
+                        Active
+                      </span>
                     )}
+                  </p>
+                  <div className="mt-4 flex space-x-2">
+                    <button
+                      onClick={() => handleEditClick(userItem as User)}
+                      className="text-blue-500 hover:underline"
+                    >
+                      Edit User
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingUser(userItem as User);
+                        setIsModalOpen(true);
+                      }}
+                      className="text-blue-500 hover:underline"
+                    >
+                      Edit Password
+                    </button>
                   </div>
-                );
-              }
+                </div>
+              ))
+            ) : (
+              <p className="col-span-full text-center">No users found.</p>
             )}
           </div>
-        )}
 
-        {/* Selected User's Full Info */}
+          {/* Pagination Controls */}
+          <div className="flex justify-between items-center mt-6">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 hover:bg-blue-600 transition"
+            >
+              Previous
+            </button>
+            <span>
+              Page <span className="font-semibold">{currentPage}</span> of{" "}
+              <span className="font-semibold">{totalPages}</span>
+            </span>
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 bg-blue-500 text-white rounded disabled:opacity-50 hover:bg-blue-600 transition"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+
+        {/* Selected User's Full Info (optional) */}
         {selectedUser && (
           <div className="bg-white p-4 rounded-lg shadow-md mb-4 z-30">
             <h3 className="font-semibold text-lg mb-2">User Details</h3>
             <p>
               <strong>Name:</strong> {selectedUser.full_name}
             </p>
-            <p>
+            <p className="text-gray-600 mb-1 break-words">
               <strong>Email:</strong> {selectedUser.email}
             </p>
             <p>
@@ -328,8 +379,7 @@ const AdminUser: React.FC = () => {
                       role: e.target.value,
                     })
                   }
-                  className="p-3 bg-slate-400 rounded-lg ml-4 text-textColor placeholder-gray-500 
-                             focus:outline-none focus:ring-0 focus:ring-transparent"
+                  className="p-3 bg-slate-400 rounded-lg ml-4 text-textColor placeholder-gray-500 focus:outline-none focus:ring-0 focus:ring-transparent"
                 >
                   {roleHierarchy
                     .filter(
@@ -359,6 +409,54 @@ const AdminUser: React.FC = () => {
               </div>
             </form>
           </SlideInPanel>
+        )}
+
+        {/* Edit Password Modal */}
+        {isModalOpen && editingUser && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 shadow-lg w-80">
+              <h2 className="text-lg font-bold mb-4">
+                Change Password for {editingUser.full_name}
+              </h2>
+              <InputField
+                type="password"
+                name="password"
+                label="Password"
+                value={password}
+                placeholder="Enter new password"
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              <button
+                onClick={async () => {
+                  if (editingUser) {
+                    try {
+                      await changePassword(editingUser, password);
+                      toast.success("Password changed successfully!");
+                      setIsModalOpen(false);
+                      setPassword("");
+                    } catch (error: unknown) {
+                      if (error instanceof Error) {
+                        toast.error(
+                          `Failed to change password: ${error.message}`
+                        );
+                      } else {
+                        toast.error("An unknown error occurred");
+                      }
+                    }
+                  }
+                }}
+                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 mt-6 rounded-lg w-full"
+              >
+                Set Password
+              </button>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="text-gray-700 bg-gray-200 rounded-md mt-4 text-sm p-3 hover:bg-gray-300 w-full"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         )}
 
         {/* Draggable Support Panel */}

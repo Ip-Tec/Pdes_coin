@@ -115,6 +115,40 @@ export const searchUser = async (
   }
 };
 
+// Get users with pagination
+export const getUsers = async (page: number) => {
+  try {
+    const response = await API.get(apiUrl(`/admin/get-users?page=${page}`));
+    // console.log({ response });
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      console.error(errorData);
+      return errorData;
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
+// Get Transactions with pagination
+export const getTransactions = async (page: number) => {
+  try {
+    // Updated the endpoint URL to match the Flask route.
+    const response = await API.get(apiUrl(`/admin/transactions?page=${page}`));
+    console.log({ response });
+
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      console.error("Backend error:", errorData);
+      return errorData;
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
+
 // Add account user will deposit to
 export const addAccount = async (data: {
   account_name: string;
@@ -318,7 +352,7 @@ export const getReferrerAndReward = async (userId: number) => {
   try {
     const response = await API.get(apiUrl(`/admin/referrer/${userId}`));
     toast.success("Referrer details fetched successfully");
-    console.log({response});
+    console.log({ response });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -338,7 +372,7 @@ export const getReferrals = async (userId: number = 6) => {
       apiUrl(`/admin/referrals/${userId}`)
     );
     toast.success("Referrals fetched successfully");
-    console.log({response});
+    console.log({ response });
     return response.data.referrals;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -358,7 +392,7 @@ export const getTopReferrersAdminPage = async (limit: number = 10) => {
       apiUrl(`/admin/top-referrers?limit=${limit}`)
     );
     toast.success("Top referrers fetched successfully");
-    console.log({response});
+    console.log({ response });
     return response.data.top_referrers;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -372,13 +406,18 @@ export const getTopReferrersAdminPage = async (limit: number = 10) => {
 };
 
 // 4️⃣ Get referrers within a date range
-export const getReferrersInRange = async (startDate: string, endDate: string) => {
+export const getReferrersInRange = async (
+  startDate: string,
+  endDate: string
+) => {
   try {
     const response = await API.get<{ referrers: User[] }>(
-      apiUrl(`/admin/referrers-in-range?start_date=${startDate}&end_date=${endDate}`)
+      apiUrl(
+        `/admin/referrers-in-range?start_date=${startDate}&end_date=${endDate}`
+      )
     );
     toast.success("Referrers in range fetched successfully");
-    console.log({response});
+    console.log({ response });
     return response.data.referrers;
   } catch (error) {
     if (axios.isAxiosError(error)) {

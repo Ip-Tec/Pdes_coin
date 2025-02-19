@@ -5,6 +5,7 @@ import traceback
 import jwt
 import datetime
 from datetime import datetime as dt
+from sqlalchemy import or_, desc
 from app import db, socketio
 from dotenv import load_dotenv
 from sqlalchemy.orm import joinedload
@@ -226,9 +227,9 @@ def get_data_overview(current_user, *args, **kwargs):
 
 # Search for a user
 @admin_bp.route("/search-user", methods=["GET"])
-# @token_required
+@token_required
 @AccessLevel.role_required(["ADMIN", "DEVELOPER", "SUPER_ADMIN", "OWNER"])
-def search_user(current_user):
+def search_user(current_user, *args, **kwargs):
     query = request.args.get("query", "").strip()
     print(query)
 
@@ -261,6 +262,105 @@ def search_user(current_user):
             ),
             500,
         )
+
+# Get User with pagination
+@admin_bp.route("/get-users", methods=["GET"])
+@token_required
+@AccessLevel.role_required(["SUPPORT", "MODERATOR", "ADMIN", "DEVELOPER", "SUPER_ADMIN", "OWNER"])
+def get_users(current_user, *args, **kwargs):
+    page = request.args.get("page", 1, type=int)
+    per_page = request.args.get("per_page", 10, type=int)
+
+    users = User.query.paginate(page=page, per_page=per_page)
+
+    user_list = [user.serialize_admin() for user in users.items]
+
+    return jsonify({"users": user_list, "total_pages": users.pages})
+
+# Get Transactions with pagination
+@admin_bp.route('/transactions', methods=['GET'])
+@token_required
+@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"])
+def get_transactions(current_user, *args, **kwargs):
+    # Get query parameters from the request
+    search = request.args.get('search', '')
+    status = request.args.get('status', '')  # "Completed" or "Pending"
+    txn_type = request.args.get('type', '')
+    start_date = request.args.get('start_date', '')
+    end_date = request.args.get('end_date', '')
+    min_amount = request.args.get('min_amount', type=float)
+    max_amount = request.args.get('max_amount', type=float)
+    sort_field = request.args.get('sort_field', 'created_at')
+    sort_order = request.args.get('sort_order', 'desc')
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+
+    # Start with a base query
+    query = Transaction.query
+
+    # Filtering by search (searching in id, account_name, or user_id)
+    if search:
+        search_term = f"%{search}%"
+        # For the user_id, if search is a digit, we match exactly.
+        query = query.filter(
+            or_(
+                Transaction.account_name.ilike(search_term),
+                Transaction.id.ilike(search_term),
+                Transaction.user_id == int(search) if search.isdigit() else False
+            )
+        )
+
+    # Filter by transaction status
+    if status:
+        if status.lower() == "completed":
+            query = query.filter(Transaction.transaction_completed == True)
+        elif status.lower() == "pending":
+            query = query.filter(Transaction.transaction_completed == False)
+
+    # Filter by transaction type
+    if txn_type:
+        query = query.filter(Transaction.transaction_type == txn_type)
+
+    # Filter by date range
+    if start_date:
+        try:
+            start_dt = dt.strptime(start_date, "%Y-%m-%d")
+            query = query.filter(Transaction.created_at >= start_dt)
+        except ValueError:
+            pass
+    if end_date:
+        try:
+            end_dt = dt.strptime(end_date, "%Y-%m-%d")
+            query = query.filter(Transaction.created_at <= end_dt)
+        except ValueError:
+            pass
+
+    # Filter by amount range
+    if min_amount is not None:
+        query = query.filter(Transaction.amount >= min_amount)
+    if max_amount is not None:
+        query = query.filter(Transaction.amount <= max_amount)
+
+    # Sorting
+    if hasattr(Transaction, sort_field):
+        order_column = getattr(Transaction, sort_field)
+        if sort_order.lower() == 'desc':
+            order_column = order_column.desc()
+        else:
+            order_column = order_column.asc()
+        query = query.order_by(order_column)
+
+    # Pagination: get the appropriate slice of data
+    paginated = query.paginate(page=page, per_page=per_page, error_out=False)
+    transactions = paginated.items
+
+    # Build and return the JSON response
+    return jsonify({
+        "transactions": [txn.serialize() for txn in transactions],
+        "total": paginated.total,
+        "page": paginated.page,
+        "pages": paginated.pages,
+    })
 
 
 # Add a deposit account
