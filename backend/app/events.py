@@ -3,52 +3,62 @@ from functools import wraps
 from app.models import Utility
 from flask_socketio import emit
 from urllib.parse import parse_qs
+from http.cookies import SimpleCookie
 from flask_jwt_extended import decode_token
 from app.controller.user_transactions import PdesService, UserTransactionsController
+
 
 def authenticate_socket_event(socketio):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            # Use request.sid to get the session ID
             sid = request.sid
             env = socketio.server.environ.get(sid, {})
             
-            # Try to get the token from HTTP_AUTHORIZATION header first
-            auth_token = env.get("HTTP_AUTHORIZATION", None)
+            token = None
+
+            # Attempt to get token from cookies
+            cookie_str = env.get("HTTP_COOKIE", "")
+            if cookie_str:
+                cookie = SimpleCookie()
+                cookie.load(cookie_str)
+                if "access_token" in cookie:
+                    token = cookie["access_token"].value
+
+            # Fallback: Try Authorization header if token not in cookies
+            if not token:
+                auth_header = env.get("HTTP_AUTHORIZATION", None)
+                if auth_header and auth_header.startswith("Bearer "):
+                    token = auth_header.split(" ")[1]
             
-            # If not found, try to get it from the query string
-            if not auth_token:
+            # Fallback: Try query string parameter
+            if not token:
                 query_string = env.get("QUERY_STRING", "")
                 parsed_qs = parse_qs(query_string)
                 token_list = parsed_qs.get("token")
                 if token_list:
-                    auth_token = token_list[0]
+                    token = token_list[0]
             
-            if not auth_token:
+            if not token:
                 emit("error", {"message": "Unauthorized: Token missing"})
                 return
             
-            # Remove 'Bearer ' if present
-            if auth_token.startswith("Bearer "):
-                auth_token = auth_token.split(" ")[1]
-
             try:
-                decoded_token = decode_token(auth_token)
-                current_user_id = decoded_token.get("sub")  # Assuming 'sub' holds the user id
-                from app.models import User  # Avoid circular import issues
+                decoded_token = decode_token(token)
+                current_user_id = decoded_token.get("sub")  # assuming 'sub' holds the user id
+                from app.models import User  # avoid circular import
                 current_user = User.query.get(current_user_id)
-    
                 if not current_user:
                     emit("error", {"message": "Unauthorized: Invalid user"})
                     return
             except Exception as e:
                 emit("error", {"message": "Invalid token", "error": str(e)})
                 return
-    
+            
             return f(current_user, *args, **kwargs)
         return decorated_function
     return decorator
+
 
 
 def register_socketio_events(socketio):
