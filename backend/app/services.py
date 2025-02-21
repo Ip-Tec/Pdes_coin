@@ -18,18 +18,15 @@ REFRESH_SECRET_KEY = os.getenv("SECRET_KEY")
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = request.headers.get("Authorization")
+        # Try to get token from cookies instead of headers
+        token = request.cookies.get("access_token")
+        
         # Bypass token checking for OPTIONS requests (preflight)
         if request.method == "OPTIONS":
             return jsonify({}), 200
-        # print({"services.py NO 14 :====> Authorization Header": token})
 
         if not token:
             return jsonify({"message": "Token is missing!"}), 401
-
-        # Handle Bearer token format
-        if token.startswith("Bearer "):
-            token = token.split(" ")[1]
 
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
@@ -42,7 +39,6 @@ def token_required(f):
             return jsonify({"message": str(e)}), 401
 
         return f(current_user, *args, **kwargs)
-
     return decorated
 
 def generate_token(user_id):

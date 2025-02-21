@@ -3,9 +3,10 @@ import jwt
 import datetime
 from app import db
 from app.models import User
+from datetime import timedelta
 from dotenv import load_dotenv
 from app.controller import user_controller
-from flask import Blueprint, request, jsonify, current_app
+from flask import Blueprint, request, jsonify, current_app, make_response
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from app.services import (
@@ -44,18 +45,23 @@ def register():
 @auth_bp.route("/logout", methods=["POST"])
 @token_required
 def logout(current_user, *args, **kwargs):
-    # Add logout logic here
+    # Get the user from the database
     user_id = current_user.id
-    # fine user with the User id
     user = User.query.filter_by(id=user_id).first()
-    print(f"user::: {user}")
+    
     if not user:
         return jsonify({"error": "User not found"}), 404
-    # update user's refresh token to None
+    
+    # Invalidate the refresh token in the database
     user.refresh_token = None
     db.session.commit()
     
-    return jsonify({"message": "Logged out successfully!"}), 200
+    # Create a response and clear the cookies
+    response = make_response(jsonify({"message": "Logged out successfully!"}), 200)
+    response.set_cookie("access_token", "", expires=0, httponly=True, secure=True, samesite="Lax")
+    response.set_cookie("refresh_token", "", expires=0, httponly=True, secure=True, samesite="Lax")
+    
+    return response
 
 
 # Forgot Password router
@@ -143,13 +149,33 @@ def resend_verification():
 @auth_bp.route("/refresh-token", methods=["POST"])
 @limiter.limit("5 per hour")
 def refresh_token():
-    data = request.json
-    payload = {
-        "user_id": data.id,
-        "exp": datetime.utcnow() + datetime.timedelta(hours=3),
-        "iat": datetime.utcnow(),  # Issued at time
-    }
+    # Retrieve refresh token from cookies
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        return jsonify({"message": "Refresh token is missing"}), 401
 
-    # Add refresh token logic here
-    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
-    return {"message": "Token refreshed successfully", "token": token}
+    try:
+        # Decode the refresh token
+        payload = jwt.decode(refresh_token, SECRET_KEY, algorithms=["HS256"])
+        user_id = payload.get("user_id")
+    except jwt.ExpiredSignatureError:
+        return jsonify({"message": "Refresh token has expired"}), 401
+    except jwt.InvalidTokenError:
+        return jsonify({"message": "Invalid refresh token"}), 401
+
+    # Generate a new access token (and optionally a new refresh token)
+    new_payload = {
+        "user_id": user_id,
+        "exp": datetime.utcnow() + timedelta(hours=3),  # New access token expiry
+        "iat": datetime.utcnow(),
+    }
+    new_access_token = jwt.encode(new_payload, SECRET_KEY, algorithm="HS256")
+
+    # Optionally, you can rotate the refresh token here and set a new one
+
+    # Set the new access token in an HttpOnly cookie
+    response = make_response(
+        jsonify({"message": "Token refreshed successfully", "access_token": new_access_token}), 200
+    )
+    response.set_cookie("access_token", new_access_token, httponly=True, secure=True, samesite="Lax")
+    return response

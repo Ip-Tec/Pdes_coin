@@ -6,7 +6,7 @@ import datetime
 from datetime import timedelta, datetime as dt
 from app import db
 from app.mail.user_mail import Email
-from flask import current_app, request, jsonify
+from flask import current_app, request, jsonify, make_response
 from app.key_gen import generate_key
 from app.services import (
     generate_access_token,
@@ -80,19 +80,22 @@ class UserController:
             access_token = generate_access_token(user.id)
             refresh_token = generate_refresh_token(user.id)
 
-            return (
-                jsonify(
-                    {
-                        "access_token": access_token,
-                        "refresh_token": refresh_token,
-                        "user": user.serialize(),
-                    }
-                ),
-                200,
+            response = make_response(jsonify({"user": user.serialize()}), 200)
+            response.set_cookie(
+                "access_token",
+                access_token,
+                httponly=True,
+                secure=True,
+                # samesite="Lax"
             )
-
-        else:
-            return jsonify({"message": "Invalid credentials"}), 401
+            response.set_cookie(
+                "refresh_token",
+                refresh_token,
+                httponly=True,
+                secure=True,
+                # samesite="Lax",
+            )
+            return response
 
     @staticmethod
     def register():

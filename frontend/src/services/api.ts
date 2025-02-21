@@ -73,20 +73,18 @@ export const checkTokenValidity = async (token: string): Promise<boolean> => {
 };
 
 // Refresh token
-export const refreshTokenAPI = async (refreshToken: string) => {
+export const refreshTokenAPI = async () => {
   try {
-    const response = await API.post(apiUrl("/auth/refresh-token"), {
-      refreshToken,
-    });
-    return response.data.access_token; // Updated to use "access_token"
+    const response = await API.post(apiUrl("/auth/refresh-token"));
+    return response.data.access_token; // Return new access token from the server response
   } catch (error) {
+    // Handle errors as before
     if (axios.isAxiosError(error)) {
       if (error.response && error.response.status === 401) {
         window.location.href = "/login";
       }
       const errorData: ErrorResponse = error.response?.data;
-      console.error(errorData?.message || "Failed to fetch Token");
-
+      console.error(errorData?.message || "Failed to refresh token");
       throw new Error(errorData?.message || "Failed to update refresh token");
     }
     throw new Error("Failed to refresh token.");

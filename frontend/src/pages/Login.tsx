@@ -1,7 +1,7 @@
 import { useState } from "react";
 import logo from "../assets/pdes.png";
 import { Link, Navigate } from "react-router-dom";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 import InputField from "../components/InputField";
 import { useAuth } from "../contexts/AuthContext";
 import { toast, ToastContainer } from "react-toastify";
@@ -19,11 +19,11 @@ const Login: React.FC = () => {
   const [errors, setErrors] = useState({ email: "", password: "" });
   const [errorMessage, setErrorMessage] = useState("");
   const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  // const navigate = useNavigate();
   const { login, isAuth, user } = useAuth();
 
   if (isAuth && user) {
-    if (user?.role !== "user") {
+    if (user?.role.toLowerCase() !== "user") {
       return <Navigate to="/a/dashboard" replace />;
     } else {
       return <Navigate to="/dashboard" replace />;
@@ -77,18 +77,16 @@ const Login: React.FC = () => {
     setLoading(true);
     if (validateForm()) {
       try {
-        const loginResponse = await loginUser(
-          formData.email,
-          formData.password
-        );
+        // const loginResponse =
+        await loginUser(formData.email, formData.password);
         // const  = user;
-        // const { user, access_token, refresh_token } = loginResponse;
+        // const { user, access_token, refresh_token } = loginResponse
         // console.log("Login page:",{ user, access_token, refresh_token });
-        if (loginResponse?.user?.role !== "user") {
-          navigate("/a/dashboard");
-        } else {
-          navigate("/dashboard");
-        }
+        // if (loginResponse?.user?.role.toLowerCase() !== "user") {
+        //   navigate("/a/dashboard");
+        // } else {
+        //   navigate("/dashboard");
+        // }
       } catch (error: unknown) {
         if (error instanceof Error) {
           toast.error(error.message || "Login failed");

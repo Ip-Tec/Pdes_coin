@@ -187,16 +187,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       // const response = await LogoutUser();
       // if (response.message) {
-        // toast.success(response.message);
-        setIsLoading(true);
-        sessionStorage.removeItem("authToken");
-        sessionStorage.removeItem("refreshToken");
-        setIsAuth(false);
-        setUser(null);
-        if (socket) {
-          socket.disconnect();
-          setSocket(null);
-        }
+      // toast.success(response.message);
+      setIsLoading(true);
+      sessionStorage.removeItem("authToken");
+      sessionStorage.removeItem("refreshToken");
+      setIsAuth(false);
+      setUser(null);
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+      }
       // }
     } catch (error: unknown | Error) {
       setIsLoading(false);
