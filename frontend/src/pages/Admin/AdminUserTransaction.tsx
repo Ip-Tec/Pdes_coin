@@ -37,6 +37,8 @@ const AdminUserTransaction: React.FC = () => {
   // totalItems can be used later if needed from API response
   const [totalItems, setTotalItems] = useState(0);
 
+  console.log({ totalItems });
+
   const [selectedTransactions, setSelectedTransactions] = useState<Set<number>>(
     new Set()
   );
@@ -104,8 +106,10 @@ const AdminUserTransaction: React.FC = () => {
 
     if (sortField === "created_at") {
       return sortOrder === "asc"
-        ? new Date(aVal as string).getTime() - new Date(bVal as string).getTime()
-        : new Date(bVal as string).getTime() - new Date(aVal as string).getTime();
+        ? new Date(aVal as string).getTime() -
+            new Date(bVal as string).getTime()
+        : new Date(bVal as string).getTime() -
+            new Date(aVal as string).getTime();
     }
     if (sortField === "amount") {
       return sortOrder === "asc"
@@ -118,7 +122,9 @@ const AdminUserTransaction: React.FC = () => {
   });
 
   // Client-side pagination calculations
-  const computedTotalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
+  const computedTotalPages = Math.ceil(
+    sortedTransactions.length / itemsPerPage
+  );
   const paginatedTransactions = sortedTransactions.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
@@ -199,8 +205,7 @@ const AdminUserTransaction: React.FC = () => {
       txn.created_at,
     ]);
 
-    let csvContent =
-      "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
+    let csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n";
     rows.forEach((row) => {
       csvContent += row.join(",") + "\n";
     });
@@ -539,8 +544,8 @@ const AdminUserTransaction: React.FC = () => {
                     <strong>ID:</strong> {selectedTransaction.id}
                   </p>
                   <p>
-                    <strong>User:</strong> {selectedTransaction.account_name} (ID:{" "}
-                    {selectedTransaction.user_id})
+                    <strong>User:</strong> {selectedTransaction.account_name}{" "}
+                    (ID: {selectedTransaction.user_id})
                   </p>
                   <p>
                     <strong>Type:</strong>{" "}
@@ -605,10 +610,14 @@ const AdminUserTransaction: React.FC = () => {
                     <button
                       className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
                       onClick={() => {
-                        const reason = prompt("Enter reason for manual override:");
+                        const reason = prompt(
+                          "Enter reason for manual override:"
+                        );
                         if (reason) {
                           // Implement manual override logic and log audit info here.
-                          alert("Manual override logged with reason: " + reason);
+                          alert(
+                            "Manual override logged with reason: " + reason
+                          );
                         }
                       }}
                     >

@@ -62,7 +62,6 @@ def authenticate_socket_event(socketio):
     return decorator
 
 
-
 def register_socketio_events(socketio):
     @socketio.on("connect")
     def handle_connect(auth):
