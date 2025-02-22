@@ -87,14 +87,14 @@ class UserController:
                 "access_token",
                 access_token,
                 httponly=True,
-                secure=True,
+                secure=False,
                 samesite="None"
             )
             response.set_cookie(
                 "refresh_token",
                 refresh_token,
                 httponly=True,
-                secure=True,
+                secure=False,
                 samesite="None",
             )
             return response
