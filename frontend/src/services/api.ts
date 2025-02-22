@@ -39,7 +39,7 @@ const API = axios.create({
 API.interceptors.request.use(
   (config) => {
     // Retrieve the token from localStorage
-    const token = sessionStorage.getItem("authToken");
+    const token = localStorage.getItem("authToken");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -75,11 +75,9 @@ export const checkTokenValidity = async (token: string): Promise<boolean> => {
 };
 
 // Refresh token
-export const refreshTokenAPI = async (refreshToken: string) => {
+export const refreshTokenAPI = async () => {
   try {
-    const response = await API.post(apiUrl("/auth/refresh-token"), {
-      refreshToken,
-    });
+    const response = await API.post(apiUrl("/auth/refresh-token"));
     return response.data.access_token; // Updated to use "access_token"
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -123,10 +121,7 @@ export const loginUser = async (loginData: {
     const response = await API.post(apiUrl("/auth/login"), loginData);
     const { access_token, refresh_token, user } = response.data;
 
-    sessionStorage.setItem("authToken", access_token);
-    sessionStorage.setItem("refreshToken", refresh_token);
-
-    // console.log({ user, access_token, refresh_token });
+    console.log({ user, access_token, refresh_token });
 
     return { user, access_token, refresh_token };
   } catch (error) {

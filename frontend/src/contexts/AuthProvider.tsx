@@ -1,15 +1,13 @@
 import { useState, useEffect, ReactNode } from "react";
 import { AuthContext } from "./AuthContext";
-import { jwtDecode } from "jwt-decode";
 import { io, Socket } from "socket.io-client";
 import { toast } from "react-toastify";
 import {
-  refreshTokenAPI,
   getTransactionHistory,
   loginUser,
   getUser as getUserAPI,
   websocketUrl,
-  // LogoutUser,
+  refreshTokenAPI,
 } from "../services/api";
 import {
   TradeHistory,
@@ -18,24 +16,11 @@ import {
   User,
 } from "../utils/type";
 
-interface DecodedToken {
-  exp: number;
-}
+// No need for local token decoding now
 
-const isTokenExpired = (token: string): boolean => {
-  try {
-    const decoded = jwtDecode<DecodedToken>(token);
-    const currentTime = Date.now() / 1000;
-    return decoded.exp < currentTime;
-  } catch (error) {
-    console.error("Error decoding token", error);
-    return true;
-  }
-};
-
-const createSocket = (token: string | null): Socket => {
+const createSocket = (): Socket => {
   return io(websocketUrl, {
-    query: { token },
+    withCredentials: true, // Ensure cookies are sent with the connection
     transports: ["websocket", "polling"],
     reconnection: true,
     reconnectionAttempts: 5,
@@ -44,11 +29,8 @@ const createSocket = (token: string | null): Socket => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [isAuth, setIsAuth] = useState<boolean>(() => {
-    const token = sessionStorage.getItem("authToken");
-    return !!token && !isTokenExpired(token);
-  });
-
+  // Instead of checking localStorage, we’ll initialize with false and then determine auth via getUserAPI
+  const [isAuth, setIsAuth] = useState<boolean>(false);
   const [userRoles, setUserRoles] = useState<string[]>([
     "USER",
     "MODERATOR",
@@ -72,21 +54,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   });
   const [transactions, setTransactions] = useState<TransactionHistory[]>([]);
 
+  // On mount, check auth state via the user endpoint (which will read the HttpOnly cookie)
   useEffect(() => {
-    const token = sessionStorage.getItem("authToken");
-    if (token && !isTokenExpired(token)) {
-      setIsAuth(true);
-      getUser().catch(() => logout());
-    } else {
-      sessionStorage.clear();
-      setIsAuth(false);
-      setUser(null);
-    }
+    setIsLoading(true);
+    getUserAPI()
+      .then((userData) => {
+        console.log("User data received:", userData); // Add this debug log
+        setUser(userData);
+        setIsAuth(true);
+      })
+      .catch((err) => {
+        console.error("Error fetching user info:", err);
+        setUser(null);
+        setIsAuth(false);
+      })
+      .finally(() => setIsLoading(false));
   }, []);
 
+  // Set up or tear down the socket connection based on isAuth
   useEffect(() => {
-    const token = sessionStorage.getItem("authToken");
-    if (!isAuth || !token) {
+    if (!isAuth) {
       if (socket) {
         socket.disconnect();
         setSocket(null);
@@ -94,9 +81,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // Only create a new socket if one doesn't exist.
     if (!socket) {
-      const newSocket = createSocket(token);
+      const newSocket = createSocket();
       setSocket(newSocket);
 
       newSocket.on("connect", () => {
@@ -106,19 +92,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         newSocket.emit("get_current_price");
       });
 
-      // Listen for transaction history events:
       newSocket.on("get_transaction_history", (data) => {
         setTransactions(data.transactions || data);
-        // console.log("Transaction History:", { data });
       });
 
-      // Listen for trade history events:
       newSocket.on("get_trade_history", (data) => {
-        // console.log("Trade History:", data);
         setTrade(data.trade_history || data);
       });
 
-      // Listen for current price events:
       newSocket.on("trade_price", (data: TradePrice) => {
         setTradePrice(data);
       });
@@ -127,54 +108,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         console.error("WebSocket Error:", error);
       });
 
-      // Cleanup on unmount:
       return () => {
         newSocket.disconnect();
       };
     }
-  }, [isAuth]); // Notice: Only depends on isAuth (and/or token from sessionStorage)
+  }, [isAuth]);
 
   const login = async (email: string, password: string) => {
     try {
-      const existingToken = sessionStorage.getItem("authToken");
-      if (existingToken && !isTokenExpired(existingToken)) {
-        toast.info("User is already logged in.");
-      }
       setIsLoading(true);
-
-      const {
-        user: userData,
-        access_token,
-        refresh_token,
-      } = await loginUser({
-        email,
-        password,
-      });
-
+      // Call loginUser which now sets HttpOnly cookies on the server response
+      const { user: userData } = await loginUser({ email, password });
       setUser(userData);
       setUserRoles(userData.role);
-      sessionStorage.setItem("authToken", access_token);
-      sessionStorage.setItem("refreshToken", refresh_token);
       setIsAuth(true);
       setIsLoading(false);
-
-      if (userData.is_blocked || userData.sticks >= 2) {
-        toast.error("Your account is under review or blocked.");
-        logout();
-        return;
-      }
-
       toast.success("Login successful!");
+
+      console.log("User:", userData);
 
       const transactions = await getTransactionHistory();
       setTransactions(transactions);
 
-      const newSocket = createSocket(access_token);
+      const newSocket = createSocket();
       setSocket(newSocket);
       newSocket.emit("get_current_price");
       newSocket.emit("get_trade_history");
       newSocket.emit("get_transaction_history");
-      // console.log("Auth Provider:", { userData, access_token, refresh_token });
       return userData;
     } catch (error) {
       setIsLoading(false);
@@ -185,20 +145,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async () => {
     try {
-      // const response = await LogoutUser();
-      // if (response.message) {
-        // toast.success(response.message);
-        setIsLoading(true);
-        sessionStorage.removeItem("authToken");
-        sessionStorage.removeItem("refreshToken");
-        setIsAuth(false);
-        setUser(null);
-        if (socket) {
-          socket.disconnect();
-          setSocket(null);
-        }
-      // }
-    } catch (error: unknown | Error) {
+      setIsLoading(true);
+      // Perform any backend logout actions if needed.
+      setUser(null);
+      // setIsAuth(false);
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+      }
+      setIsLoading(false);
+      toast.success("Logged out");
+    } catch (error) {
       setIsLoading(false);
       console.error("Logout failed:", error);
       toast.error("Logout failed");
@@ -207,14 +164,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshAuthToken = async () => {
     try {
-      const refreshToken = sessionStorage.getItem("refreshToken");
-      if (!refreshToken) {
-        logout();
-        return;
-      }
-      const newToken = await refreshTokenAPI(refreshToken);
-      sessionStorage.setItem("authToken", newToken);
-      if (socket) socket.emit("update_token", newToken);
+      // Calling refreshTokenAPI should update the HttpOnly cookie
+      await refreshTokenAPI();
+      if (socket) socket.emit("update_token"); // if needed on socket side
       setIsAuth(true);
     } catch (error) {
       console.error("Failed to refresh token", error);
@@ -234,13 +186,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(false);
     }
   };
-
-  useEffect(() => {
-    const token = sessionStorage.getItem("authToken");
-    if (token && isTokenExpired(token)) {
-      refreshAuthToken();
-    }
-  }, []);
 
   return (
     <AuthContext.Provider

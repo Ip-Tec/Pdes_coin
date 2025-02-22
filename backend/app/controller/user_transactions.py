@@ -334,7 +334,7 @@ class UserTransactionsController:
         except Exception as e:
             db.session.rollback()
             # Log the exception for debugging purposes
-            print(f"Error during withdrawal: {e}")
+            # print(f"Error during withdrawal: {e}")
             return (
                 jsonify({"error": "Transaction failed due to an unexpected error."}),
                 500,
@@ -441,7 +441,7 @@ class AccountService:
             return jsonify(random_account.serialize())
 
         except Exception as e:
-            print(f"Error occurred: {str(e)}")  # Log the error for debugging
+            # print(f"Error occurred: {str(e)}")  # Log the error for debugging
             return jsonify({"message": "Internal Server Error", "error": str(e)}), 500
 
 
@@ -471,7 +471,7 @@ class PdesService:
         price = data["price"]["pdes_buy_price"]
         total = amount / price
 
-        print(f"{data=}")
+        # print(f"{data=}")
 
         if amount <= 0 or price <= 0:
             return jsonify({"error": "Amount and price must be positive numbers"}), 400

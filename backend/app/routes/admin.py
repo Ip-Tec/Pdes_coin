@@ -220,7 +220,7 @@ def get_data_overview(current_user, *args, **kwargs):
         ],
     }
 
-    print(data_overview)
+    # print(data_overview)
 
     return jsonify(data_overview)
 
@@ -231,7 +231,7 @@ def get_data_overview(current_user, *args, **kwargs):
 @AccessLevel.role_required(["ADMIN", "DEVELOPER", "SUPER_ADMIN", "OWNER"])
 def search_user(current_user, *args, **kwargs):
     query = request.args.get("query", "").strip()
-    print(query)
+    # print(query)
 
     if not query:
         return jsonify({"error": "Query parameter is required"}), 400
@@ -485,7 +485,7 @@ def confirm_user_deposit(current_user, *args, **kwargs):
         # Get the user_id from the request data
         data = request.get_json()
         user_id = data.get("user_id")
-        print(f"data:: {data=}")
+        # print(f"data:: {data=}")
 
         # Validate user_id
         if not user_id:
@@ -791,7 +791,7 @@ def search_deposits(current_user, *args, **kwargs):
         deposits = query.all()
         result = [deposit.serialize_with_user() for deposit in deposits]
 
-        print(f"Result: {result}")
+        # print(f"Result: {result}")
 
         return jsonify(result), 200
 
@@ -1374,7 +1374,7 @@ def update_user(current_user, *args, **kwargs):
     """
     data = request.get_json()
 
-    print(f"{data=}")
+    # print(f"{data=}")
 
     # Ensure user_id is provided in the request
     user_id = data.get("id")  # Allow updating any user

@@ -1,6 +1,6 @@
 from app import db
-from app.models import Utility
-from flask import Blueprint, jsonify
+from app.models import Utility, RewardConfig
+from flask import Blueprint, jsonify, request
 
 # Blueprint for the utility routes
 utility_bp = Blueprint("utility", __name__)
@@ -14,16 +14,16 @@ def get_current_price():
     )  # Assuming there's only one row for the price details
     if utility:
 
-        print(
-            {
-                "pdes_buy_price": utility.pdes_buy_price,
-                "pdes_sell_price": utility.pdes_sell_price,
-                "pdes_market_cap": utility.pdes_market_cap,
-                "pdes_circulating_supply": utility.pdes_circulating_supply,
-                "pdes_supply_left": utility.pdes_supply_left,
-                "pdes_total_supply": utility.pdes_total_supply,
-            }
-        )
+        # print(
+        #     {
+        #         "pdes_buy_price": utility.pdes_buy_price,
+        #         "pdes_sell_price": utility.pdes_sell_price,
+        #         "pdes_market_cap": utility.pdes_market_cap,
+        #         "pdes_circulating_supply": utility.pdes_circulating_supply,
+        #         "pdes_supply_left": utility.pdes_supply_left,
+        #         "pdes_total_supply": utility.pdes_total_supply,
+        #     }
+        # )
 
         return (
             jsonify(

@@ -6,7 +6,7 @@ import datetime
 from datetime import timedelta, datetime as dt
 from app import db
 from app.mail.user_mail import Email
-from flask import current_app, request, jsonify
+from flask import current_app, request, jsonify, make_response
 from app.key_gen import generate_key
 from app.services import (
     generate_access_token,
@@ -32,6 +32,8 @@ class UserController:
     def get_user(current_user, *args, **kwargs):
         # Use current_user instead of request.user_id
         # Get User from the database
+        
+        print(f"current_user::: {current_user}")
 
         user = User.query.filter_by(
             id=current_user.id, email=current_user.email
@@ -76,23 +78,29 @@ class UserController:
 
         user = User.query.filter_by(email=email).first()
         if user and check_password_hash(user.password, password):
-            # Use the app's SECRET_KEY from config
+            # Generate tokens using your helper functions
             access_token = generate_access_token(user.id)
             refresh_token = generate_refresh_token(user.id)
 
-            return (
-                jsonify(
-                    {
-                        "access_token": access_token,
-                        "refresh_token": refresh_token,
-                        "user": user.serialize(),
-                    }
-                ),
-                200,
+            response = make_response(jsonify({"user": user.serialize()}), 200)
+            response.set_cookie(
+                "access_token",
+                access_token,
+                httponly=True,
+                secure=True,
+                samesite="None"
             )
+            response.set_cookie(
+                "refresh_token",
+                refresh_token,
+                httponly=True,
+                secure=True,
+                samesite="None",
+            )
+            return response
 
-        else:
-            return jsonify({"message": "Invalid credentials"}), 401
+        return jsonify({"message": "Invalid credentials"}), 401
+
 
     @staticmethod
     def register():

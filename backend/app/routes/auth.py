@@ -48,7 +48,7 @@ def logout(current_user, *args, **kwargs):
     user_id = current_user.id
     # fine user with the User id
     user = User.query.filter_by(id=user_id).first()
-    print(f"user::: {user}")
+    # print(f"user::: {user}")
     if not user:
         return jsonify({"error": "User not found"}), 404
     # update user's refresh token to None

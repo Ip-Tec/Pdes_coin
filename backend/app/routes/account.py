@@ -41,8 +41,8 @@ def generate_address_and_seed(coin: str):
 def create_account(current_user, *args, **kwargs):
     # print(f"User:::{user_id}")
     user_id = current_user.id
-    print(f"User ID:::{user_id}")
-    print(f"User username=:::{current_user.username}")
+    # print(f"User ID:::{user_id}")
+    # print(f"User username=:::{current_user.username}")
 
     user = User.query.get(user_id)
     username = user.username
@@ -84,8 +84,8 @@ def create_account(current_user, *args, **kwargs):
 @account_bp.route("/get-all-crypto-address", methods=["GET"])
 @token_required
 def get_all_account(current_user, *args, **kwargs):
-    print(f"user_id::: {current_user.id}")
-    print(f"username::: {current_user.username}")
+    # print(f"user_id::: {current_user.id}")
+    # print(f"username::: {current_user.username}")
 
     try:
         account_detail = AccountDetail.query.filter_by(user_id=current_user.id).all()
@@ -104,8 +104,8 @@ def get_all_account(current_user, *args, **kwargs):
 @account_bp.route("/get-crypto-address", methods=["GET"])
 @token_required
 def get_account(current_user, *args, **kwargs):
-    print(f"user_id::: {current_user.id}")
-    print(f"username::: {current_user.username}")
+    # print(f"user_id::: {current_user.id}")
+    # print(f"username::: {current_user.username}")
 
     try:
         account_detail = AccountDetail.query.filter_by(user_id=current_user.id).first()

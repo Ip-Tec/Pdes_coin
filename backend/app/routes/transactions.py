@@ -92,7 +92,7 @@ def get_account_balance(current_user):
 def buy_sell(current_user):
     data = request.get_json()
 
-    print(f"{data=}")
+    # print(f"{data=}")
 
     action = data.get("action")  # 'buy' or 'sell'
     amount = data.get("amount")
@@ -189,7 +189,7 @@ def get_user_activity():
     # Fetch the latest price history entry
     activity = UserTransactionsController.get_user_activity()
 
-    print(f"Activity Trans::::{activity}")
+    # print(f"Activity Trans::::{activity}")
 
     if activity:
         return jsonify({"user_activity": activity})
@@ -241,5 +241,5 @@ def get_trade_history(current_user, *args, **kwargs):
 @token_required
 def get_random_deposit_account(current_user):
     data = AccountService.get_random_deposit_account()
-    print(f"random_deposit_account: {data}")
+    # print(f"random_deposit_account: {data}")
     return data
