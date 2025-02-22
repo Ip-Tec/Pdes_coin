@@ -1,7 +1,9 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { VitePWA } from "vite-plugin-pwa";
-
+interface RequestObject {
+  request: Request;
+}
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -12,18 +14,16 @@ export default defineConfig({
         globPatterns: ["**/*.{js,css,html,png,svg,json}"],
         runtimeCaching: [
           {
-            urlPattern: ({ request }) => request.destination === "document",
+            urlPattern: ({ request }: RequestObject) => request.destination === "document",
             handler: "NetworkFirst",
           },
           {
-            urlPattern: ({ request }) => request.destination === "script",
+            urlPattern: ({ request }: RequestObject) => request.destination === "script",
             handler: "CacheFirst",
           },
         ],
       },
-      devOptions: {
-        enabled: true,
-      },
+      mode: 'development',
       manifest: {
         name: "PEDEX Coin",
         short_name: "PEDEX",
