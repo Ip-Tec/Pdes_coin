@@ -48,7 +48,7 @@ function Deposit() {
     // console.log(response);
 
     setAccountDetails(response);
-    sessionStorage.setItem("accountDetails", JSON.stringify(response));
+    localStorage.setItem("accountDetails", JSON.stringify(response));
   };
 
   // Fetch crypto address
@@ -88,7 +88,7 @@ function Deposit() {
 
       if (!accountDetails) {
         setAccountDetails(
-          JSON.parse(sessionStorage.getItem("accountDetails") || "{}").id
+          JSON.parse(localStorage.getItem("accountDetails") || "{}").id
         );
         if (!accountDetails) {
           return;

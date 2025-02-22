@@ -37,7 +37,7 @@ const API = axios.create({
 API.interceptors.request.use(
   (config) => {
     // Retrieve the token from localStorage
-    const token = sessionStorage.getItem("authToken");
+    const token = localStorage.getItem("authToken");
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -119,8 +119,8 @@ export const loginUser = async (loginData: {
     const response = await API.post(apiUrl("/auth/login"), loginData);
     const { access_token, refresh_token, user } = response.data;
 
-    sessionStorage.setItem("authToken", access_token);
-    sessionStorage.setItem("refreshToken", refresh_token);
+    localStorage.setItem("authToken", access_token);
+    localStorage.setItem("refreshToken", refresh_token);
 
     // console.log({ user, access_token, refresh_token });
 

@@ -1,10 +1,9 @@
 from app import db, socketio
+from flask_cors import cross_origin
 from flask import Blueprint, jsonify
 from app.services import token_required
-from app.controller.user_controller import UserController
-from flask_cors import cross_origin
-
 from flask_socketio import SocketIO, emit
+from app.controller.user_controller import UserController
 
 users_bp = Blueprint("users", __name__)
 
