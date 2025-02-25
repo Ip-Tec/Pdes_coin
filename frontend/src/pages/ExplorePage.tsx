@@ -74,7 +74,7 @@ const ExplorePage = () => {
             compound.
           </p>
           <p>
-            It’s important to maintain only one account per user—this helps
+            It&at;s important to maintain only one account per user—this helps
             ensure fairness and prevents any restrictions that might arise from
             multiple accounts.
           </p>
