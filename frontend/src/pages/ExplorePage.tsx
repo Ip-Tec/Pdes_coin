@@ -1,164 +1,211 @@
-
+import React, { useState, useRef } from "react";
 
 const ExplorePage = () => {
-  return (
-    <div className="min-h-screen mb-24 bg-transparent text-gray-800">
-      {/* Header */}
-      <header className="bg-bgColor text-white py-8 px-4 text-center">
-        <h1 className="text-4xl font-bold mb-2">Pdes Investment Platform</h1>
-        <p className="text-xl">
-          Learn How to Grow Your Wealth Using Your Smartphone
-        </p>
-      </header>
-
-      {/* Navigation */}
-      <nav className="bg-primary-dark py-4 text-center">
-        <a href="#intro" className="text-white mx-4 hover:text-gray-200">
-          Introduction
-        </a>
-        <a href="#why" className="text-white mx-4 hover:text-gray-200">
-          Why Pdes?
-        </a>
-        <a href="#investment" className="text-white mx-4 hover:text-gray-200">
-          Investment Rates
-        </a>
-        <a href="#benefits" className="text-white mx-4 hover:text-gray-200">
-          Deposit Benefits
-        </a>
-        <a href="#update" className="text-white mx-4 hover:text-gray-200">
-          Updates
-        </a>
-      </nav>
-
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-8">
-        {/* Introduction Section */}
-        <section id="intro" className="mb-8">
-          <h2 className="text-2xl font-semibold border-b-2 border-bgColor pb-2 mb-4">
-            Introduction
-          </h2>
-          <p className="mb-4">
+  // Define your sections with an image, title, and content.
+  const sections = [
+    {
+      id: "intro",
+      title: "Introduction",
+      image: "/blog/Introduction.jpeg",
+      content: (
+        <>
+          <p className="mb-4 text-gray-600">
             Hello, I’m Nafisat Muhammad—an online investor passionate about
             teaching people how to make money using just their smartphones.
-            Today, I’m excited to introduce you to the Pdes platform, an
+            Today, I’m excited to introduce you to the Pdes platform—an
             innovative investment tool designed to help you earn regardless of
             the amount you invest.
           </p>
-        </section>
-
-        {/* Why Choose Pdes Section */}
-        <section id="why" className="mb-8">
-          <h2 className="text-2xl font-semibold border-b-2 border-bgColor pb-2 mb-4">
-            Why Choose Pdes?
-          </h2>
-          <p className="mb-4">
+        </>
+      ),
+    },
+    {
+      id: "deposit",
+      title: "How to Deposit",
+      image: "/blog/deposit.png",
+      content: (
+        <>
+          <p className="mb-4 text-gray-600">
+            Depositing funds into your PDES account is simple and secure. Follow
+            these steps:
+          </p>
+          <ol className="list-decimal list-inside text-gray-600">
+            <li>Log in to your account.</li>
+            <li>Navigate to the deposit section.</li>
+            <li>Choose your preferred payment method.</li>
+            <li>Confirm the transaction details.</li>
+          </ol>
+        </>
+      ),
+    },
+    {
+      id: "crypto",
+      title: "What is Crypto?",
+      image: "/blog/What_is_Crypto.jpeg",
+      content: (
+        <>
+          <p className="mb-4 text-gray-600">
+            Cryptocurrency is a digital or virtual form of currency that uses
+            cryptography for security. It operates independently of a central
+            bank, offering fast transfers, lower fees, and global accessibility.
+          </p>
+        </>
+      ),
+    },
+    {
+      id: "why",
+      title: "Why Pdes?",
+      image: "/blog/why_pdes.jpeg",
+      content: (
+        <>
+          <p className="mb-4 text-gray-600">
             Pdes is a fully registered investment platform that takes your
-            security seriously. With a robust email verification process, it
-            ensures that every user is genuine and that your funds are safe and
-            secure. This verification not only protects your investment but also
-            underscores the platform's trustworthiness.
+            security seriously. With a robust email verification process, every
+            user is genuine and your funds remain safe and secure.
           </p>
-        </section>
-
-        {/* Dynamic Investment Rates Section */}
-        <section id="investment" className="mb-8">
-          <h2 className="text-2xl font-semibold border-b-2 border-bgColor pb-2 mb-4">
-            Dynamic Investment Rates
-          </h2>
-          <p className="mb-4">
-            One of the most impressive aspects of Pdes is how your earnings can
-            grow over time. Even if two investors start at the same time, the
-            differences in their earnings over 30, 60, or 90 days can be
-            significant. Early investors, even with deposits as modest as 10,000
-            or 50,000 NGN, can see substantial returns as their earnings
-            compound.
+        </>
+      ),
+    },
+    {
+      id: "investment",
+      title: "Investment Rates",
+      image: "/blog/Investment_Rates.jpeg",
+      content: (
+        <>
+          <p className="mb-4 text-gray-600">
+            Your earnings can grow significantly over time. Whether it’s 30, 60,
+            or 90 days—the compounding effect can be substantial, even for
+            deposits as modest as 10,000 or 50,000 NGN.
           </p>
-          <p>
-            It&at;s important to maintain only one account per user—this helps
-            ensure fairness and prevents any restrictions that might arise from
-            multiple accounts.
+          <p className="text-gray-600">
+            Remember to keep only one account to ensure fairness and avoid
+            restrictions.
           </p>
-        </section>
-
-        {/* Benefits of a Large First Deposit Section */}
-        <section id="benefits" className="mb-8">
-          <h2 className="text-2xl font-semibold border-b-2 border-bgColor pb-2 mb-4">
-            Benefits of a Large First Deposit
-          </h2>
-          <ul className="list-disc list-inside mb-4">
-            <li className="mb-2">
+        </>
+      ),
+    },
+    {
+      id: "benefits",
+      title: "Deposit Benefits",
+      image: "/blog/Deposit_Benefits.jpeg",
+      content: (
+        <>
+          <ul className="list-disc pl-5 mb-4 text-gray-600">
+            <li>
               <strong>Higher Rewards:</strong> A larger first deposit unlocks
               greater initial rewards.
             </li>
-            <li className="mb-2">
+            <li>
               <strong>Enhanced Profits:</strong> More capital means higher
-              profits early on, keeping you motivated and allowing you to
-              experience the full benefits of the platform.
+              profits early on, keeping you motivated.
             </li>
           </ul>
-          <p>
-            When inviting new members to join Pdes, I encourage them to deposit
-            a higher amount to maximize both their rewards and your overall team
-            benefits.
+          <p className="text-gray-600">
+            We encourage new members to deposit more to maximize rewards and
+            boost overall team benefits.
           </p>
-        </section>
+        </>
+      ),
+    },
+    {
+      id: "update",
+      title: "Updates",
+      image: "/blog/update.jpeg",
+      content: (
+        <>
+          <p className="mb-4 text-gray-600">Dear PDES Community,</p>
+          <p className="mb-4 text-gray-600">
+            We appreciate your support and participation! To ensure long-term
+            sustainability, we’re making adjustments to our reward system:
+          </p>
+          <ul className="list-disc pl-5 mb-4 text-gray-600">
+            <li>
+              <strong>41% Weekly Reward:</strong> Ends on March 2, 2025. New
+              deposits will no longer qualify after this date.
+            </li>
+            <li>
+              <strong>Referral Bonus Update:</strong> From March 3, 2025, the
+              referral bonus moves from 20% to 5%.
+            </li>
+          </ul>
+          <p className="mb-4 text-gray-600">
+            These changes will ensure platform stability, introduce sustainable
+            rewards, and allow us to continue providing valuable services.
+          </p>
+          <p className="text-gray-600">🚀 PEDEX Team</p>
+        </>
+      ),
+    },
+  ];
 
-        {/* Important Update Section */}
-        <section id="update" className="mb-8">
-          <h2 className="text-2xl font-semibold border-b-2 border-bgColor pb-2 mb-4">
-            Important Update: Changes to Our Reward System!
-          </h2>
-          <p className="mb-4">Dear PDES Community,</p>
-          <p className="mb-4">
-            We appreciate your support and participation in our platform! To
-            ensure long-term sustainability and growth, we’re making important
-            adjustments to our reward structure:
-          </p>
-          <ul className="list-disc list-inside mb-4">
-            <li className="mb-2">
-              <strong>41% Weekly Reward Closing Soon!</strong> The 41% weekly
-              reward program will officially end on March 2, 2025. After this
-              date, new deposits will no longer qualify for this reward.
-            </li>
-            <li className="mb-2">
-              <strong>Referral Bonus Update:</strong> Starting March 3, 2025,
-              the referral bonus will move from 20% to 5%. This adjustment
-              allows us to build a more sustainable reward system while still
-              appreciating our active users.
-            </li>
-          </ul>
-          <p className="mb-4">
-            <strong>Why are we making these changes?</strong>
-          </p>
-          <ul className="list-disc list-inside mb-4">
-            <li className="mb-2">
-              To ensure long-term stability of the platform.
-            </li>
-            <li className="mb-2">
-              To introduce new, sustainable rewards tied to platform usage.
-            </li>
-            <li className="mb-2">
-              To continue providing valuable services while growing our
-              ecosystem.
-            </li>
-          </ul>
-          <p className="mb-4">
-            Stay tuned for more updates as we transition to a more robust and
-            lasting reward model! Thank you for being part of our journey.
-          </p>
-          <p>🚀 PEDEX Team</p>
-        </section>
+  const [selectedSection, setSelectedSection] = useState(sections[0].id);
+  const currentSection = sections.find(
+    (section) => section.id === selectedSection
+  );
 
-        {/* Call to Action */}
-        <section className="text-center my-12">
-          <a
-            href="/register"
-            className="bg-bgColor text-white py-3 px-8 rounded hover:bg-secondary transition-colors"
-          >
-            Join Pdes Now
-          </a>
-        </section>
-      </main>
+  // Create a ref for the content area
+  const contentRef = useRef<HTMLDivElement | null>(null);
+
+  // Function to handle card clicks and scroll to the content area
+  const handleCardClick = (id: React.SetStateAction<string>) => {
+    setSelectedSection(id);
+    // Scroll to the content area smoothly
+    contentRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  return (
+    <div className="min-h-screen mb-24 text-gray-800">
+      {/* Header */}
+      <header className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-8 px-4 text-center">
+        <h1 className="text-4xl font-bold mb-2">Pdes Investment Platform</h1>
+        <p className="text-xl">Grow Your Wealth on the Go</p>
+      </header>
+
+      {/* Grid of Cards */}
+      <div className="px-4 py-4">
+        <div className="grid grid-cols-2 gap-4">
+          {sections.map((section) => (
+            <button
+              key={section.id}
+              onClick={() => handleCardClick(section.id)}
+              className={`w-full text-left rounded-xl overflow-hidden shadow-md transition-transform duration-300 hover:scale-105 focus:outline-none
+                ${
+                  selectedSection === section.id
+                    ? "border-2 border-bgColor"
+                    : "border"
+                }`}
+            >
+              <img
+                src={section.image}
+                alt={section.title}
+                className="w-full h-32 object-cover"
+              />
+              <div className="p-2">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  {section.title}
+                </h3>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Selected Section Content */}
+      <div className="px-4" ref={contentRef}>
+        <div className="bg-white shadow-lg rounded-xl p-6">
+          {currentSection && currentSection.content}
+        </div>
+      </div>
+
+      {/* Call to Action */}
+      <div className="text-center my-8">
+        <a
+          href="/register"
+          className="inline-block bg-blue-600 text-white py-3 px-8 rounded-full hover:bg-blue-700 transition-all duration-300"
+        >
+          Join Pdes Now
+        </a>
+      </div>
     </div>
   );
 };
