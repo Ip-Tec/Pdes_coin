@@ -88,7 +88,7 @@ function SupportPage() {
             <FaPhone size={32} className="text-primary mx-auto mb-2" />
             <h3 className="font-semibold text-lg">Phone</h3>
             <p className="text-gray-600">+1-234-567-890</p>
-            <p className="text-gray-600">+234-903-379-8890</p>
+            <p className="text-gray-600">+234-808-439-2327</p>
           </div>
           <div className="text-center">
             <FaEnvelope size={32} className="text-primary mx-auto mb-2" />
