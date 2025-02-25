@@ -83,20 +83,26 @@ class UserController:
             refresh_token = generate_refresh_token(user.id)
 
             response = make_response(jsonify({"user": user.serialize()}), 200)
+            # Set cookies correctly
             response.set_cookie(
                 "access_token",
                 access_token,
                 httponly=True,
-                secure=False,
-                samesite="None"
+                secure=False,  # Set to True in production
+                samesite="None",  # Required for cross-domain cookies
+                domain="localhost",  # Use "localhost" in development
+                path="/"               # Ensure the cookie is sent to all endpoints
             )
             response.set_cookie(
                 "refresh_token",
                 refresh_token,
                 httponly=True,
-                secure=False,
+                secure=False,  # Set to True in production
                 samesite="None",
+                domain="localhost",
+                path="/"
             )
+            print(f"response::: {response}")
             return response
 
         return jsonify({"message": "Invalid credentials"}), 401

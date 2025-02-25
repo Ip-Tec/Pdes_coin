@@ -66,6 +66,12 @@ def get_totals(current_user, *args, **kwargs):
 
     # Total Users
     total_users = db.session.query(func.count(User.id)).scalar() or 00.0
+    
+    print("Total Users:", total_users)
+    print("Total Transactions:", total_transactions)
+    print("Total Deposits:", total_deposits)
+    print("Total Withdrawals:", total_withdrawals)
+    print("Total Rewards:", total_rewards)
 
     return jsonify(
         {

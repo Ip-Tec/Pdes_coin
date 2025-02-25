@@ -38,13 +38,7 @@ const API = axios.create({
 // Add a request interceptor to include the token in headers
 API.interceptors.request.use(
   (config) => {
-    // Retrieve the token from localStorage
-    const token = localStorage.getItem("authToken");
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
+    return config; // No need to manually set Authorization
   },
   (error) => Promise.reject(error)
 );
@@ -77,18 +71,9 @@ export const checkTokenValidity = async (token: string): Promise<boolean> => {
 // Refresh token
 export const refreshTokenAPI = async () => {
   try {
-    const response = await API.post(apiUrl("/auth/refresh-token"));
-    return response.data.access_token; // Updated to use "access_token"
+    await API.post(apiUrl("/auth/refresh-token"));
   } catch (error) {
-    if (axios.isAxiosError(error)) {
-      if (error.response && error.response.status === 401) {
-        window.location.href = "/login";
-      }
-      const errorData: ErrorResponse = error.response?.data;
-      console.error(errorData?.message || "Failed to fetch Token");
-
-      throw new Error(errorData?.message || "Failed to update refresh token");
-    }
+    console.error("Failed to refresh token", error);
     throw new Error("Failed to refresh token.");
   }
 };
@@ -119,11 +104,11 @@ export const loginUser = async (loginData: {
 }) => {
   try {
     const response = await API.post(apiUrl("/auth/login"), loginData);
-    const { access_token, refresh_token, user } = response.data;
+    const { user } = response.data;
 
-    console.log({ user, access_token, refresh_token });
+    console.log({ user });
 
-    return { user, access_token, refresh_token };
+    return { user };
   } catch (error) {
     console.log({ error });
 

@@ -72,6 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   // Set up or tear down the socket connection based on isAuth
+
   useEffect(() => {
     if (!isAuth) {
       if (socket) {
@@ -81,51 +82,49 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    if (!socket) {
-      const newSocket = createSocket();
-      setSocket(newSocket);
+    const newSocket = createSocket();
+    setSocket(newSocket);
 
-      newSocket.on("connect", () => {
-        console.log("Connected to WebSocket server");
-        newSocket.emit("get_transaction_history");
-        newSocket.emit("get_trade_history");
-        newSocket.emit("get_current_price");
-      });
+    newSocket.on("connect", () => {
+      console.log("Connected to WebSocket server");
+      newSocket.emit("get_transaction_history");
+      newSocket.emit("get_trade_history");
+      newSocket.emit("get_current_price");
+    });
 
-      newSocket.on("get_transaction_history", (data) => {
-        setTransactions(data.transactions || data);
-      });
+    newSocket.on("get_transaction_history", (data) => {
+      setTransactions(data.transactions || data);
+    });
 
-      newSocket.on("get_trade_history", (data) => {
-        setTrade(data.trade_history || data);
-      });
+    newSocket.on("get_trade_history", (data) => {
+      setTrade(data.trade_history || data);
+    });
 
-      newSocket.on("trade_price", (data: TradePrice) => {
-        setTradePrice(data);
-      });
+    newSocket.on("trade_price", (data: TradePrice) => {
+      setTradePrice(data);
+    });
 
-      newSocket.on("error", (error) => {
-        console.error("WebSocket Error:", error);
-      });
+    newSocket.on("error", (error) => {
+      console.error("WebSocket Error:", error);
+    });
 
-      return () => {
-        newSocket.disconnect();
-      };
-    }
+    return () => {
+      console.log("Cleaning up WebSocket connection");
+      newSocket.disconnect();
+    };
   }, [isAuth]);
 
   const login = async (email: string, password: string) => {
     try {
       setIsLoading(true);
-      // Call loginUser which now sets HttpOnly cookies on the server response
       const { user: userData } = await loginUser({ email, password });
       setUser(userData);
       setUserRoles(userData.role);
       setIsAuth(true);
-      setIsLoading(false);
       toast.success("Login successful!");
 
       console.log("User:", userData);
+      setIsLoading(false);
 
       const transactions = await getTransactionHistory();
       setTransactions(transactions);
@@ -135,6 +134,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       newSocket.emit("get_current_price");
       newSocket.emit("get_trade_history");
       newSocket.emit("get_transaction_history");
+
       return userData;
     } catch (error) {
       setIsLoading(false);
@@ -164,10 +164,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshAuthToken = async () => {
     try {
-      // Calling refreshTokenAPI should update the HttpOnly cookie
       await refreshTokenAPI();
-      if (socket) socket.emit("update_token"); // if needed on socket side
+      if (socket) socket.emit("update_token");
       setIsAuth(true);
+      getUser(); // Fetch user data again after token refresh
     } catch (error) {
       console.error("Failed to refresh token", error);
       logout();

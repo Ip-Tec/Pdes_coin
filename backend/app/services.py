@@ -18,36 +18,41 @@ REFRESH_SECRET_KEY = os.getenv("SECRET_KEY")
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        # Try to get token from the Authorization header first
+        print("Headers:::::", request.headers)  # Log headers
+        print("Cookies:::::", request.cookies)  # Log cookies
+
         token = request.headers.get("Authorization")
-        # If not found, then try the cookies
         if not token:
-            token = request.cookies.get("access_token")
-        # Bypass token checking for OPTIONS requests (preflight)
+            token = request.cookies.get("access_token")  # Get from cookies
+
+        print("Extracted Token:::::", token)  # Check what Flask actually sees
+
         if request.method == "OPTIONS":
             return jsonify({}), 200
 
         if not token:
             return jsonify({"message": "Token is missing!"}), 401
 
-        # Handle Bearer token format if it comes from headers
         if token.startswith("Bearer "):
             token = token.split(" ")[1]
 
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            current_user = User.query.get(data["user_id"])
+            current_user = User.query.get(data.get("user_id"))
+
+            if not current_user:
+                return jsonify({"message": "User not found!"}), 401
+
         except ExpiredSignatureError:
             return jsonify({"message": "Token has expired!"}), 401
         except InvalidTokenError:
             return jsonify({"message": "Token is invalid!"}), 401
         except Exception as e:
-            return jsonify({"message": str(e)}), 401
+            return jsonify({"message": f"Token error: {str(e)}"}), 401
 
         return f(current_user, *args, **kwargs)
-    
-    return decorated
 
+    return decorated
 
 def generate_token(user_id):
     payload = {

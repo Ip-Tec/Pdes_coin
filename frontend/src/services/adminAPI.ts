@@ -1,5 +1,4 @@
 import axios from "axios";
-import API, { apiUrl } from "./api";
 import { toast } from "react-toastify";
 import {
   confirmUserDepositProps,
@@ -9,10 +8,56 @@ import {
   UtilityProps,
 } from "../utils/type";
 
+// Create API instance
+const prod = import.meta.env.PROD;
+console.log("API:", { prod });
+
+export const url = prod
+  ? "https://pedex.duckdns.org/api"
+  : // ? import.meta.env.REACT_APP_API_URL
+    import.meta.env.VITE_API_URL;
+
+export const websocketUrl = prod
+  ? "wss://pedex.duckdns.org/"
+  : import.meta.env.VITE_API_WEBSOCKET_URL;
+
+export const feURL = prod
+  ? "https://pedex.vercel.app/"
+  : import.meta.env.VITE_EF_URL_LOCAL;
+// Create API instance
+const API = axios.create({
+  baseURL: url,
+  headers: {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  },
+  withCredentials: true,
+});
+
+// Add a request interceptor to include the token in headers
+API.interceptors.request.use(
+  (config) => {
+    return config; // No need to manually set Authorization
+  },
+  (error) => Promise.reject(error)
+);
+
+// Helper function to generate endpoint URLs
+export const apiUrl = (endpoint: string) =>
+  `${API.defaults.baseURL}${endpoint}`;
+
+
 // Transfer Funds
 export const getDashboardTotal = async () => {
   try {
-    const response = await API.post(apiUrl("/admin/get-dashboard-total"));
+    const response = await API.post(
+      apiUrl("/admin/get-dashboard-total"),
+      {},
+      {
+        withCredentials: true, // Ensure credentials are included
+      }
+    );
+    // const response = await API.post(apiUrl("/admin/get-dashboard-total"));
     // console.log({ response });
     return response.data;
   } catch (error) {
