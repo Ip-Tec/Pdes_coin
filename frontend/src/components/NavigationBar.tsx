@@ -1,4 +1,10 @@
-import { FiHome, FiActivity, FiCreditCard, FiUser } from "react-icons/fi";
+import {
+  FiHome,
+  FiActivity,
+  FiCreditCard,
+  FiUser,
+  FiCompass,
+} from "react-icons/fi";
 import { Link, useLocation } from "react-router-dom";
 
 const Navigation = () => {
@@ -8,6 +14,7 @@ const Navigation = () => {
     { icon: <FiHome />, label: "Home", path: "/dashboard" },
     { icon: <FiCreditCard />, label: "Withdraw", path: "/withdraw" },
     { icon: <FiActivity />, label: "Activity", path: "/activity" },
+    { icon: <FiCompass />, label: "Explore", path: "/explore" },
     { icon: <FiUser />, label: "Profile", path: "/profile" },
   ];
 
@@ -19,7 +26,7 @@ const Navigation = () => {
             key={index}
             to={item.path}
             className={`flex flex-col rounded-full items-center p-2 hover:bg-primary-light hover:text-white ${
-              location.pathname == item.path
+              location.pathname === item.path
                 ? "bg-primary text-white"
                 : "text-gray-500"
             }`}

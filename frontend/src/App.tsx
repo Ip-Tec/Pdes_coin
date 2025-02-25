@@ -25,6 +25,7 @@ import AboutPage from "./pages/AboutPage";
 import SupportPage from "./pages/SupportPage";
 import HelpCenterPage from "./pages/HelpCenterPage";
 import WalletPage from "./pages/WalletPage";
+import Explore from "./pages/ExplorePage";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import AdminTransaction from "./pages/Admin/AdminTransaction";
 import AdminUser from "./pages/Admin/AdminUser";
@@ -105,6 +106,7 @@ const App: React.FC<AppProps> = ({ installPrompt, isInstalled, onInstall }) => {
             <Route path="/dashboard" element={<ProtectedRoute requiredRoles={["USER", "MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><Dashboard /></ProtectedRoute>} />
             <Route path="/activity" element={<ProtectedRoute requiredRoles={["USER", "MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><Activity /></ProtectedRoute>} />
             <Route path="/withdraw" element={<ProtectedRoute requiredRoles={["USER", "MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><Withdraw /></ProtectedRoute>} />
+            <Route path="/explore" element={<ProtectedRoute requiredRoles={["USER", "MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><Explore /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute requiredRoles={["USER", "MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><Profile /></ProtectedRoute>} />
             <Route path="/wallet" element={<ProtectedRoute requiredRoles={["USER", "MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><WalletPage /></ProtectedRoute>} />
             
