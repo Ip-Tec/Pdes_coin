@@ -86,13 +86,16 @@ class UserController:
                 access_token,
                 httponly=True,
                 secure=True,
+                samesite="None"
                 # samesite="Lax"
             )
+            
             response.set_cookie(
                 "refresh_token",
                 refresh_token,
                 httponly=True,
                 secure=True,
+                samesite="None",
                 # samesite="Lax",
             )
             return response
