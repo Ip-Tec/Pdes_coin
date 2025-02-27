@@ -8,7 +8,7 @@ const UsersTable = () => {
 
   // Fetch users every time filters change
   useEffect(() => {
-    console.log(document.cookie.toString());
+    // console.log(document.cookie.toString());
     const fetchUsers = async () => {
       try {
         const response = await axios.get("/admin/users", { params: filters });
