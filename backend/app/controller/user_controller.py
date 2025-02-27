@@ -85,9 +85,9 @@ class UserController:
                 "access_token",
                 access_token,
                 httponly=True,
-                secure=True,
-                # samesite="None",
-                samesite="Lax",
+                secure=False,
+                samesite="None",
+                # samesite="Lax",
                 path="/",
             )
             
@@ -95,9 +95,9 @@ class UserController:
                 "refresh_token",
                 refresh_token,
                 httponly=True,
-                secure=True,
-                # samesite="None",
-                samesite="Lax",
+                secure=False,
+                samesite="None",
+                # samesite="Lax",
                 path="/",
             )
             return response

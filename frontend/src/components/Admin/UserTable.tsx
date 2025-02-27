@@ -12,7 +12,7 @@ const UsersTable = () => {
     const fetchUsers = async () => {
       try {
         const response = await axios.get("/admin/users", { params: filters });
-        console.log("Response data:", response.data); // Check the structure
+        // console.log("Response data:", response.data); // Check the structure
         // Update this line based on the response structure:
         const data = Array.isArray(response.data)
           ? response.data
