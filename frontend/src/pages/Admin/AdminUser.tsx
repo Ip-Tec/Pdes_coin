@@ -8,6 +8,7 @@ import SlideInPanel from "../../components/Admin/SlideInPanel";
 import { DepositPropsWithUser, User } from "../../utils/type";
 import { changePassword, updateUser } from "../../services/adminAPI";
 import { toast, ToastContainer } from "react-toastify";
+import UsersTable from "../../components/Admin/UserTable";
 
 const AdminUser: React.FC = () => {
   const { user,  isAllowed } = useAuth();
@@ -105,6 +106,8 @@ const AdminUser: React.FC = () => {
       <div className="w-wull md:px-4 py-20 mb-6 overflow-x-clip">
         {/* Search Bar with Suggestions */}
         <SearchUsers title="Admin User Page" setUsers={setUsers} />
+
+        <UsersTable />
 
         {/* Floating Search Results */}
         {users.length > 0 && (

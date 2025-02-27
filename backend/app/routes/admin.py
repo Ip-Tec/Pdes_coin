@@ -1398,3 +1398,45 @@ def get_referrers_in_range(current_user, *args, **kwargs):
         ]
     }), 200
 
+
+# Get users for admin dashboard
+@admin_bp.route('/users/<int:user_id>/transactions', methods=['GET'])
+def get_user_transactions(user_id):
+    transactions = Transaction.query.filter_by(user_id=user_id).all()
+    return jsonify([tx.serialize() for tx in transactions])
+
+
+@admin_bp.route('/users', methods=['GET'])
+def get_users():
+    query = User.query
+
+    # Example: Filter by referrer_id if provided
+    referrer_id = request.args.get('referrer_id')
+    if referrer_id:
+        query = query.filter(User.referrer_id == referrer_id)
+
+    # Filtering by balance (assumes join with Balance)
+    balance_min = request.args.get('balance_min', type=float)
+    balance_max = request.args.get('balance_max', type=float)
+    if balance_min is not None or balance_max is not None:
+        query = query.join(Balance)
+        if balance_min is not None:
+            query = query.filter(Balance.balance >= balance_min)
+        if balance_max is not None:
+            query = query.filter(Balance.balance <= balance_max)
+
+    # Filtering by crypto balance (assumes join with Crypto)
+    crypto_min = request.args.get('crypto_min', type=float)
+    crypto_max = request.args.get('crypto_max', type=float)
+    if crypto_min is not None or crypto_max is not None:
+        query = query.join(Crypto)
+        if crypto_min is not None:
+            query = query.filter(Crypto.amount >= crypto_min)
+        if crypto_max is not None:
+            query = query.filter(Crypto.amount <= crypto_max)
+
+    users = query.all()
+    # Use the admin serializer if you want additional fields
+    return jsonify([user.serialize_admin() for user in users])
+
+

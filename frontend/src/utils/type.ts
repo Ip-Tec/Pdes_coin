@@ -30,6 +30,7 @@ export interface User {
   crypto_balance?: number;
   referral_code: string | null;
   total_referrals: number;
+  referrer_id?: number;
   sticks?: number;
   is_blocked?: boolean;
   correct_balance?: number;
