@@ -1330,7 +1330,7 @@ def update_user(current_user, *args, **kwargs):
 
 @admin_bp.route("/referrals", methods=["GET"])
 @token_required
-def get_referrals(current_user):
+def get_referrals(current_user, *args, **kwargs):
     """ Get all users that the current user has referred """
     referrals = User.query.filter_by(referrer_id=current_user.id).all()
     serialized_referrals = [referral.serialize() for referral in referrals]
@@ -1338,7 +1338,7 @@ def get_referrals(current_user):
 
 @admin_bp.route("/referrer/<int:user_id>", methods=["GET"])
 @token_required
-def get_referrer_and_reward(user_id):
+def get_referrer_and_reward(user_id, current_user, *args, **kwargs):
     """ Get referrer details and reward """
     user = User.query.get(user_id)
     try:
@@ -1363,7 +1363,7 @@ def get_referrer_and_reward(user_id):
    
 @admin_bp.route("/referrers-in-range", methods=["GET"])
 @token_required
-def get_referrers_in_range():
+def get_referrers_in_range(current_user, *args, **kwargs):
     """ Get referrers within a date range """
     start_date = request.args.get("start_date")
     end_date = request.args.get("end_date")
