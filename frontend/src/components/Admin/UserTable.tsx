@@ -8,10 +8,16 @@ const UsersTable = () => {
 
   // Fetch users every time filters change
   useEffect(() => {
+    console.log(document.cookie.toString());
     const fetchUsers = async () => {
       try {
         const response = await axios.get("/admin/users", { params: filters });
-        setUsers(response.data);
+        console.log("Response data:", response.data); // Check the structure
+        // Update this line based on the response structure:
+        const data = Array.isArray(response.data)
+          ? response.data
+          : response.data.users;
+        setUsers(data);
       } catch (error) {
         console.error("Error fetching users:", error);
       }
@@ -34,7 +40,7 @@ const UsersTable = () => {
   const viewTransactions = async (userId: number) => {
     try {
       const res = await axios.get(`/admin/users/${userId}/transactions`);
-      console.log("Transactions for user", userId, res.data);
+      console.log("Transactions for user", userId, { res });
       // You might want to show these in a modal or separate component
     } catch (error) {
       console.error("Error fetching transactions:", error);
@@ -42,13 +48,13 @@ const UsersTable = () => {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 text-black overflow-x-scroll no-scrollbar">
       {/* Filter inputs at the top */}
-      <div className="mb-4 flex space-x-2">
+      <div className="mb-4 flex flex-wrap items-center justify-center">
         <input
           type="number"
           placeholder="Min Balance"
-          className="px-2 py-1 border rounded"
+          className="p-1 gap-2 border rounded bg-transparent"
           onChange={(e) =>
             setFilters((prev) => ({ ...prev, balance_min: e.target.value }))
           }
@@ -56,7 +62,7 @@ const UsersTable = () => {
         <input
           type="number"
           placeholder="Max Balance"
-          className="px-2 py-1 border rounded"
+          className="px-2 py-1 border rounded bg-transparent"
           onChange={(e) =>
             setFilters((prev) => ({ ...prev, balance_max: e.target.value }))
           }
@@ -64,7 +70,7 @@ const UsersTable = () => {
         <input
           type="number"
           placeholder="Min Crypto"
-          className="px-2 py-1 border rounded"
+          className="px-2 py-1 border rounded bg-transparent"
           onChange={(e) =>
             setFilters((prev) => ({ ...prev, crypto_min: e.target.value }))
           }
@@ -72,7 +78,7 @@ const UsersTable = () => {
         <input
           type="number"
           placeholder="Max Crypto"
-          className="px-2 py-1 border rounded"
+          className="px-2 py-1 border rounded bg-transparent"
           onChange={(e) =>
             setFilters((prev) => ({ ...prev, crypto_max: e.target.value }))
           }
@@ -86,7 +92,7 @@ const UsersTable = () => {
       </div>
 
       {/* Users Table */}
-      <table className="min-w-full bg-white">
+      <table className="min-w-full bg-transparent">
         <thead>
           <tr className="border-b">
             <th
@@ -120,47 +126,53 @@ const UsersTable = () => {
           </tr>
         </thead>
         <tbody>
-          {users.map((user) => (
-            <tr className="border-b" key={user.id}>
-              <td
-                className="px-4 py-2 cursor-pointer"
-                onClick={() =>
-                  handleColumnClick(
-                    "referrer_id",
-                    user.referrer_id?.toString() ?? ""
-                  )
-                }
-              >
-                {user.referrer_id || "N/A"}
-              </td>
-              <td className="px-4 py-2">{user.full_name}</td>
-              <td className="px-4 py-2">{user.email}</td>
-              <td
-                className="px-4 py-2 cursor-pointer"
-                onClick={() =>
-                  handleColumnClick("balance", user.balance.toString())
-                }
-              >
-                {user.balance}
-              </td>
-              <td
-                className="px-4 py-2 cursor-pointer"
-                onClick={() =>
-                  handleColumnClick("balance", user.balance.toString())
-                }
-              >
-                {user.crypto_balance}
-              </td>
-              <td className="px-4 py-2">
-                <button
-                  onClick={() => viewTransactions(user.id)}
-                  className="px-2 py-1 bg-green-500 text-white rounded"
+          {Array.isArray(users) && users.length > 0 ? (
+            users.map((user) => (
+              <tr className="border-b" key={user.id}>
+                <td
+                  className="px-4 py-2 cursor-pointer"
+                  onClick={() =>
+                    handleColumnClick(
+                      "referrer_id",
+                      user.referrer_id?.toString() ?? ""
+                    )
+                  }
                 >
-                  Transactions
-                </button>
-              </td>
+                  {user.referrer_id || "N/A"}
+                </td>
+                <td className="px-4 py-2">{user.full_name}</td>
+                <td className="px-4 py-2">{user.email}</td>
+                <td
+                  className="px-4 py-2 cursor-pointer"
+                  onClick={() =>
+                    handleColumnClick("balance", user.balance.toString())
+                  }
+                >
+                  {user.balance}
+                </td>
+                <td
+                  className="px-4 py-2 cursor-pointer"
+                  onClick={() =>
+                    handleColumnClick("balance", user.balance.toString())
+                  }
+                >
+                  {user.crypto_balance}
+                </td>
+                <td className="px-4 py-2">
+                  <button
+                    onClick={() => viewTransactions(user.id)}
+                    className="px-2 py-1 bg-green-500 text-white rounded"
+                  >
+                    Transactions
+                  </button>
+                </td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={6}>No users found</td>
             </tr>
-          ))}
+          )}
         </tbody>
       </table>
     </div>

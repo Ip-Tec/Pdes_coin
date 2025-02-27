@@ -86,8 +86,9 @@ class UserController:
                 access_token,
                 httponly=True,
                 secure=True,
-                samesite="None"
+                samesite="None",
                 # samesite="Lax"
+                path="/",
             )
             
             response.set_cookie(
@@ -97,6 +98,7 @@ class UserController:
                 secure=True,
                 samesite="None",
                 # samesite="Lax",
+                path="/",
             )
             return response
 
