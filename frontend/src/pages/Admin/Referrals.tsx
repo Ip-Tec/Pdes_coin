@@ -27,7 +27,7 @@ const Referrals = () => {
         // you want ALL the referral data, not just the last call's data.
 
         const referralsData = await getReferrals();
-        const rangeData = await getReferrersInRange("1", "222"); // You'll need to handle the range data
+        const rangeData = await getReferrersInRange("2022-01-01", "2022-12-31") // You'll need to handle the range data
         const topReferrers = await getTopReferrersAdminPage(); // And the top referrers
         const referrerReward = await getReferrerAndReward(user!.id); // And the referrer reward
         console.log({ referrerReward, topReferrers, rangeData, referralsData });

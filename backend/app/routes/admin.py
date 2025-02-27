@@ -1338,7 +1338,7 @@ def get_referrals(current_user, *args, **kwargs):
 
 @admin_bp.route("/referrer/<int:user_id>", methods=["GET"])
 @token_required
-def get_referrer_and_reward(user_id, current_user, *args, **kwargs):
+def get_referrer_and_reward(current_user, user_id, *args, **kwargs):
     """ Get referrer details and reward """
     user = User.query.get(user_id)
     try:
