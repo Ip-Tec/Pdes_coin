@@ -33,20 +33,6 @@ const API = axios.create({
   withCredentials: true,
 });
 
-// Add a request interceptor to include the token in headers
-API.interceptors.request.use(
-  (config) => {
-    // Retrieve the token from localStorage
-    const token = localStorage.getItem("authToken");
-
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
 // Helper function to generate endpoint URLs
 export const apiUrl = (endpoint: string) =>
   `${API.defaults.baseURL}${endpoint}`;
@@ -117,14 +103,11 @@ export const loginUser = async (loginData: {
 }) => {
   try {
     const response = await API.post(apiUrl("/auth/login"), loginData);
-    const { access_token, refresh_token, user } = response.data;
-
-    localStorage.setItem("authToken", access_token);
-    localStorage.setItem("refreshToken", refresh_token);
+    const { user } = response.data;
 
     // console.log({ user, access_token, refresh_token });
 
-    return { user, access_token, refresh_token };
+    return { user };
   } catch (error) {
     console.log({ error });
 

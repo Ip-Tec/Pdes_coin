@@ -26,7 +26,9 @@ def token_required(f):
             return jsonify({}), 200
 
         if not token:
-            return jsonify({"message": "Token is missing!"}), 401
+            token = request.cookies.get("refresh_token")
+            if not token:
+                return jsonify({"message": "Token is missing!"}), 401
 
         try:
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])

@@ -1,13 +1,51 @@
 import axios from "axios";
-import API, { apiUrl } from "./api";
-import { toast } from "react-toastify";
 import {
-  confirmUserDepositProps,
-  ErrorResponse,
-  RewardSettingFormData,
   User,
   UtilityProps,
+  ErrorResponse,
+  RewardSettingFormData,
+  confirmUserDepositProps,
 } from "../utils/type";
+import { toast } from "react-toastify";
+
+// Create API instance
+const prod = import.meta.env.PROD || true;
+export const url = prod
+  ? "https://pedex.duckdns.org/api"
+  : // ? import.meta.env.REACT_APP_API_URL
+    import.meta.env.VITE_API_URL;
+
+export const websocketUrl = prod
+  ? "wss://pedex.duckdns.org/"
+  : import.meta.env.VITE_API_WEBSOCKET_URL;
+
+export const feURL = prod
+  ? "https://pedex.vercel.app/"
+  : import.meta.env.VITE_EF_URL_LOCAL;
+// Create API instance
+const API = axios.create({
+  baseURL: url,
+  headers: {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+  },
+  withCredentials: true,
+});
+
+// Helper function to generate endpoint URLs
+export const apiUrl = (endpoint: string) =>
+  `${API.defaults.baseURL}${endpoint}`;
+
+// Get Cookies from the browser
+export const getCookies = () => {
+  const cookies = document.cookie.split(";").reduce((acc, cookie) => {
+    const [key, value] = cookie.trim().split("=");
+    acc[key] = value;
+    console.log({ key, value });
+    return acc;
+  }, {} as { [key: string]: string });
+  return cookies;
+};
 
 // Transfer Funds
 export const getDashboardTotal = async () => {
@@ -318,7 +356,7 @@ export const getReferrerAndReward = async (userId: number) => {
   try {
     const response = await API.get(apiUrl(`/admin/referrer/${userId}`));
     toast.success("Referrer details fetched successfully");
-    console.log({response});
+    console.log({ response });
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -338,7 +376,7 @@ export const getReferrals = async (userId: number = 6) => {
       apiUrl(`/admin/referrals/${userId}`)
     );
     toast.success("Referrals fetched successfully");
-    console.log({response});
+    console.log({ response });
     return response.data.referrals;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -358,7 +396,7 @@ export const getTopReferrersAdminPage = async (limit: number = 10) => {
       apiUrl(`/admin/top-referrers?limit=${limit}`)
     );
     toast.success("Top referrers fetched successfully");
-    console.log({response});
+    console.log({ response });
     return response.data.top_referrers;
   } catch (error) {
     if (axios.isAxiosError(error)) {
@@ -372,13 +410,18 @@ export const getTopReferrersAdminPage = async (limit: number = 10) => {
 };
 
 // 4️⃣ Get referrers within a date range
-export const getReferrersInRange = async (startDate: string, endDate: string) => {
+export const getReferrersInRange = async (
+  startDate: string,
+  endDate: string
+) => {
   try {
     const response = await API.get<{ referrers: User[] }>(
-      apiUrl(`/admin/referrers-in-range?start_date=${startDate}&end_date=${endDate}`)
+      apiUrl(
+        `/admin/referrers-in-range?start_date=${startDate}&end_date=${endDate}`
+      )
     );
     toast.success("Referrers in range fetched successfully");
-    console.log({response});
+    console.log({ response });
     return response.data.referrers;
   } catch (error) {
     if (axios.isAxiosError(error)) {

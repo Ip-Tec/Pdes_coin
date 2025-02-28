@@ -18,7 +18,6 @@ const UsersTable = () => {
           ? response.data
           : response.data.users;
         setUsers(data);
-        console.log({ data });
       } catch (error) {
         console.error("Error fetching users:", error);
       }
