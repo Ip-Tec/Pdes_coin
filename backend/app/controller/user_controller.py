@@ -89,6 +89,7 @@ class UserController:
                 samesite="None",
                 # samesite="Lax",
                 path="/",
+                domain="pedex.duckdns.org",
             )
             
             response.set_cookie(
@@ -99,6 +100,7 @@ class UserController:
                 samesite="None",
                 # samesite="Lax",
                 path="/",
+                domain="pedex.duckdns.org",
             )
             return response
 
