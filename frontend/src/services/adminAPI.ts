@@ -29,8 +29,21 @@ const API = axios.create({
   timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
+    'Accept': 'application/json',
   }
 });
+
+// Add a request interceptor to debug auth headers
+API.interceptors.request.use(
+  config => {
+    // Log the cookies being sent (for debugging)
+    console.log('Request cookies:', document.cookie);
+    return config;
+  },
+  error => {
+    return Promise.reject(error);
+  }
+);
 
 // Add a request interceptor that does NOT trigger redirects
 API.interceptors.response.use(
@@ -59,13 +72,34 @@ export const getCookies = () => {
 // Transfer Funds
 export const getDashboardTotal = async () => {
   try {
+    console.log('Attempting to fetch dashboard total');
     const response = await API.post(apiUrl("/admin/get-dashboard-total"));
-    // console.log({ response });
+    console.log('Dashboard total response:', response.data);
     return response.data;
   } catch (error) {
     if (axios.isAxiosError(error)) {
+      console.error('Dashboard API error details:', {
+        status: error.response?.status,
+        data: error.response?.data,
+        headers: error.response?.headers,
+      });
+      
       const errorData: ErrorResponse = error.response?.data;
-      throw new Error(errorData?.message || "Transfer failed");
+      
+      // Handle token issues
+      if (error.response?.status === 401) {
+        console.error('Authentication error in API call');
+        // Don't throw here, return empty data instead
+        return {
+          total_users: 0,
+          total_deposits: 0,
+          total_rewards: 0,
+          total_transactions: 0,
+          total_withdrawals: 0
+        };
+      }
+      
+      throw new Error(errorData?.message || "Request failed");
     }
     throw new Error("Network error. Please try again.");
   }

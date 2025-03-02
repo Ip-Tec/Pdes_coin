@@ -27,12 +27,85 @@ limiter = Limiter(
     default_limits=["15 per hour"]
 )
 
+# Add these token creation functions
+def create_access_token(identity):
+    """
+    Create a new access token for the given user identity
+    """
+    payload = {
+        "user_id": identity,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=3),  # 3 hour expiry
+        "iat": datetime.datetime.utcnow(),
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+    return token
+
+def create_refresh_token(identity):
+    """
+    Create a new refresh token for the given user identity
+    """
+    payload = {
+        "user_id": identity,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=30),  # 30 day expiry
+        "iat": datetime.datetime.utcnow(),
+    }
+    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+    return token
+
 # Login router with rate limiting
 @auth_bp.route("/login", methods=["POST"])
 @limiter.limit("5 per minute")
 def login():
-    user = user_controller.UserController.login()
-    return user
+    # old code
+    # user = user_controller.UserController.login()
+    # return user
+    data = request.get_json()
+    email = data.get("email", "").lower()
+    password = data.get("password", "")
+    
+    user = User.query.filter_by(email=email).first()
+    
+    if not user or not user.check_password(password):
+        return jsonify({"error": "Invalid email or password"}), 401
+    
+    # Generate tokens
+    access_token = create_access_token(identity=user.id)
+    refresh_token = create_refresh_token(identity=user.id)
+    
+    # Prepare response with user data
+    response = jsonify({
+        "message": "Login successful",
+        "user": user.serialize(),
+        "access_token": access_token,
+        "refresh_token": refresh_token
+    })
+    
+    # Set secure cookies with proper attributes
+    max_age = 60 * 60 * 24 * 30  # 30 days
+    
+    # Set the cookies with all necessary attributes
+    response.set_cookie(
+        'access_token', 
+        access_token, 
+        httponly=True, 
+        secure=False,  # Set to True in production with HTTPS
+        samesite='Lax',
+        max_age=max_age,
+        path='/'
+    )
+    
+    response.set_cookie(
+        'refresh_token', 
+        refresh_token, 
+        httponly=True, 
+        secure=False,  # Set to True in production with HTTPS
+        samesite='Lax', 
+        max_age=max_age,
+        path='/'
+    )
+    
+    print(f"Login successful for {email}, setting cookies: access_token, refresh_token")
+    return response, 200
 
 # Register router with rate limiting
 @auth_bp.route("/register", methods=["POST"])

@@ -118,27 +118,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       // Call login API
       const response = await loginUser({ email, password });
+      console.log('Login response:', response);
       
-      if (response && response.user) {
-        // Set user data and authentication state
-        setUser(response.user);
-        setIsAuth(true);
-        
-        // Set role from user data
-        const role = response.user.role || "USER";
-        setUserRoles(Array.isArray(role) ? role : [role]);
-        
-        // Initialize the socket after successful login
-         initializeSocket();
-        
-        toast.success("Login successful!");
-        return response.user;
-      } else {
-        throw new Error("Login response missing user data");
+      // Explicitly check for tokens in the response
+      const { user } = response;
+      
+      if (!user) {
+        throw new Error("User data missing from login response");
       }
+      
+      // Log cookies for debugging
+      console.log('Cookies after login:', document.cookie);
+      
+      // Set user data and authentication state
+      setUser(user);
+      setIsAuth(true);
+      
+      // Set roles
+      const role = user.role || "USER";
+      setUserRoles(Array.isArray(role) ? role : [role]);
+      
+      // Initialize socket with fresh token
+      initializeSocket();
+      
+      toast.success("Login successful!");
+      return user;
     } catch (error) {
       console.error("Login error:", error);
-      toast.error("Login failed. Please check your credentials.");
+      toast.error(error instanceof Error ? error.message : "Login failed");
       setUser(null);
       setIsAuth(false);
       return null;

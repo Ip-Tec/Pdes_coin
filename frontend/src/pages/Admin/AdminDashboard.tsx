@@ -75,51 +75,70 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      // Get dashboard data
-      const getDashboard = await getDashboardTotal();
-      // Get transaction trends
-      const getTransaction = await getTransactionTrends();
-      // Get Top Referrers
-      const getReferrers = await getTopReferrers();
-      // Get data overview
-      const dataOverview = await getDataOverview();
-      // Get Top Users with the highest Balance
-      const topUsersByBalance = await getTopUsersByBalance();
-
-      setPolarData(dataOverview);
-      setTopReferrers(getReferrers);
-      setTotalDashboard(getDashboard);
-      setTransactionTrends(getTransaction);
-
-      const { top_users_by_balance, top_users_by_crypto_balance } =
-        topUsersByBalance;
-
-      // Prepare chart data
-      setTopChartData({
-        labels: top_users_by_balance.map((user: { name: string }) => user.name), // User names
-
-        datasets: [
-          {
-            label: "Balance",
-            data: top_users_by_balance.map(
-              (user: { balance: number }) => user.balance
-            ),
-            backgroundColor: "#FF6384",
-            borderColor: "#FF6384",
-            borderWidth: 1,
-          },
-
-          {
-            label: "Crypto Balance",
-            data: top_users_by_crypto_balance.map(
-              (user: { crypto_balance: number }) => user.crypto_balance || 0
-            ),
-            backgroundColor: "#36A2EB",
-            borderColor: "#36A2EB",
-            borderWidth: 1,
-          },
-        ],
-      });
+      try {
+        // Get dashboard data
+        const getDashboard = await getDashboardTotal();
+        if (getDashboard) setTotalDashboard(getDashboard);
+        
+        try {
+          // Get transaction trends
+          const getTransaction = await getTransactionTrends();
+          if (getTransaction) setTransactionTrends(getTransaction);
+        } catch (error) {
+          console.error("Error fetching transaction trends:", error);
+        }
+        
+        try {
+          // Get Top Referrers
+          const getReferrers = await getTopReferrers();
+          if (getReferrers) setTopReferrers(getReferrers);
+        } catch (error) {
+          console.error("Error fetching top referrers:", error);
+        }
+        
+        try {
+          // Get data overview
+          const dataOverview = await getDataOverview();
+          if (dataOverview) setPolarData(dataOverview);
+        } catch (error) {
+          console.error("Error fetching data overview:", error);
+        }
+        
+        try {
+          // Get Top Users with the highest Balance
+          const topUsersByBalance = await getTopUsersByBalance();
+          if (topUsersByBalance) {
+            const { top_users_by_balance, top_users_by_crypto_balance } = topUsersByBalance;
+            
+            // Prepare chart data
+            setTopChartData({
+              labels: top_users_by_balance.map((user: { name: string }) => user.name),
+              datasets: [
+                {
+                  label: "Balance",
+                  data: top_users_by_balance.map((user: { balance: number }) => user.balance),
+                  backgroundColor: "#FF6384",
+                  borderColor: "#FF6384",
+                  borderWidth: 1,
+                },
+                {
+                  label: "Crypto Balance",
+                  data: top_users_by_crypto_balance.map(
+                    (user: { crypto_balance: number }) => user.crypto_balance || 0
+                  ),
+                  backgroundColor: "#36A2EB",
+                  borderColor: "#36A2EB",
+                  borderWidth: 1,
+                },
+              ],
+            });
+          }
+        } catch (error) {
+          console.error("Error fetching top users by balance:", error);
+        }
+      } catch (error) {
+        console.error("Error in fetchDashboardData:", error);
+      }
     };
 
     fetchDashboardData();
