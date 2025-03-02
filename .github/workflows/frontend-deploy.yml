@@ -49,9 +49,9 @@ jobs:
             npm run build  # Build the project
 
             # Restart the application with PM2
-            pm2 delete pedex || true
-            pm2 start "serve -s dist -l 3000" --name pedex
-            pm2 save
+            # pm2 delete pedex || true
+            # pm2 start "serve -s dist -l 3000" --name pedex
+            # pm2 save
 
             # Restart frontend service without sudo password prompt
             # echo "${{ secrets.SSH_USER }} ALL=(ALL) NOPASSWD: /bin/systemctl restart frontend" | sudo tee /etc/sudoers.d/restart-frontend
