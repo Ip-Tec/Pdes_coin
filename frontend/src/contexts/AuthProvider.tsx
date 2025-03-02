@@ -276,25 +276,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const getUser = async () => {
-    setIsLoading(true);
+    // Don't try to get user if no token exists
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      setUser(null);
+      setIsAuth(false);
+      setUserRoles([]);
+      return null;
+    }
+
     try {
+      setIsLoading(true);
       const userData = await getUserAPI();
+      
       if (userData) {
         setUser(userData);
         setIsAuth(true);
-        // Set roles from user data
+        
+        // Set roles
         const role = userData.role || "USER";
         setUserRoles(Array.isArray(role) ? role : [role]);
+        
         return userData;
       } else {
+        // If we got no user data but didn't throw an error, clear auth state
         setUser(null);
         setIsAuth(false);
+        setUserRoles([]);
         return null;
       }
     } catch (error) {
-      console.error("Error fetching user", error);
+      console.error("Error fetching user:", error);
       setUser(null);
       setIsAuth(false);
+      setUserRoles([]);
       return null;
     } finally {
       setIsLoading(false);

@@ -72,7 +72,7 @@ def login():
     access_token = create_access_token(identity=user.id)
     refresh_token = create_refresh_token(identity=user.id)
     
-    # Return tokens in response body instead of cookies
+    # Return tokens in response body
     return jsonify({
         "message": "Login successful",
         "user": user.serialize(),

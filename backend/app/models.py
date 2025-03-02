@@ -4,6 +4,7 @@ from flask import request, jsonify
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.types import Enum as SqEnum
 from app.enumValue import TicketPriority, TicketStatus
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 # User model
@@ -117,6 +118,17 @@ class User(db.Model):
             "created_at": self.created_at.isoformat() if self.created_at else "",
             "updated_at": self.updated_at.isoformat() if self.created_at else "",
         }
+
+    # Add these methods to handle password hashing and verification
+    def set_password(self, password):
+        """Hash and set the user's password"""
+        self.password = generate_password_hash(password)
+        
+    def check_password(self, password):
+        """Check if the provided password matches the stored hash"""
+        if not self.password:
+            return False
+        return check_password_hash(self.password, password)
 
 
 # Balance model

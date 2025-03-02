@@ -26,53 +26,48 @@ export const feURL = prod
 // Create API instance
 const API = axios.create({
   baseURL: url,
-  timeout: 15000
+  timeout: 30000,
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  }
 });
 
-// Add request interceptor to include token
+// Add request interceptor
 API.interceptors.request.use(
   config => {
+    // Add the token to every request
     const token = localStorage.getItem('access_token');
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
-  error => {
-    return Promise.reject(error);
-  }
+  error => Promise.reject(error)
 );
 
-// Add response interceptor to handle token refresh
+// Add response interceptor with better error handling
 API.interceptors.response.use(
   response => response,
-  async error => {
-    const originalRequest = error.config;
+  error => {
+    // Don't reject timeout errors immediately - log them for debugging
+    if (axios.isAxiosError(error) && error.code === 'ECONNABORTED') {
+      console.error('Request timed out:', error.config?.url);
+      // Return a custom error object instead of rejecting
+      return Promise.resolve({ 
+        data: null, 
+        error: 'Request timed out. Please try again.'
+      });
+    }
     
-    // If error is 401 and we haven't tried to refresh yet
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      
-      try {
-        // Refresh token
-        const refreshToken = localStorage.getItem('refresh_token');
-        const response = await axios.post(`${url}/auth/refresh-token`, {
-          refresh_token: refreshToken
-        });
-        
-        // Store new tokens
-        localStorage.setItem('access_token', response.data.access_token);
-        localStorage.setItem('refresh_token', response.data.refresh_token);
-        
-        // Update request header with new token
-        originalRequest.headers['Authorization'] = `Bearer ${response.data.access_token}`;
-        return API(originalRequest);
-      } catch (refreshError) {
-        // If refresh fails, redirect to login
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+    // For 401 errors, clear authentication
+    if (axios.isAxiosError(error) && error.response?.status === 401) {
+      console.log('Unauthorized request, clearing auth state');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      // Only redirect if not already on login page
+      if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login';
-        return Promise.reject(refreshError);
       }
     }
     
@@ -172,17 +167,20 @@ export const loginUser = async (loginData: {
 // Get user info
 export const getUser = async (): Promise<User | null> => {
   try {
-    const response = await API.get<User>(apiUrl("/users/users_info"));
-    return response.data;
-  } catch (error: unknown) {
-    if (error instanceof Error) {
-      console.error("Error fetching user:", error);
-      toast.error(error.message);
-    } else {
-      console.error("Unknown error:", error);
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      console.log('No token found, skipping user info request');
+      return null;
     }
-    toast.error("Failed to fetch user.");
-    return null; // Return null if the user is not logged in or an error occurs
+    
+    console.log('Fetching user info...');
+    const response = await API.get<User>(apiUrl("/users/users_info"));
+    
+    console.log('User info fetched successfully');
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user:", error);
+    return null;
   }
 };
 
