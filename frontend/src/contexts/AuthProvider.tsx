@@ -158,29 +158,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       
-      // First update state (to avoid race conditions)
-      setUser(null);
-      setIsAuth(false);
-      setUserRoles([]);
-      
-      // Disconnect WebSocket
+      // Disconnect socket first
       if (socket) {
         socket.disconnect();
         setSocket(null);
       }
       
-      // Then call the logout API endpoint
+      // Call logout API endpoint
       await LogoutUser();
       
-      // Use a short timeout to ensure state is fully updated before navigation
+      // After successful logout API call, clear state
+      setUser(null);
+      setIsAuth(false);
+      setUserRoles([]);
+      
+      // Manual cookie deletion as a fallback
+      document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      
+      // Clear any localStorage items
+      localStorage.removeItem('user');
+      
+      // Use window.location to ensure a complete page refresh
+      toast.success("Logged out successfully");
+      
+      // Wait a moment to ensure clean state before redirect
       setTimeout(() => {
-        // Navigate to login page after all state is cleared
         window.location.href = '/login';
-      }, 100);
+      }, 500);
       
     } catch (error) {
       console.error("Logout error:", error);
-      toast.error("Failed to logout. Please try again.");
+      
+      // Force logout even if API call fails
+      setUser(null);
+      setIsAuth(false);
+      setUserRoles([]);
+      
+      // Manual cookie deletion as a fallback
+      document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      
+      toast.warning("Logged out with some errors - please refresh the page");
+      
+      // Redirect anyway
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 500);
     } finally {
       setIsLoading(false);
     }
@@ -218,25 +242,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const initializeSocket = () => {
-    if (!isAuth) return;
+    // Close existing socket if any
+    if (socket) {
+      socket.disconnect();
+    }
+
+    // Get access token from cookies
+    const getCookieValue = (name: string) => {
+      const value = `; ${document.cookie}`;
+      const parts = value.split(`; ${name}=`);
+      if (parts.length === 2) return parts.pop()?.split(';').shift();
+      return null;
+    };
     
-    const newSocket = createSocket();
-    setSocket(newSocket);
+    const token = getCookieValue('access_token');
     
-    newSocket.on("connect", () => {
-      console.log("Connected to WebSocket server");
-      // Emit events after successful connection
-      newSocket.emit("get_transaction_history");
-      newSocket.emit("get_trade_history");
-      newSocket.emit("get_current_price");
+    // Connect with auth token in query params (for WebSocket)
+    const newSocket = io(`${import.meta.env.VITE_API_URL}`, {
+      withCredentials: true,
+      transports: ['websocket'],
+      query: token ? { token } : undefined
     });
-    
-    newSocket.on("connect_error", (error) => {
-      console.error("WebSocket connection error:", error);
+
+    // Set up event handlers
+    newSocket.on('connect', () => {
+      console.log('Connected to WebSocket server');
+      setSocket(newSocket);
     });
-    
-    newSocket.on("error", (error) => {
-      console.error("WebSocket Error:", error);
+
+    newSocket.on('error', (error) => {
+      console.error('WebSocket Error:', error);
     });
     
     return newSocket;

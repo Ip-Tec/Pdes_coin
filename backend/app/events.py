@@ -6,6 +6,7 @@ from urllib.parse import parse_qs
 from http.cookies import SimpleCookie
 from flask_jwt_extended import decode_token
 from app.controller.user_transactions import PdesService, UserTransactionsController
+import jwt
 
 
 def authenticate_socket_event(socketio):
@@ -17,41 +18,58 @@ def authenticate_socket_event(socketio):
             
             token = None
 
-            # Attempt to get token from cookies
-            cookie_str = env.get("HTTP_COOKIE", "")
-            if cookie_str:
-                cookie = SimpleCookie()
-                cookie.load(cookie_str)
-                if "access_token" in cookie:
-                    token = cookie["access_token"].value
+            # Attempt to get token from query params first (most reliable for WebSockets)
+            query_string = env.get("QUERY_STRING", "")
+            parsed_qs = parse_qs(query_string)
+            token_list = parsed_qs.get("token")
+            if token_list:
+                token = token_list[0]
+            
+            # Fallback: Try cookies
+            if not token:
+                cookie_str = env.get("HTTP_COOKIE", "")
+                if cookie_str:
+                    cookie = SimpleCookie()
+                    cookie.load(cookie_str)
+                    if "access_token" in cookie:
+                        token = cookie["access_token"].value
 
-            # Fallback: Try Authorization header if token not in cookies
+            # Fallback: Try Authorization header
             if not token:
                 auth_header = env.get("HTTP_AUTHORIZATION", None)
                 if auth_header and auth_header.startswith("Bearer "):
                     token = auth_header.split(" ")[1]
             
-            # Fallback: Try query string parameter
+            # Skip auth for unprotected events - MODIFY THIS FOR YOUR NEEDS
             if not token:
-                query_string = env.get("QUERY_STRING", "")
-                parsed_qs = parse_qs(query_string)
-                token_list = parsed_qs.get("token")
-                if token_list:
-                    token = token_list[0]
-            
-            if not token:
+                print(f"No token found for WebSocket event: {f.__name__}")
+                # For non-critical events, you can allow them to proceed without auth
+                # For example: if f.__name__ in ["get_current_price", "get_transaction_history"]:
+                if f.__name__ in ["get_current_price", "get_transaction_history"]:
+                    print(f"Allowing non-authenticated access to {f.__name__}")
+                    return f(None, *args, **kwargs)
                 emit("error", {"message": "Unauthorized: Token missing"})
                 return
             
             try:
-                decoded_token = decode_token(token)
-                current_user_id = decoded_token.get("sub")  # assuming 'sub' holds the user id
+                # Print debug info about the token
+                print(f"Decoding token for WebSocket event: {f.__name__}")
+                
+                # Modify to use your token verification logic
+                from app.services import SECRET_KEY  # Import your secret key
+                decoded_token = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+                user_id = decoded_token.get("user_id")  # Based on how you store user ID in token
+                
                 from app.models import User  # avoid circular import
-                current_user = User.query.get(current_user_id)
+                current_user = User.query.get(user_id)
                 if not current_user:
+                    print(f"Invalid user ID in token: {user_id}")
                     emit("error", {"message": "Unauthorized: Invalid user"})
                     return
+                    
+                print(f"Authenticated user {current_user.id} for WebSocket event: {f.__name__}")
             except Exception as e:
+                print(f"Token verification error: {str(e)}")
                 emit("error", {"message": "Invalid token", "error": str(e)})
                 return
             
@@ -63,12 +81,58 @@ def authenticate_socket_event(socketio):
 
 def register_socketio_events(socketio):
     @socketio.on("connect")
-    def handle_connect(auth):
-        # The connect handler now accepts the auth parameter.
-        # Optionally, you could use this auth data for additional logic.
-        current_price = handle_get_current_price()
-        trade_history = handle_get_transaction_history()
-        emit("response", {"message": "Welcome to the server!", "auth": auth, "current_price": current_price, "trade_history": trade_history})
+    def handle_connect():
+        try:
+            # Get token from request cookies
+            token = request.cookies.get('access_token')
+            
+            # Also check query params for token
+            if not token and request.args.get('token'):
+                token = request.args.get('token')
+            
+            # If no token found, allow connection but note it's unauthenticated
+            if not token:
+                print("WebSocket connecting without authentication")
+                current_price = handle_get_current_price()
+                trade_history = handle_get_transaction_history()
+                emit("response", {
+                    "message": "Connected without authentication", 
+                    "current_price": current_price, 
+                    "trade_history": trade_history
+                })
+                return True
+            
+            # Try to validate token
+            try:
+                from app.services import SECRET_KEY
+                decoded_token = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+                user_id = decoded_token.get("user_id")
+                
+                from app.models import User
+                current_user = User.query.get(user_id)
+                
+                if not current_user:
+                    print(f"WebSocket auth failed: User {user_id} not found")
+                    return False
+                    
+                print(f"WebSocket authenticated for user {current_user.id}")
+                current_price = handle_get_current_price()
+                trade_history = handle_get_transaction_history()
+                emit("response", {
+                    "message": f"Welcome {current_user.email}!", 
+                    "auth": True, 
+                    "current_price": current_price, 
+                    "trade_history": trade_history
+                })
+                return True
+                
+            except Exception as e:
+                print(f"WebSocket auth error: {str(e)}")
+                return False
+            
+        except Exception as e:
+            print(f"Socket connection error: {str(e)}")
+            return False
     
     @socketio.on("disconnect")
     def handle_disconnect():
