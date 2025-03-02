@@ -29,7 +29,7 @@ const createSocket = (): Socket => {
 };
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  // Instead of checking localStorage, we’ll initialize with false and then determine auth via getUserAPI
+  // Instead of checking localStorage, we'll initialize with false and then determine auth via getUserAPI
   const [isAuth, setIsAuth] = useState<boolean>(false);
   const [userRoles, setUserRoles] = useState<string[]>([
     "USER",
@@ -160,14 +160,58 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const refreshAuthToken = async () => {
     try {
-      // Calling refreshTokenAPI should update the HttpOnly cookie
+      setIsLoading(true);
+      // Call the refresh token API endpoint
       await refreshTokenAPI();
-      if (socket) socket.emit("update_token"); // if needed on socket side
-      setIsAuth(true);
+      
+      // Get the user info again to confirm authentication
+      const userData = await getUserAPI();
+      if (userData) {
+        setUser(userData);
+        setIsAuth(true);
+        // Re-initialize socket with fresh tokens
+        if (socket) {
+          socket.disconnect();
+        }
+        initializeSocket();
+      }
     } catch (error) {
-      console.error("Failed to refresh token", error);
-      logout();
+      console.error("Failed to refresh token:", error);
+      // Clear auth state on failure
+      setUser(null);
+      setIsAuth(false);
+      if (socket) {
+        socket.disconnect();
+        setSocket(null);
+      }
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const initializeSocket = () => {
+    if (!isAuth) return;
+    
+    const newSocket = createSocket();
+    setSocket(newSocket);
+    
+    newSocket.on("connect", () => {
+      console.log("Connected to WebSocket server");
+      // Emit events after successful connection
+      newSocket.emit("get_transaction_history");
+      newSocket.emit("get_trade_history");
+      newSocket.emit("get_current_price");
+    });
+    
+    newSocket.on("connect_error", (error) => {
+      console.error("WebSocket connection error:", error);
+    });
+    
+    newSocket.on("error", (error) => {
+      console.error("WebSocket Error:", error);
+    });
+    
+    return newSocket;
   };
 
   const getUser = async () => {

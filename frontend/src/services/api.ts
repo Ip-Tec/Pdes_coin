@@ -26,12 +26,46 @@ export const feURL = prod
 // Create API instance
 const API = axios.create({
   baseURL: url,
+  withCredentials: true, // Important for cookies
+  timeout: 15000,
   headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  },
-  withCredentials: true,
+    'Content-Type': 'application/json',
+  }
 });
+
+// Add request interceptor to handle token refresh
+API.interceptors.request.use(
+  async (config) => {
+    // No need to manually set Authorization header when using HttpOnly cookies
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
+
+// Add response interceptor to handle token refresh
+API.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        // Retry the original request
+        return API(originalRequest);
+      } catch (refreshError) {
+        // If refresh fails, redirect to login
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
 
 // Helper function to generate endpoint URLs
 export const apiUrl = (endpoint: string) =>

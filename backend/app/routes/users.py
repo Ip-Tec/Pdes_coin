@@ -15,21 +15,41 @@ def handle_connect():
     try:
         # Get token from request cookies
         token = request.cookies.get('access_token')
+        
+        # For debugging
+        print(f"Socket connection attempt, cookies: {request.cookies}")
+        
         if not token:
-            raise ConnectionRefusedError('Authentication failed')
+            # Try to get from headers or query params as fallback
+            token = request.headers.get('Authorization', '').replace('Bearer ', '')
+            if not token:
+                token = request.args.get('token')
+                
+        if not token:
+            print("No token found in socket connection")
+            return False
             
         # Verify token
-        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
-        user_id = payload.get('user_id')
-        
-        if not user_id:
-            raise ConnectionRefusedError('Invalid token')
+        try:
+            payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload.get('user_id')
             
-        print(f"Client connected: User {user_id}")
-        return True
-        
+            if not user_id:
+                print("Invalid token payload")
+                return False
+                
+            print(f"Socket authenticated: User {user_id}")
+            return True
+        except jwt.ExpiredSignatureError:
+            print("Token expired")
+            return False
+        except jwt.InvalidTokenError:
+            print("Invalid token")
+            return False
+            
     except Exception as e:
-        raise ConnectionRefusedError(f'Authentication failed: {str(e)}')
+        print(f"Socket auth error: {str(e)}")
+        return False
 
 
 # Get Login user info

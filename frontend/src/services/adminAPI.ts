@@ -7,6 +7,7 @@ import {
   confirmUserDepositProps,
 } from "../utils/type";
 import { toast } from "react-toastify";
+import { refreshTokenAPI } from "./api";
 
 // Create API instance
 const prod = import.meta.env.PROD || true;
@@ -30,7 +31,33 @@ const API = axios.create({
     "Content-Type": "application/json",
   },
   withCredentials: true,
+  timeout: 15000,  // Add timeout to prevent hanging requests
 });
+
+// Add interceptors for handling auth errors
+API.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        // Try to refresh the token
+        await refreshTokenAPI();
+        // Retry the original request
+        return API(originalRequest);
+      } catch (refreshError) {
+        // If refresh fails, redirect to login
+        window.location.href = '/login';
+        return Promise.reject(refreshError);
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
 
 // Helper function to generate endpoint URLs
 export const apiUrl = (endpoint: string) =>
