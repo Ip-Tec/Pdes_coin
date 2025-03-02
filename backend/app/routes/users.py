@@ -4,14 +4,32 @@ from flask import Blueprint, jsonify
 from app.services import token_required
 from flask_socketio import SocketIO, emit
 from app.controller.user_controller import UserController
+import jwt
+from flask import request, current_app
 
 users_bp = Blueprint("users", __name__)
 
 
 @socketio.on('connect')
 def handle_connect():
-    print("Client connected")
-    emit('message', {'data': 'Connected successfully'})
+    try:
+        # Get token from request cookies
+        token = request.cookies.get('access_token')
+        if not token:
+            raise ConnectionRefusedError('Authentication failed')
+            
+        # Verify token
+        payload = jwt.decode(token, current_app.config['SECRET_KEY'], algorithms=['HS256'])
+        user_id = payload.get('user_id')
+        
+        if not user_id:
+            raise ConnectionRefusedError('Invalid token')
+            
+        print(f"Client connected: User {user_id}")
+        return True
+        
+    except Exception as e:
+        raise ConnectionRefusedError(f'Authentication failed: {str(e)}')
 
 
 # Get Login user info
