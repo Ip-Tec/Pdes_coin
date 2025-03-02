@@ -45,7 +45,7 @@ jobs:
 
             # Install dependencies
             npm ci --omit=dev  # Install only production dependencies
-            npm install -g pm2 typescript  # Ensure PM2 and TypeScript are installed
+            npm install # -g pm2 typescript  # Ensure PM2 and TypeScript are installed
             npm run build  # Build the project
 
             # Restart the application with PM2
