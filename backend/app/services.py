@@ -18,37 +18,27 @@ REFRESH_SECRET_KEY = os.getenv("SECRET_KEY")
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        # Try to get token from cookies instead of headers
-        token = request.cookies.get("access_token")
+        token = None
         
-        # Bypass token checking for OPTIONS requests (preflight)
-        if request.method == "OPTIONS":
-            return jsonify({}), 200
-
+        # Get token from Authorization header
+        auth_header = request.headers.get('Authorization')
+        if auth_header and auth_header.startswith('Bearer '):
+            token = auth_header.split(" ")[1]
+            
         if not token:
-            # Try refresh token as fallback
-            token = request.cookies.get("refresh_token")
-            if not token:
-                return jsonify({"message": "Token is missing!"}), 401
-
+            return jsonify({'message': 'Token is missing!'}), 401
+            
         try:
-            # Verify token
+            from app.services import SECRET_KEY
             data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
-            current_user = User.query.get(data["user_id"])
+            current_user = User.query.get(data['user_id'])
             
             if not current_user:
-                return jsonify({"message": "User not found!"}), 401
+                return jsonify({'message': 'Invalid user!'}), 401
                 
-            # For logging/debugging
-            print(f"Authenticated request for user {current_user.id} to {request.path}")
-                
-        except ExpiredSignatureError:
-            return jsonify({"message": "Token has expired!"}), 401
-        except InvalidTokenError:
-            return jsonify({"message": "Token is invalid!"}), 401
         except Exception as e:
-            return jsonify({"message": str(e)}), 401
-
+            return jsonify({'message': f'Token is invalid! {str(e)}'}), 401
+            
         return f(current_user, *args, **kwargs)
     return decorated
 

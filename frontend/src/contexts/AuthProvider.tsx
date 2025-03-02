@@ -111,43 +111,34 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         newSocket.disconnect();
       };
     }
-  }, [isAuth]);
+  }, [isAuth, socket]);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Call login API
       const response = await loginUser({ email, password });
-      console.log('Login response:', response);
       
-      // Explicitly check for tokens in the response
-      const { user } = response;
-      
-      if (!user) {
-        throw new Error("User data missing from login response");
+      if (!response.user) {
+        throw new Error("Invalid login response");
       }
       
-      // Log cookies for debugging
-      console.log('Cookies after login:', document.cookie);
+      // Store token in localStorage
+      localStorage.setItem('access_token', response.access_token as string);
+      localStorage.setItem('refresh_token', (response.refresh_token as string) || '');
       
-      // Set user data and authentication state
-      setUser(user);
+      // Store user data
+      setUser(response.user);
       setIsAuth(true);
       
       // Set roles
-      const role = user.role || "USER";
+      const role = response.user.role || "USER";
       setUserRoles(Array.isArray(role) ? role : [role]);
       
-      // Initialize socket with fresh token
-      initializeSocket();
-      
       toast.success("Login successful!");
-      return user;
+      return response.user;
     } catch (error) {
       console.error("Login error:", error);
       toast.error(error instanceof Error ? error.message : "Login failed");
-      setUser(null);
-      setIsAuth(false);
       return null;
     } finally {
       setIsLoading(false);
@@ -158,53 +149,60 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       setIsLoading(true);
       
-      // Disconnect socket first
+      // Step 1: Disconnect WebSocket if connected
       if (socket) {
         socket.disconnect();
         setSocket(null);
       }
       
-      // Call logout API endpoint
-      await LogoutUser();
+      // Step 2: Get the token to use in the logout API call (if needed)
+      const token = localStorage.getItem('access_token');
       
-      // After successful logout API call, clear state
+      // Step 3: Clear local authentication state
       setUser(null);
       setIsAuth(false);
       setUserRoles([]);
       
-      // Manual cookie deletion as a fallback
-      document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      
-      // Clear any localStorage items
+      // Step 4: Remove tokens from localStorage
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
       localStorage.removeItem('user');
       
-      // Use window.location to ensure a complete page refresh
+      // Step 5: Call the server logout endpoint (if needed)
+      // The implementation depends on your backend:
+      // - Some backends track active tokens and need to invalidate them
+      // - Some backends are stateless and don't need a logout call
+      if (token) {
+        try {
+          // Call with the token in the Authorization header
+          await LogoutUser();
+          console.log("Server-side logout successful");
+        } catch (error) {
+          console.error("Server-side logout failed:", error);
+          // Continue with client-side logout anyway
+        }
+      }
+      
       toast.success("Logged out successfully");
       
-      // Wait a moment to ensure clean state before redirect
+      // Step 6: Navigate to login page with a slight delay to ensure state is cleared
       setTimeout(() => {
         window.location.href = '/login';
-      }, 500);
+      }, 100);
       
     } catch (error) {
       console.error("Logout error:", error);
       
-      // Force logout even if API call fails
+      // Fallback logout: force clear everything even if there was an error
       setUser(null);
       setIsAuth(false);
       setUserRoles([]);
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('user');
       
-      // Manual cookie deletion as a fallback
-      document.cookie = "access_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "refresh_token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      
-      toast.warning("Logged out with some errors - please refresh the page");
-      
-      // Redirect anyway
-      setTimeout(() => {
-        window.location.href = '/login';
-      }, 500);
+      toast.warning("Logged out with some errors");
+      window.location.href = '/login';
     } finally {
       setIsLoading(false);
     }

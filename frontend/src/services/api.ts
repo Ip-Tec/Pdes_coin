@@ -26,38 +26,51 @@ export const feURL = prod
 // Create API instance
 const API = axios.create({
   baseURL: url,
-  withCredentials: true, // Important for cookies
-  timeout: 15000,
-  headers: {
-    'Content-Type': 'application/json',
-  }
+  timeout: 15000
 });
 
-// Add request interceptor to handle token refresh
+// Add request interceptor to include token
 API.interceptors.request.use(
-  async (config) => {
-    // No need to manually set Authorization header when using HttpOnly cookies
+  config => {
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
     return config;
   },
-  (error) => {
+  error => {
     return Promise.reject(error);
   }
 );
 
 // Add response interceptor to handle token refresh
 API.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  response => response,
+  async error => {
     const originalRequest = error.config;
     
+    // If error is 401 and we haven't tried to refresh yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
       try {
-        // Retry the original request
+        // Refresh token
+        const refreshToken = localStorage.getItem('refresh_token');
+        const response = await axios.post(`${url}/auth/refresh-token`, {
+          refresh_token: refreshToken
+        });
+        
+        // Store new tokens
+        localStorage.setItem('access_token', response.data.access_token);
+        localStorage.setItem('refresh_token', response.data.refresh_token);
+        
+        // Update request header with new token
+        originalRequest.headers['Authorization'] = `Bearer ${response.data.access_token}`;
         return API(originalRequest);
       } catch (refreshError) {
         // If refresh fails, redirect to login
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }
@@ -137,11 +150,11 @@ export const loginUser = async (loginData: {
 }) => {
   try {
     const response = await API.post(apiUrl("/auth/login"), loginData);
-    const { user } = response.data;
+    const { user, access_token, refresh_token } = response.data;
 
     // console.log({ user, access_token, refresh_token });
 
-    return { user };
+    return { user, access_token, refresh_token };
   } catch (error) {
     console.log({ error });
 
@@ -672,19 +685,29 @@ export const getDepositAccountDetail = async () => {
   }
 };
 
+// Updated LogoutUser function for JWT-based auth
 export const LogoutUser = async () => {
   try {
-    const response = await API.post(apiUrl("/auth/logout"));
-    return response.data;
+    const token = localStorage.getItem('access_token');
+    
+    // Only attempt to call the logout endpoint if we have a token
+    if (token) {
+      const response = await API.post(apiUrl("/auth/logout"), {}, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      return response.data;
+    }
+    return { message: "Logged out locally" };
   } catch (error) {
     if (axios.isAxiosError(error)) {
-      // if (error.response && error.response.status === 401) {
-      //   window.location.href = "/login";
-      // }
       const errorData: ErrorResponse = error.response?.data;
+      console.error("Logout API error:", errorData);
       throw new Error(errorData?.message || "Logout failed");
     }
-    throw new Error("Network error. Please try again.");
+    throw new Error("Network error during logout");
   }
 };
 

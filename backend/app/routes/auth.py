@@ -22,10 +22,9 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 
 # Initialize Flask-Limiter
 limiter = Limiter(
-    key_func=get_remote_address,
-    app=current_app,
-    default_limits=["15 per hour"]
+    key_func=get_remote_address, app=current_app, default_limits=["15 per hour"]
 )
+
 
 # Add these token creation functions
 def create_access_token(identity):
@@ -34,11 +33,13 @@ def create_access_token(identity):
     """
     payload = {
         "user_id": identity,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=3),  # 3 hour expiry
+        "exp": datetime.datetime.utcnow()
+        + datetime.timedelta(hours=3),  # 3 hour expiry
         "iat": datetime.datetime.utcnow(),
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     return token
+
 
 def create_refresh_token(identity):
     """
@@ -46,19 +47,18 @@ def create_refresh_token(identity):
     """
     payload = {
         "user_id": identity,
-        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=30),  # 30 day expiry
+        "exp": datetime.datetime.utcnow()
+        + datetime.timedelta(days=30),  # 30 day expiry
         "iat": datetime.datetime.utcnow(),
     }
     token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
     return token
 
+
 # Login router with rate limiting
 @auth_bp.route("/login", methods=["POST"])
 @limiter.limit("5 per minute")
 def login():
-    # old code
-    # user = user_controller.UserController.login()
-    # return user
     data = request.get_json()
     email = data.get("email", "").lower()
     password = data.get("password", "")
@@ -72,69 +72,48 @@ def login():
     access_token = create_access_token(identity=user.id)
     refresh_token = create_refresh_token(identity=user.id)
     
-    # Prepare response with user data
-    response = jsonify({
+    # Return tokens in response body instead of cookies
+    return jsonify({
         "message": "Login successful",
         "user": user.serialize(),
         "access_token": access_token,
         "refresh_token": refresh_token
-    })
-    
-    # Set secure cookies with proper attributes
-    max_age = 60 * 60 * 24 * 30  # 30 days
-    
-    # Set the cookies with all necessary attributes
-    response.set_cookie(
-        'access_token', 
-        access_token, 
-        httponly=True, 
-        secure=False,  # Set to True in production with HTTPS
-        samesite='Lax',
-        max_age=max_age,
-        path='/'
-    )
-    
-    response.set_cookie(
-        'refresh_token', 
-        refresh_token, 
-        httponly=True, 
-        secure=False,  # Set to True in production with HTTPS
-        samesite='Lax', 
-        max_age=max_age,
-        path='/'
-    )
-    
-    print(f"Login successful for {email}, setting cookies: access_token, refresh_token")
-    return response, 200
+    }), 200
+
 
 # Register router with rate limiting
 @auth_bp.route("/register", methods=["POST"])
-@limiter.limit("3 per minute") 
+@limiter.limit("3 per minute")
 def register():
     user = user_controller.UserController.register()
     return user
+
 
 # Logout router
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
     response = make_response(jsonify({"message": "Successfully logged out"}))
-    
+
     # Clear all auth cookies
     response.delete_cookie("access_token", path="/", domain=None)
     response.delete_cookie("refresh_token", path="/", domain=None)
-    
+
     # For added security, set cookies with empty values and immediate expiration
-    response.set_cookie("access_token", "", expires=0, httponly=True, secure=True, samesite="Lax")
-    response.set_cookie("refresh_token", "", expires=0, httponly=True, secure=True, samesite="Lax")
-    
+    response.set_cookie(
+        "access_token", "", expires=0, httponly=True, secure=True, samesite="Lax"
+    )
+    response.set_cookie(
+        "refresh_token", "", expires=0, httponly=True, secure=True, samesite="Lax"
+    )
+
     print("Logout response prepared with cookies cleared")
-    
+
     return response
 
 
 # Forgot Password router
 @auth_bp.route("/forgot-password", methods=["POST"])
-@limiter.limit("3 per hour") 
+@limiter.limit("3 per hour")
 def forgot_password():
     data = request.json
     email = data.get("email")
@@ -243,7 +222,15 @@ def refresh_token():
 
     # Set the new access token in an HttpOnly cookie
     response = make_response(
-        jsonify({"message": "Token refreshed successfully", "access_token": new_access_token}), 200
+        jsonify(
+            {
+                "message": "Token refreshed successfully",
+                "access_token": new_access_token,
+            }
+        ),
+        200,
     )
-    response.set_cookie("access_token", new_access_token, httponly=True, secure=True, samesite="Lax")
+    response.set_cookie(
+        "access_token", new_access_token, httponly=True, secure=True, samesite="Lax"
+    )
     return response
