@@ -40,6 +40,7 @@ API.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     
+    // Check if this is an authentication error AND not already retried
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       
@@ -49,8 +50,8 @@ API.interceptors.response.use(
         // Retry the original request
         return API(originalRequest);
       } catch (refreshError) {
-        // If refresh fails, redirect to login
-        window.location.href = '/login';
+        console.error("Token refresh failed:", refreshError);
+        // Don't redirect here - we'll handle that in the components
         return Promise.reject(refreshError);
       }
     }

@@ -1,38 +1,42 @@
-import React from "react";
-import { Navigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import Loading from "../components/Loading";
+import React, { useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProtectedRouteProps {
-  children: React.ReactElement;
-  requiredRoles?: string[]; // Defines the required roles
+  children: React.ReactNode;
+  requiredRoles: string[];
 }
 
-const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
-  children,
-  requiredRoles = [],
-}) => {
-  const { user, loading } = useAuth(); // Assume we now provide a loading state
+const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
+  const { isAuth, loading, roles, getUser } = useAuth();
+  const location = useLocation();
+
+  useEffect(() => {
+    // Try to get user data if we're not authenticated but not in a loading state
+    if (!isAuth && !loading) {
+      getUser();
+    }
+  }, [isAuth, loading, getUser]);
 
   if (loading) {
-    return <Loading isLoading={loading} />;
+    // Show loading state
+    return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
-  if (!user) {
-    // If no user is logged in, redirect to the login page
-    return <Navigate to="/login" />;
+  // If not authenticated, redirect to login
+  if (!isAuth) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (
-    requiredRoles.length > 0 &&
-    !requiredRoles.some(
-      (role) => role.toLowerCase() === user.role.toLowerCase()
-    )
-  ) {
-    return <Navigate to="/" />;
+  // Check if user has required role
+  const hasPermission = requiredRoles.some(role => roles.includes(role));
+  
+  if (!hasPermission) {
+    // User is authenticated but doesn't have the required role
+    return <Navigate to="/dashboard" replace />;
   }
 
-  // If authenticated and authorized, render the children
+  // User is authenticated and has required role
   return <>{children}</>;
 };
 

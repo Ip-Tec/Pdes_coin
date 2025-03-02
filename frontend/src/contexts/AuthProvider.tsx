@@ -3,7 +3,7 @@ import { AuthContext } from "./AuthContext";
 import { io, Socket } from "socket.io-client";
 import { toast } from "react-toastify";
 import {
-  getTransactionHistory,
+  
   loginUser,
   getUser as getUserAPI,
   websocketUrl,
@@ -113,29 +113,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [isAuth]);
 
   const login = async (email: string, password: string) => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      // Call loginUser which now sets HttpOnly cookies on the server response
-      const { user: userData } = await loginUser({ email, password }, );
-      setUser(userData);
-      setUserRoles(userData.role);
-      setIsAuth(true);
-      setIsLoading(false);
-      toast.success("Login successful!");
-
-      const transactions = await getTransactionHistory();
-      setTransactions(transactions);
-
-      const newSocket = createSocket();
-      setSocket(newSocket);
-      newSocket.emit("get_current_price");
-      newSocket.emit("get_trade_history");
-      newSocket.emit("get_transaction_history");
-      return userData;
+      // Call login API
+      const response = await loginUser({ email, password });
+      
+      if (response && response.user) {
+        // Set user data and authentication state
+        setUser(response.user);
+        setIsAuth(true);
+        
+        // Set role from user data
+        const role = response.user.role || "USER";
+        setUserRoles(Array.isArray(role) ? role : [role]);
+        
+        // Initialize the socket after successful login
+         initializeSocket();
+        
+        toast.success("Login successful!");
+        return response.user;
+      } else {
+        throw new Error("Login response missing user data");
+      }
     } catch (error) {
+      console.error("Login error:", error);
+      toast.error("Login failed. Please check your credentials.");
+      setUser(null);
+      setIsAuth(false);
+      return null;
+    } finally {
       setIsLoading(false);
-      toast.error("Login failed");
-      console.error("Login failed", error);
     }
   };
 
@@ -218,10 +225,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setIsLoading(true);
     try {
       const userData = await getUserAPI();
-      setUser(userData);
-      return userData;
+      if (userData) {
+        setUser(userData);
+        setIsAuth(true);
+        // Set roles from user data
+        const role = userData.role || "USER";
+        setUserRoles(Array.isArray(role) ? role : [role]);
+        return userData;
+      } else {
+        setUser(null);
+        setIsAuth(false);
+        return null;
+      }
     } catch (error) {
       console.error("Error fetching user", error);
+      setUser(null);
+      setIsAuth(false);
+      return null;
     } finally {
       setIsLoading(false);
     }
