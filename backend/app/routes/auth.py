@@ -43,23 +43,18 @@ def register():
 
 # Logout router
 @auth_bp.route("/logout", methods=["POST"])
-@token_required
-def logout(current_user, *args, **kwargs):
-    # Get the user from the database
-    user_id = current_user.id
-    user = User.query.filter_by(id=user_id).first()
+def logout():
+    response = make_response(jsonify({"message": "Successfully logged out"}))
     
-    if not user:
-        return jsonify({"error": "User not found"}), 404
+    # Clear all auth cookies
+    response.delete_cookie("access_token", path="/", domain=None)
+    response.delete_cookie("refresh_token", path="/", domain=None)
     
-    # Invalidate the refresh token in the database
-    user.refresh_token = None
-    db.session.commit()
-    
-    # Create a response and clear the cookies
-    response = make_response(jsonify({"message": "Logged out successfully!"}), 200)
+    # For added security, set cookies with empty values and immediate expiration
     response.set_cookie("access_token", "", expires=0, httponly=True, secure=True, samesite="Lax")
     response.set_cookie("refresh_token", "", expires=0, httponly=True, secure=True, samesite="Lax")
+    
+    print("Logout response prepared with cookies cleared")
     
     return response
 

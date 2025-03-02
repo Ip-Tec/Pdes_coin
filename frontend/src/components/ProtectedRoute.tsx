@@ -12,9 +12,13 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
   const location = useLocation();
 
   useEffect(() => {
-    // Try to get user data if we're not authenticated but not in a loading state
+    // Only try to get user data if not already loading
     if (!isAuth && !loading) {
-      getUser();
+      // Use a non-state variable to prevent multiple calls
+      const fetchUser = async () => {
+        await getUser();
+      };
+      fetchUser();
     }
   }, [isAuth, loading, getUser]);
 
@@ -23,17 +27,22 @@ const ProtectedRoute = ({ children, requiredRoles }: ProtectedRouteProps) => {
     return <div className="flex justify-center items-center h-screen">Loading...</div>;
   }
 
-  // If not authenticated, redirect to login
+  // If not authenticated and not loading, redirect to login
   if (!isAuth) {
+    console.log("Not authenticated, redirecting to login");
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Check if user has required role
-  const hasPermission = requiredRoles.some(role => roles.includes(role));
-  
-  if (!hasPermission) {
-    // User is authenticated but doesn't have the required role
-    return <Navigate to="/dashboard" replace />;
+  // Check if user has required role - if roles array is available
+  if (roles && roles.length > 0) {
+    const hasPermission = requiredRoles.some(role => 
+      roles.includes(role.toUpperCase()) || roles.includes(role.toLowerCase())
+    );
+    
+    if (!hasPermission) {
+      console.log("Insufficient permissions, redirecting to dashboard");
+      return <Navigate to="/dashboard" replace />;
+    }
   }
 
   // User is authenticated and has required role

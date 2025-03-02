@@ -8,6 +8,7 @@ import {
   getUser as getUserAPI,
   websocketUrl,
   refreshTokenAPI,
+  LogoutUser,
 } from "../services/api";
 import {
   TradeHistory,
@@ -149,19 +150,32 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async () => {
     try {
       setIsLoading(true);
-      // Perform any backend logout actions if needed.
+      
+      // First update state (to avoid race conditions)
       setUser(null);
       setIsAuth(false);
+      setUserRoles([]);
+      
+      // Disconnect WebSocket
       if (socket) {
         socket.disconnect();
         setSocket(null);
       }
-      setIsLoading(false);
-      toast.success("Logged out");
+      
+      // Then call the logout API endpoint
+      await LogoutUser();
+      
+      // Use a short timeout to ensure state is fully updated before navigation
+      setTimeout(() => {
+        // Navigate to login page after all state is cleared
+        window.location.href = '/login';
+      }, 100);
+      
     } catch (error) {
+      console.error("Logout error:", error);
+      toast.error("Failed to logout. Please try again.");
+    } finally {
       setIsLoading(false);
-      console.error("Logout failed:", error);
-      toast.error("Logout failed");
     }
   };
 

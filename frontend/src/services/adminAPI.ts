@@ -7,7 +7,6 @@ import {
   confirmUserDepositProps,
 } from "../utils/type";
 import { toast } from "react-toastify";
-import { refreshTokenAPI } from "./api";
 
 // Create API instance
 const prod = import.meta.env.PROD || true;
@@ -26,36 +25,18 @@ export const feURL = prod
 // Create API instance
 const API = axios.create({
   baseURL: url,
+  withCredentials: true, // This is crucial for cookies
+  timeout: 15000,
   headers: {
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  },
-  withCredentials: true,
-  timeout: 15000,  // Add timeout to prevent hanging requests
+    'Content-Type': 'application/json',
+  }
 });
 
-// Add interceptors for handling auth errors
+// Add a request interceptor that does NOT trigger redirects
 API.interceptors.response.use(
   (response) => response,
   async (error) => {
-    const originalRequest = error.config;
-    
-    // Check if this is an authentication error AND not already retried
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true;
-      
-      try {
-        // Try to refresh the token
-        await refreshTokenAPI();
-        // Retry the original request
-        return API(originalRequest);
-      } catch (refreshError) {
-        console.error("Token refresh failed:", refreshError);
-        // Don't redirect here - we'll handle that in the components
-        return Promise.reject(refreshError);
-      }
-    }
-    
+    // Don't redirect here - let the components handle it
     return Promise.reject(error);
   }
 );
