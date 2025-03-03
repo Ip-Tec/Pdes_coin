@@ -23,30 +23,34 @@ export const feURL = prod
   ? "https://pedex.vercel.app/"
   : import.meta.env.VITE_EF_URL_LOCAL;
 // Create API instance
-const API = axios.create({
+const AdminAPI = axios.create({
   baseURL: url,
-  withCredentials: true, // This is crucial for cookies
-  timeout: 15000,
+  timeout: 30000,
+  withCredentials: true,  // Enable credentials for CORS
   headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  }
+    "Content-Type": "application/json",
+  },
 });
 
-// Add a request interceptor to debug auth headers
-API.interceptors.request.use(
-  config => {
-    // Log the cookies being sent (for debugging)
-    console.log('Request cookies:', document.cookie);
+// Modify the request interceptor to handle tokens correctly
+AdminAPI.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("access_token");
+    
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    } else {
+      throw new Error("Token is missing!");
+    }
     return config;
   },
-  error => {
+  (error) => {
     return Promise.reject(error);
   }
 );
 
 // Add a request interceptor that does NOT trigger redirects
-API.interceptors.response.use(
+AdminAPI.interceptors.response.use(
   (response) => response,
   async (error) => {
     // Don't redirect here - let the components handle it
@@ -56,7 +60,7 @@ API.interceptors.response.use(
 
 // Helper function to generate endpoint URLs
 export const apiUrl = (endpoint: string) =>
-  `${API.defaults.baseURL}${endpoint}`;
+  `${AdminAPI.defaults.baseURL}${endpoint}`;
 
 // Get Cookies from the browser
 export const getCookies = () => {
@@ -73,7 +77,7 @@ export const getCookies = () => {
 export const getDashboardTotal = async () => {
   try {
     console.log('Attempting to fetch dashboard total');
-    const response = await API.post(apiUrl("/admin/get-dashboard-total"));
+    const response = await AdminAPI.post(apiUrl("/admin/get-dashboard-total"));
     console.log('Dashboard total response:', response.data);
     return response.data;
   } catch (error) {
@@ -108,7 +112,7 @@ export const getDashboardTotal = async () => {
 // Transfer Funds
 export const getTransactionTrends = async () => {
   try {
-    const response = await API.get(apiUrl("/admin/get-transaction-trends"));
+    const response = await AdminAPI.get(apiUrl("/admin/get-transaction-trends"));
     // console.log({ response });
     return response.data;
   } catch (error) {
@@ -123,7 +127,7 @@ export const getTransactionTrends = async () => {
 // Get Top Referrers
 export const getTopReferrers = async () => {
   try {
-    const response = await API.get(apiUrl("/admin/get-top-referrers"));
+    const response = await AdminAPI.get(apiUrl("/admin/get-top-referrers"));
     // console.log({ response });
     return response.data;
   } catch (error) {
@@ -138,7 +142,7 @@ export const getTopReferrers = async () => {
 // Get data overview
 export const getDataOverview = async () => {
   try {
-    const response = await API.get(apiUrl("/admin/get-data-overview"));
+    const response = await AdminAPI.get(apiUrl("/admin/get-data-overview"));
     // console.log({ response });
     return response.data;
   } catch (error) {
@@ -153,7 +157,7 @@ export const getDataOverview = async () => {
 // Get Top Users with the highest Balance
 export const getTopUsersByBalance = async () => {
   try {
-    const response = await API.get(apiUrl("/admin/get-top-users-by-balance"));
+    const response = await AdminAPI.get(apiUrl("/admin/get-top-users-by-balance"));
     // console.log({ response });
     return response.data;
   } catch (error) {
@@ -180,7 +184,7 @@ export const searchUser = async (
   };
 
   try {
-    const response = await API.get(
+    const response = await AdminAPI.get(
       apiUrl(`/admin/${url[path]}?query=${query}`)
     );
     // console.log(response);
@@ -204,7 +208,7 @@ export const addAccount = async (data: {
   max_deposit_amount: number;
 }) => {
   try {
-    const response = await API.post(apiUrl("/admin/add-account"), data);
+    const response = await AdminAPI.post(apiUrl("/admin/add-account"), data);
     // console.log({ response });
     toast.success(response.data.message);
     return response.data;
@@ -222,7 +226,7 @@ export const addAccount = async (data: {
 // Add utility data
 export const addUtility = async (data: UtilityProps) => {
   try {
-    const response = await API.post(apiUrl("/admin/utility"), data);
+    const response = await AdminAPI.post(apiUrl("/admin/utility"), data);
     // console.log({ response });
     toast.success(response.data.message);
     return response.data;
@@ -242,7 +246,7 @@ export const confirmUserDeposit = async (data: confirmUserDepositProps) => {
   console.log({ data });
 
   try {
-    const response = await API.post(apiUrl("/admin/add-money"), data);
+    const response = await AdminAPI.post(apiUrl("/admin/add-money"), data);
     // console.log({ response });
     toast.success(response.data.message);
     return response.data;
@@ -265,7 +269,7 @@ export const confirmUserDeposit = async (data: confirmUserDepositProps) => {
 // get_transaction_proportions
 export const getProportionChart = async (type: string) => {
   try {
-    const response = await API.get(apiUrl(`/admin/proportions?type=${type}`));
+    const response = await AdminAPI.get(apiUrl(`/admin/proportions?type=${type}`));
     // console.log({ response });
     return response.data;
   } catch (error) {
@@ -282,7 +286,7 @@ export const getProportionChart = async (type: string) => {
 // distribution-over-time
 export const distributionOverTime = async () => {
   try {
-    const response = await API.get(apiUrl("/admin/distribution-over-time"));
+    const response = await AdminAPI.get(apiUrl("/admin/distribution-over-time"));
     // console.log({ response });
     return response.data;
   } catch (error) {
@@ -299,7 +303,7 @@ export const distributionOverTime = async () => {
 // configure-reward-setting
 export const configureRewardSetting = async (data: RewardSettingFormData) => {
   try {
-    const response = await API.post(
+    const response = await AdminAPI.post(
       apiUrl("/admin/configure-reward-setting"),
       data
     );
@@ -320,7 +324,7 @@ export const configureRewardSetting = async (data: RewardSettingFormData) => {
 // download Users
 export const handleDownloadApi = async (url: string) => {
   try {
-    const response = await API.get(`/admin${url}`, {
+    const response = await AdminAPI.get(`/admin${url}`, {
       responseType: "blob",
     });
 
@@ -358,7 +362,7 @@ export const handleDownloadApi = async (url: string) => {
 
 export const updateUser = async (data: User) => {
   try {
-    const response = await API.put(apiUrl("/admin/update-user"), data);
+    const response = await AdminAPI.put(apiUrl("/admin/update-user"), data);
     // console.log({ response });
     toast.success(response.data.message);
     return response.data;
@@ -376,7 +380,7 @@ export const updateUser = async (data: User) => {
 // Admin change password
 export const changePassword = async (data: User, password: string) => {
   try {
-    const response = await API.put(apiUrl("/admin/change-password"), {
+    const response = await AdminAPI.put(apiUrl("/admin/change-password"), {
       ...data,
       password,
     });
@@ -397,7 +401,7 @@ export const changePassword = async (data: User, password: string) => {
 // 1️⃣ Get user referrer and reward
 export const getReferrerAndReward = async (userId: number) => {
   try {
-    const response = await API.get(apiUrl(`/admin/referrer/${userId}`));
+    const response = await AdminAPI.get(apiUrl(`/admin/referrer/${userId}`));
     toast.success("Referrer details fetched successfully");
     console.log({ response });
     return response.data;
@@ -415,7 +419,7 @@ export const getReferrerAndReward = async (userId: number) => {
 // 2️⃣ Get all referrals of a specific user
 export const getReferrals = async (userId: number = 6) => {
   try {
-    const response = await API.get<{ referrals: User[] }>(
+    const response = await AdminAPI.get<{ referrals: User[] }>(
       apiUrl(`/admin/referrals/${userId}`)
     );
     toast.success("Referrals fetched successfully");
@@ -435,7 +439,7 @@ export const getReferrals = async (userId: number = 6) => {
 // 3️⃣ Get top referrers (default limit: 10)
 export const getTopReferrersAdminPage = async (limit: number = 10) => {
   try {
-    const response = await API.get<{ top_referrers: User[] }>(
+    const response = await AdminAPI.get<{ top_referrers: User[] }>(
       apiUrl(`/admin/top-referrers?limit=${limit}`)
     );
     toast.success("Top referrers fetched successfully");
@@ -458,7 +462,7 @@ export const getReferrersInRange = async (
   endDate: string
 ) => {
   try {
-    const response = await API.get<{ referrers: User[] }>(
+    const response = await AdminAPI.get<{ referrers: User[] }>(
       apiUrl(
         `/admin/referrers-in-range?start_date=${startDate}&end_date=${endDate}`
       )

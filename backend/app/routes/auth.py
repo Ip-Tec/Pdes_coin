@@ -14,6 +14,7 @@ from app.services import (
     generate_refresh_token,
     token_required,
 )
+from app.config import Config
 
 load_dotenv()
 
@@ -27,31 +28,29 @@ limiter = Limiter(
 
 
 # Add these token creation functions
-def create_access_token(identity):
+def create_access_token(user_id):
     """
     Create a new access token for the given user identity
     """
     payload = {
-        "user_id": identity,
-        "exp": datetime.datetime.utcnow()
-        + datetime.timedelta(hours=3),  # 3 hour expiry
+        "user_id": user_id,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(hours=1),  # 1 hour expiry
         "iat": datetime.datetime.utcnow(),
     }
-    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+    token = jwt.encode(payload, Config.SECRET_KEY, algorithm="HS256")
     return token
 
 
-def create_refresh_token(identity):
+def create_refresh_token(user_id):
     """
     Create a new refresh token for the given user identity
     """
     payload = {
-        "user_id": identity,
-        "exp": datetime.datetime.utcnow()
-        + datetime.timedelta(days=30),  # 30 day expiry
+        "user_id": user_id,
+        "exp": datetime.datetime.utcnow() + datetime.timedelta(days=30),  # 30 days expiry
         "iat": datetime.datetime.utcnow(),
     }
-    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+    token = jwt.encode(payload, Config.SECRET_KEY, algorithm="HS256")
     return token
 
 
@@ -60,25 +59,53 @@ def create_refresh_token(identity):
 @limiter.limit("5 per minute")
 def login():
     data = request.get_json()
-    email = data.get("email", "").lower()
+    email = data.get("email", "")
     password = data.get("password", "")
     
-    user = User.query.filter_by(email=email).first()
+    if not email or not password:
+        return jsonify({'message': 'Email and password are required'}), 400
+    
+    # Find the user
+    user = User.query.filter_by(email=email.lower()).first()
+    
+    # Debug info
+    print(f"Login attempt for {email}, user found: {user is not None}")
     
     if not user or not user.check_password(password):
-        return jsonify({"error": "Invalid email or password"}), 401
+        return jsonify({'message': 'Invalid email or password'}), 401
     
     # Generate tokens
-    access_token = create_access_token(identity=user.id)
-    refresh_token = create_refresh_token(identity=user.id)
+    access_token = create_access_token(user.id)
+    refresh_token = create_refresh_token(user.id)
     
-    # Return tokens in response body
-    return jsonify({
+    # Set tokens in cookies with proper settings for CORS
+    response = jsonify({
         "message": "Login successful",
-        "user": user.serialize(),
+        "user": user.to_dict(),
         "access_token": access_token,
         "refresh_token": refresh_token
-    }), 200
+    })
+    
+    # Set cookies with secure settings
+    response.set_cookie(
+        'access_token', 
+        access_token,
+        httponly=True,
+        secure=True,
+        samesite='None',
+        max_age=3600  # 1 hour
+    )
+    
+    response.set_cookie(
+        'refresh_token',
+        refresh_token,
+        httponly=True,
+        secure=True,
+        samesite='None',
+        max_age=604800  # 7 days
+    )
+    
+    return response, 200
 
 
 # Register router with rate limiting
@@ -92,23 +119,9 @@ def register():
 # Logout router
 @auth_bp.route("/logout", methods=["POST"])
 def logout():
-    response = make_response(jsonify({"message": "Successfully logged out"}))
-
-    # Clear all auth cookies
-    response.delete_cookie("access_token", path="/", domain=None)
-    response.delete_cookie("refresh_token", path="/", domain=None)
-
-    # For added security, set cookies with empty values and immediate expiration
-    response.set_cookie(
-        "access_token", "", expires=0, httponly=True, secure=True, samesite="Lax"
-    )
-    response.set_cookie(
-        "refresh_token", "", expires=0, httponly=True, secure=True, samesite="Lax"
-    )
-
-    print("Logout response prepared with cookies cleared")
-
-    return response
+    # JWT is stateless, so we don't need to do anything server-side
+    # Client will remove the tokens
+    return jsonify({'message': 'Logged out successfully'}), 200
 
 
 # Forgot Password router
@@ -159,7 +172,6 @@ def reset_password():
 @auth_bp.route("/change-password", methods=["POST"])
 @token_required
 @limiter.limit("10 per hour")
-@token_required
 def change_password(current_user, *args, **kwargs):
     data = request.json
     current_password = data.get("oldPassword")
@@ -234,3 +246,5 @@ def refresh_token():
         "access_token", new_access_token, httponly=True, secure=True, samesite="Lax"
     )
     return response
+
+

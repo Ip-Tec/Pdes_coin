@@ -9,12 +9,11 @@ import {
 } from "../utils/type";
 import { toast } from "react-toastify";
 
-// Create API instance
+// Determine environment and URLs
 const prod = import.meta.env.PROD || true;
 export const url = prod
   ? "https://pedex.duckdns.org/api"
-  : // ? import.meta.env.REACT_APP_API_URL
-    import.meta.env.VITE_API_URL;
+  : import.meta.env.VITE_API_URL;
 
 export const websocketUrl = prod
   ? "wss://pedex.duckdns.org/"
@@ -23,13 +22,19 @@ export const websocketUrl = prod
 export const feURL = prod
   ? "https://pedex.vercel.app/"
   : import.meta.env.VITE_EF_URL_LOCAL;
+
+// Debug messages
+console.log("API environment:", prod ? "production" : "development");
+console.log("API base URL:", url);
+console.log("WebSocket URL:", websocketUrl);
+
 // Create API instance
 const API = axios.create({
   baseURL: url,
-  timeout: 30000,
+  timeout: 30000, // Increase timeout to 30 seconds
+  withCredentials: true,  // This is crucial for CORS with credentials
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
   }
 });
 
@@ -38,17 +43,28 @@ API.interceptors.request.use(
   config => {
     // Add the token to every request
     const token = localStorage.getItem('access_token');
+    
+    // For debugging
+    console.log(`Request to ${config.url} - Auth token exists: ${!!token}`);
+    
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
     }
     return config;
   },
-  error => Promise.reject(error)
+  error => {
+    console.error('Request interceptor error:', error);
+    return Promise.reject(error);
+  }
 );
 
 // Add response interceptor with better error handling
 API.interceptors.response.use(
-  response => response,
+  response => {
+    // For debugging
+    console.log(`Response from ${response.config.url}: Status ${response.status}`);
+    return response;
+  },
   error => {
     // Don't reject timeout errors immediately - log them for debugging
     if (axios.isAxiosError(error) && error.code === 'ECONNABORTED') {
@@ -138,34 +154,43 @@ export const registerUser = async (userData: {
   }
 };
 
-// Login Function
+// Login Function - Improved
 export const loginUser = async (loginData: {
   email: string;
   password: string;
 }) => {
   try {
+    console.log('Attempting login for:', loginData.email);
     const response = await API.post(apiUrl("/auth/login"), loginData);
+    
+    console.log('Login response structure:', Object.keys(response.data));
+    
+    // Ensure the response contains what we need
+    if (!response.data.access_token || !response.data.user) {
+      console.error('Invalid login response structure:', response.data);
+      throw new Error('Server returned an invalid response');
+    }
+    
+    // Store tokens in localStorage right away
+    localStorage.setItem('access_token', response.data.access_token);
+    if (response.data.refresh_token) {
+      localStorage.setItem('refresh_token', response.data.refresh_token);
+    }
+    
     const { user, access_token, refresh_token } = response.data;
-
-    // console.log({ user, access_token, refresh_token });
-
     return { user, access_token, refresh_token };
   } catch (error) {
-    console.log({ error });
-
-    if (axios.isAxiosError(error)) {
-      if (error.response && error.response.status === 401) {
-        window.location.href = "/login";
-      }
-      const errorData: ErrorResponse = error.response?.data;
-      throw new Error(errorData?.message || "Login failed");
+    console.error('Login error:', error);
+    if (axios.isAxiosError(error) && error.response) {
+      // Use the server's error message if available
+      throw new Error(error.response.data?.message || 'Login failed');
     }
-    throw new Error("Network error. Please try again.");
+    throw new Error('Network error during login');
   }
 };
 
-// Get user info
-export const getUser = async (): Promise<User | null> => {
+// Get user info - Improved
+export const getUser = async () => {
   try {
     const token = localStorage.getItem('access_token');
     if (!token) {
@@ -688,6 +713,11 @@ export const LogoutUser = async () => {
   try {
     const token = localStorage.getItem('access_token');
     
+    // Always clear the local storage regardless of API success
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    
     // Only attempt to call the logout endpoint if we have a token
     if (token) {
       const response = await API.post(apiUrl("/auth/logout"), {}, {
@@ -703,9 +733,9 @@ export const LogoutUser = async () => {
     if (axios.isAxiosError(error)) {
       const errorData: ErrorResponse = error.response?.data;
       console.error("Logout API error:", errorData);
-      throw new Error(errorData?.message || "Logout failed");
     }
-    throw new Error("Network error during logout");
+    // Still return success since we've cleared local storage
+    return { message: "Logged out locally, server logout failed" };
   }
 };
 

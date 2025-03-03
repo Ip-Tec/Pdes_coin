@@ -74,7 +74,6 @@ def create_app():
                     "https://pedex.duckdns.org",
                     "https://pedex.vercel.app",
                     "https://pedex.onrender.com/",
-                    "https://pedex.onrender.com/",
                     "https://pdes-coin.vercel.app",
                 ],
                 "allow_headers": ["Content-Type", "Authorization"],

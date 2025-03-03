@@ -9,38 +9,46 @@ from flask import current_app, request, jsonify
 from jwt import ExpiredSignatureError, InvalidTokenError
 from app.utils import save_refresh_key_to_db, get_refresh_key_from_db
 
+from app.config import Config
 
 load_dotenv()
 SECRET_KEY = os.getenv("SECRET_KEY")
 REFRESH_SECRET_KEY = os.getenv("SECRET_KEY")
 
 
+# Add this decorator to protect routes
 def token_required(f):
+    from functools import wraps
+    
     @wraps(f)
     def decorated(*args, **kwargs):
         token = None
         
-        # Get token from Authorization header
+        # Check Authorization header
         auth_header = request.headers.get('Authorization')
         if auth_header and auth_header.startswith('Bearer '):
-            token = auth_header.split(" ")[1]
-            
+            token = auth_header.split(' ')[1]
+        
         if not token:
             return jsonify({'message': 'Token is missing!'}), 401
-            
+        
         try:
-            from app.services import SECRET_KEY
-            data = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            # Decode token
+            data = jwt.decode(token, Config.SECRET_KEY, algorithms=['HS256'])
             current_user = User.query.get(data['user_id'])
             
             if not current_user:
-                return jsonify({'message': 'Invalid user!'}), 401
+                return jsonify({'message': 'User not found!'}), 401
                 
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired!'}), 401
         except Exception as e:
             return jsonify({'message': f'Token is invalid! {str(e)}'}), 401
             
         return f(current_user, *args, **kwargs)
+        
     return decorated
+
 
 def generate_token(user_id):
     payload = {
