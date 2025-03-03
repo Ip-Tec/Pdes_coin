@@ -13,7 +13,7 @@ from app.access_level import AccessLevel
 from sqlalchemy import func, desc, case
 from app.controller import user_controller
 from werkzeug.security import generate_password_hash
-from flask import Blueprint, request, jsonify, Response, make_response
+from flask import Blueprint, request, jsonify, Response, make_response, current_app
 from app.models import (
     Deposit,
     DepositAccount,
@@ -38,43 +38,50 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # Get dashboard totals
 @admin_bp.route("/get-dashboard-total", methods=["POST"])
 @token_required
-@AccessLevel.role_required(["ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"])
-def get_totals(current_user, *args, **kwargs):
-
-    # Total Transactions (all transaction types)
-    total_transactions = db.session.query(func.count(Transaction.id)).scalar()
-
-    # Total Deposits (only 'deposit' transaction type)
-    total_deposits = (
-        db.session.query(func.sum(Transaction.amount))
-        .filter(Transaction.transaction_type == "deposit")
-        .scalar()
-        or 0.0
-    )
-
-    # Total Withdrawals (only 'withdrawal' transaction type)
-    total_withdrawals = (
-        db.session.query(func.sum(Transaction.amount))
-        .filter(Transaction.transaction_type == "withdrawal")
-        .scalar()
-        or 00.0
-    )
-
-    # Total Rewards (sum of rewards from all users' balance)
-    total_rewards = db.session.query(func.sum(Balance.rewards)).scalar() or 00.0
-
-    # Total Users
-    total_users = db.session.query(func.count(User.id)).scalar() or 00.0
-
-    return jsonify(
-        {
-            "total_users": total_users,
-            "total_rewards": total_rewards,
-            "total_deposits": total_deposits,
-            "total_withdrawals": total_withdrawals,
-            "total_transactions": total_transactions,
-        }
-    )
+def get_dashboard_total(current_user):
+    # Verify admin role
+    if not current_user.is_admin:
+        return jsonify({"message": "Unauthorized access"}), 403
+        
+    # Calculate the different totals
+    total_users = User.query.count()
+    total_deposits = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.transaction_type == "deposit", 
+        Transaction.status == "completed"
+    ).scalar() or 0
+    
+    # Fix for Total Withdrawals: Ensure we're correctly filtering withdrawal transactions
+    total_withdrawals = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.transaction_type == "withdrawal",
+        Transaction.status == "completed"
+    ).scalar() or 0
+    
+    # Fix for Total Rewards: Query the rewards from transactions specifically marked as rewards
+    total_rewards = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.transaction_type == "reward",
+        Transaction.status == "completed"
+    ).scalar() or 0
+    
+    # Also check user balances for rewards that might be stored there
+    total_rewards_from_balances = db.session.query(func.sum(Balance.rewards_earned)).scalar() or 0
+    total_rewards += total_rewards_from_balances
+    
+    # Check if we have a RewardConfig and total rewards processed
+    reward_config = RewardConfig.query.first()
+    reward_percentage = reward_config.percentage_weekly if reward_config else 0
+    
+    # Log the actual values to help debug
+    current_app.logger.info(f"Total deposits: {total_deposits}")
+    current_app.logger.info(f"Total withdrawals: {total_withdrawals}")
+    current_app.logger.info(f"Total rewards: {total_rewards}")
+    
+    return jsonify({
+        "total_users": total_users,
+        "total_deposits": float(total_deposits),
+        "total_withdrawals": float(total_withdrawals),
+        "total_rewards": float(total_rewards),
+        "reward_percentage": float(reward_percentage)
+    }), 200
 
 
 # Get the transaction trends

@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.types import Enum as SqEnum
 from app.enumValue import TicketPriority, TicketStatus
 from werkzeug.security import generate_password_hash, check_password_hash
+from sqlalchemy import func
 
 
 # User model
@@ -967,3 +968,69 @@ def calculate_total_balance(user_id):
         total_balance += crypto.amount
 
     return total_balance
+
+
+# Add a function to calculate total rewards in the system
+def calculate_total_rewards():
+    # Method 1: Sum rewards from completed reward transactions
+    reward_transactions = db.session.query(func.sum(Transaction.amount)).filter(
+        Transaction.transaction_type == "reward",
+        Transaction.status == "completed"
+    ).scalar() or 0
+    
+    # Method 2: Sum rewards tracked in user balances
+    rewards_from_balances = db.session.query(func.sum(Balance.rewards_earned)).scalar() or 0
+    
+    # Combine both sources
+    total_rewards = float(reward_transactions) + float(rewards_from_balances)
+    
+    return total_rewards
+
+
+# In the function that processes rewards, ensure we're properly recording them
+
+def process_weekly_rewards():
+    reward_config = RewardConfig.query.first()
+    if not reward_config:
+        return {"message": "Reward configuration not found"}
+    
+    # Get percentage from config
+    percentage = reward_config.percentage_weekly
+    
+    # Get all users
+    users = User.query.all()
+    total_rewards_given = 0
+    
+    for user in users:
+        # Calculate user's crypto balance
+        crypto_balance = calculate_total_balance(user.id)
+        
+        # Calculate reward amount
+        reward_amount = crypto_balance * (percentage / 100)
+        
+        if reward_amount > 0:
+            # Create a reward transaction
+            reward_transaction = Transaction(
+                user_id=user.id,
+                amount=reward_amount,
+                transaction_type="reward",
+                status="completed",
+                description=f"Weekly reward of {percentage}% on crypto balance"
+            )
+            
+            # Update user's balance
+            user.balance.balance += reward_amount
+            user.balance.rewards_earned += reward_amount  # Track rewards specifically
+            
+            # Add transaction to database
+            db.session.add(reward_transaction)
+            
+            # Update user's last reward date
+            user.last_reward_date = datetime.utcnow()
+            
+            total_rewards_given += reward_amount
+    
+    # Commit all changes to database
+    db.session.commit()
+    
+    return {"message": f"Rewards processed successfully. Total rewards given: {total_rewards_given}"}
