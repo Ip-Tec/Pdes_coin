@@ -27,12 +27,13 @@ const AdminUser: React.FC = () => {
     role: "",
     balance: 0,
     sticks: 0,
-    reward: 0,
+    referral_reward: 0,
+    rewards_earned: 0,
     is_blocked: false,
     created_at: "",
     referral_code: null,
     total_referrals: 0,
-    referral_reward: 0,
+    reward_rate: 0,
   });
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const [users, setUsers] = useState<User[] | DepositPropsWithUser[]>([]);
