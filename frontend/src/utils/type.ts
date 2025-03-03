@@ -25,9 +25,9 @@ export interface User {
   email: string;
   full_name: string;
   username: string;
-  balance: Balance;
-  reward_rate: number;
+  balance: number;
   crypto_balance?: number;
+  reward_rate: number;
   referral_code: string | null;
   total_referrals: number;
   referrer_id?: number;
