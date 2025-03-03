@@ -18,7 +18,6 @@ socketio = SocketIO(
         "https://pedex.vercel.app",
         "https://pedex.duckdns.org",
         "https://pedex.onrender.com/",
-        "https://pedex.onrender.com/",
         "https://pdes-coin.vercel.app",
     ],
     async_mode="eventlet",
@@ -65,21 +64,20 @@ def create_app():
     # CORS configuration
     CORS(
         app,
-        supports_credentials=True,
         resources={
             r"/api/*": {
                 "origins": [
                     "http://localhost:5173",
-                    "http://pedex.vercel.app",
-                    "https://pedex.duckdns.org",
                     "https://pedex.vercel.app",
-                    "https://pedex.onrender.com/",
-                    "https://pdes-coin.vercel.app",
+                    "https://pedex.duckdns.org",
+                    "https://pdes-coin.vercel.app"
                 ],
-                "allow_headers": ["Content-Type", "Authorization"],
                 "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": ["Content-Type", "Authorization"],
+                "supports_credentials": True,
+                "expose_headers": ["Content-Range", "X-Content-Range"]
             }
-        },
+        }
     )
 
     # Load configuration
@@ -90,11 +88,17 @@ def create_app():
     migrate.init_app(app, db)
     socketio.init_app(
         app,
-        cors_allowed_origins="*",
+        cors_allowed_origins=[
+            "http://localhost:5173",
+            "https://pedex.vercel.app", 
+            "https://pedex.duckdns.org",
+            "https://pdes-coin.vercel.app"
+        ],
         async_mode="eventlet",
-        transports=["websocket", "polling"],
-        logger=True,  # Add logging
-        engineio_logger=True,  # Add detailed logging
+        ping_timeout=60,
+        ping_interval=25,
+        logger=True,
+        engineio_logger=True
     )
     # Attach Socket.IO to the Flask app
 

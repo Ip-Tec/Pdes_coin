@@ -45,7 +45,7 @@ API.interceptors.request.use(
     const token = localStorage.getItem('access_token');
     
     // For debugging
-    console.log(`Request to ${config.url} - Auth token exists: ${!!token}`);
+    // console.log(`Request to ${config.url} - Auth token exists: ${!!token}`);
     
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
@@ -62,7 +62,7 @@ API.interceptors.request.use(
 API.interceptors.response.use(
   response => {
     // For debugging
-    console.log(`Response from ${response.config.url}: Status ${response.status}`);
+    // console.log(`Response from ${response.config.url}: Status ${response.status}`);
     return response;
   },
   error => {

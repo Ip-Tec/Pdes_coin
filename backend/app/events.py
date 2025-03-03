@@ -82,11 +82,9 @@ def authenticate_socket_event(socketio):
 def register_socketio_events(socketio):
     @socketio.on("connect")
     def handle_connect():
-        # Get token from query string
         token = request.args.get('token')
         
         if not token:
-            print("WebSocket connecting without authentication")
             emit("error", {"message": "Authentication required"})
             return False
         
@@ -99,14 +97,11 @@ def register_socketio_events(socketio):
             current_user = User.query.get(user_id)
             
             if not current_user:
-                print(f"WebSocket auth failed: User {user_id} not found")
                 return False
                 
-            print(f"WebSocket authenticated for user {current_user.id}")
             return True
             
-        except Exception as e:
-            print(f"WebSocket auth error: {str(e)}")
+        except Exception:
             return False
     
     @socketio.on("disconnect")
@@ -119,39 +114,27 @@ def register_socketio_events(socketio):
         emit("response", {"message": "Test event successful!"})
     
     @socketio.on("get_transaction_history")
-    # @authenticate_socket_event(socketio)  # Enable if you need authentication
-    def handle_get_transaction_history(current_user=None, *args, **kwargs):
-        print("[WebSocket] Received 'get_transaction_history' event")
-        
-        # Directly assign the returned data:
+    def handle_get_transaction_history(current_user=None):
         transactions = UserTransactionsController.get_all_transactions_socket()
-        print(f"transactions::::{transactions}")
         emit("get_transaction_history", {"transactions": transactions})
-
     
     @socketio.on("get_trade_history")
     @authenticate_socket_event(socketio)
-    def handle_get_trade_history(current_user, *args, **kwargs):
-        print("[WebSocket] Received 'get_trade_history' event")
+    def handle_get_trade_history(current_user):
         trade_history = PdesService.get_pdes_trade_history()
         emit("trade_history", {"trade_history": trade_history})
-
     
     @socketio.on("get_current_price")
     def handle_get_current_price():
-        print("[WebSocket] Received 'get_current_price' event")
         utility = Utility.query.first()
         if utility:
-            emit(
-                "trade_price",
-                {
-                    "pdes_buy_price": utility.pdes_buy_price,
-                    "pdes_sell_price": utility.pdes_sell_price,
-                    "pdes_market_cap": utility.pdes_market_cap,
-                    "pdes_circulating_supply": utility.pdes_circulating_supply,
-                    "pdes_supply_left": utility.pdes_supply_left,
-                    "pdes_total_supply": utility.pdes_total_supply,
-                },
-            )
+            emit("trade_price", {
+                "pdes_buy_price": utility.pdes_buy_price,
+                "pdes_sell_price": utility.pdes_sell_price,
+                "pdes_market_cap": utility.pdes_market_cap,
+                "pdes_circulating_supply": utility.pdes_circulating_supply,
+                "pdes_supply_left": utility.pdes_supply_left,
+                "pdes_total_supply": utility.pdes_total_supply,
+            })
         else:
             emit("trade_price", {"error": "Price data not available"})

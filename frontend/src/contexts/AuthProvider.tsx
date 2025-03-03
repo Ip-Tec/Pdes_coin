@@ -1,12 +1,10 @@
 import { useState, useEffect, ReactNode } from "react";
 import { AuthContext } from "./AuthContext";
-import { io, Socket } from "socket.io-client";
+import { Socket } from "socket.io-client";
 import { toast } from "react-toastify";
 import {
-  
   loginUser,
   getUser as getUserAPI,
-  websocketUrl,
   refreshTokenAPI,
   LogoutUser,
 } from "../services/api";
@@ -16,18 +14,7 @@ import {
   TransactionHistory,
   User,
 } from "../utils/type";
-
-// No need for local token decoding now
-
-const createSocket = (): Socket => {
-  return io(websocketUrl, {
-    withCredentials: true, // Ensure cookies are sent with the connection
-    transports: ["websocket", "polling"],
-    reconnection: true,
-    reconnectionAttempts: 5,
-    reconnectionDelay: 1000,
-  });
-};
+import { createSocketConnection } from "../services/socket";
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Instead of checking localStorage, we'll initialize with false and then determine auth via getUserAPI
@@ -81,31 +68,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
 
     if (!socket) {
-      const newSocket = createSocket();
+      const newSocket = createSocketConnection({
+        setTransactions,
+        setTrade,
+        setTradePrice
+      });
       setSocket(newSocket);
-
-      newSocket.on("connect", () => {
-        console.log("Connected to WebSocket server");
-        newSocket.emit("get_transaction_history");
-        newSocket.emit("get_trade_history");
-        newSocket.emit("get_current_price");
-      });
-
-      newSocket.on("get_transaction_history", (data) => {
-        setTransactions(data.transactions || data);
-      });
-
-      newSocket.on("get_trade_history", (data) => {
-        setTrade(data.trade_history || data);
-      });
-
-      newSocket.on("trade_price", (data: TradePrice) => {
-        setTradePrice(data);
-      });
-
-      newSocket.on("error", (error) => {
-        console.error("WebSocket Error:", error);
-      });
 
       return () => {
         newSocket.disconnect();
@@ -211,23 +179,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshAuthToken = async () => {
     try {
       setIsLoading(true);
-      // Call the refresh token API endpoint
       await refreshTokenAPI();
       
-      // Get the user info again to confirm authentication
       const userData = await getUserAPI();
       if (userData) {
         setUser(userData);
         setIsAuth(true);
-        // Re-initialize socket with fresh tokens
+        
+        // Use createSocketConnection instead of initializeSocket
         if (socket) {
           socket.disconnect();
         }
-        initializeSocket();
+        const newSocket = createSocketConnection({
+          setTransactions,
+          setTrade,
+          setTradePrice
+        });
+        setSocket(newSocket);
       }
     } catch (error) {
       console.error("Failed to refresh token:", error);
-      // Clear auth state on failure
       setUser(null);
       setIsAuth(false);
       if (socket) {
@@ -237,42 +208,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const initializeSocket = () => {
-    // Close existing socket if any
-    if (socket) {
-      socket.disconnect();
-    }
-
-    // Get access token from cookies
-    const getCookieValue = (name: string) => {
-      const value = `; ${document.cookie}`;
-      const parts = value.split(`; ${name}=`);
-      if (parts.length === 2) return parts.pop()?.split(';').shift();
-      return null;
-    };
-    
-    const token = getCookieValue('access_token');
-    
-    // Connect with auth token in query params (for WebSocket)
-    const newSocket = io(`${import.meta.env.VITE_API_URL}`, {
-      withCredentials: true,
-      transports: ['websocket'],
-      query: token ? { token } : undefined
-    });
-
-    // Set up event handlers
-    newSocket.on('connect', () => {
-      console.log('Connected to WebSocket server');
-      setSocket(newSocket);
-    });
-
-    newSocket.on('error', (error) => {
-      console.error('WebSocket Error:', error);
-    });
-    
-    return newSocket;
   };
 
   const getUser = async () => {
