@@ -6,6 +6,7 @@ import Loading from "../components/Loading";
 import { useAuth } from "../contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
+import RewardsCard from '../components/RewardsCard';
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -47,6 +48,7 @@ const Dashboard = () => {
         {/* Left Section - Fixed on md screens only */}
         <div className="md:w-1/2 md:sticky md:top-4 md:mt-[15%] lg:static lg:top-auto">
           <BalanceCard  />
+          <RewardsCard />
           <QuickActions />
         </div>
 

@@ -25,8 +25,8 @@ export interface User {
   email: string;
   full_name: string;
   username: string;
-  balance: number;
- reward: number;
+  balance: Balance;
+  reward_rate: number;
   crypto_balance?: number;
   referral_code: string | null;
   total_referrals: number;
@@ -50,10 +50,9 @@ export interface ErrorResponse {
 }
 
 export interface Balance {
-  id: number;
-  user_id: number;
   balance: number;
-  crypto_balance?: number;
+  crypto_balance: number;
+  rewards_earned: number;
 }
 
 export interface Transactions {

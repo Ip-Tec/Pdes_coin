@@ -345,7 +345,7 @@ class Crypto(db.Model):
 class RewardConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     percentage_weekly = db.Column(db.Float, default=1.0)  # Keep for backward compatibility
-    percentage_daily = db.Column(db.Float, default=0.15)  # Set a default daily percentage (about 1% weekly)
+    percentage_daily = db.Column(db.Float, default=0.15)  # Daily percentage (about 1% weekly)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __init__(self, percentage_weekly=1.0, percentage_daily=0.15):
