@@ -261,7 +261,7 @@ export interface confirmUserDepositProps {
   full_name?: string;
   username?: string;
   balance?: number;
-  crypto_balance?: number | undefined;
+  crypto_balance?: number;
   referral_code?: string | null;
   total_referrals?: number;
   sticks?: number;
