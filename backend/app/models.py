@@ -343,23 +343,22 @@ class Crypto(db.Model):
 
 # Current percentage for rewards
 class RewardConfig(db.Model):
-    __tablename__ = "reward_config"
-
     id = db.Column(db.Integer, primary_key=True)
-    percentage_weekly = db.Column(
-        db.Float, nullable=False, default=0.0
-    )  # Weekly percentage
-    updated_at = db.Column(
-        db.DateTime,
-        default=db.func.current_timestamp(),
-        onupdate=db.func.current_timestamp(),
-    )
+    percentage_weekly = db.Column(db.Float, default=1.0)  # Keep for backward compatibility
+    percentage_daily = db.Column(db.Float, default=0.15)  # Set a default daily percentage (about 1% weekly)
+    last_updated = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __init__(self, percentage_weekly=1.0, percentage_daily=0.15):
+        self.percentage_weekly = percentage_weekly
+        self.percentage_daily = percentage_daily
+        self.last_updated = datetime.utcnow()
 
     def serialize(self):
         return {
             "id": self.id,
             "percentage_weekly": self.percentage_weekly,
-            "updated_at": self.updated_at.isoformat(),
+            "percentage_daily": self.percentage_daily,
+            "last_updated": self.last_updated.isoformat(),
         }
 
 
@@ -987,9 +986,9 @@ def calculate_total_rewards():
     return total_rewards
 
 
-# In the function that processes rewards, ensure we're properly recording them
+# Update the rewards function to process daily rewards only for users who have deposited
 
-def process_weekly_rewards():
+def process_daily_rewards():
     reward_config = RewardConfig.query.first()
     if not reward_config:
         return {"message": "Reward configuration not found"}
