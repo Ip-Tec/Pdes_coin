@@ -284,3 +284,16 @@ export interface confirmUserDepositProps {
   transaction_type: string;
 }
 
+export interface PriceHistoryItem {
+  timestamp: string;
+  open_price: number;
+  high_price: number;
+  low_price: number;
+  close_price: number;
+  volume: number;
+}
+
+export interface PriceChartProps {
+  showTimestamp?: boolean;
+  timeframe?: "1m" | "5m" | "15m" | "1h" | "4h" | "1d" | "1m" | "1y";
+}
