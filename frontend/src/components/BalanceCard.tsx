@@ -12,7 +12,7 @@ const BalanceCard = () => {
   };
 
   return (
-    <div className="bg-primary text-white rounded-2xl p-4 shadow-md relative">
+    <div className="bg-primary text-white rounded-2xl rounded-b-none p-4 shadow-md relative">
       <h2 className="text-2xl font-semibold">
         {formattedMoneyUSD(user?.balance || 0)}
       </h2>
