@@ -46,7 +46,7 @@ const Dashboard = () => {
       <ToastContainer />
       <div className="md:flex md:h-screen md:space-x-6 m-2 md:m-0 overflow-hidden">
         {/* Left Section - Fixed on md screens only */}
-        <div className="md:w-1/2 md:sticky md:top-4 md:mt-[15%] lg:static lg:top-auto">
+        <div className="md:w-1/2 md:sticky md:top-4 md:mt-[8%] lg:static lg:top-auto">
           <BalanceCard  />
           <RewardsCard />
           <QuickActions />

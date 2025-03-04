@@ -18,6 +18,7 @@ const RewardsCard: React.FC = () => {
         setUser({ ...user, balance: user.balance + reward });
       }
     } catch (error) {
+      console.error("Error claiming rewards:", error);
       toast.error("Failed to claim rewards. Please try again.");
     }
   };
