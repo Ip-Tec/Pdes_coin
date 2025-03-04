@@ -271,7 +271,7 @@ const AdminDashboard = () => {
 
           <div className="flex m-auto justify-center items-center mt-4 w-full p-2">
             <div className="bg-white w-full rounded-lg shadow-lg p-6">
-              <PriceChart showTimestamp={true} />
+              <PriceChart />
             </div>
           </div>
 
