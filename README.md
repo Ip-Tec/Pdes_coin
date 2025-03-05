@@ -19,15 +19,18 @@ Embrace the future of digital finance with Pdes Coin.
 
 ## Project Root Directory
 
+```text
 pedex-crypto
 ├── backend/
 ├── web/
 ├── mobile/
 ├── shared/
 └── README.md
+```
 
 ## Backend (Flask)
 
+```text
 backend
 ├── app/
 │   ├── __init__.py         # App factory and initialization
@@ -46,9 +49,11 @@ backend
 │   └── test_users.py       # Tests for user-related APIs
 ├── requirements.txt        # Python dependencies
 └── run.py                  # Entry point
+```
 
 ## Frontend (React.js)
 
+```text
 frontend
 |── public/
 │   ├── index.html          # Main HTML file
@@ -68,9 +73,11 @@ frontend
 │       └── global.css
 ├── package.json            # Node.js dependencies
 └── .env                    # Environment variables (API URLs, keys)
+```
 
 ## Mobile App (React Native)
 
+```text
 mobile
 ├── android/                # Android-specific files
 ├── ios/                    # iOS-specific files
@@ -88,9 +95,11 @@ mobile
 │       └── globalStyles.js
 ├── package.json            # Node.js dependencies
 └── .env                    # Environment variables (API URLs, keys)
+```
 
 ## Shared Code (Optional)
 
+``` text
 shared
 ├── constants/              # Shared constants (e.g., coin symbols, API URLs)
 │   └── index.js
@@ -98,6 +107,7 @@ shared
 │   └── useFetch.js
 ├── utils/                  # Shared utilities
 │   └── validation.js
+```
 
 ## Folder Mapping
 

@@ -27,7 +27,7 @@ const RewardsCard: React.FC = () => {
     <div className="bg-secondary text-white rounded-lg rounded-t-none p-4 shadow-md">
       <h3 className="text-lg font-semibold">Rewards Earned</h3>
       <p className="text-2xl font-bold">
-        {formattedMoneyUSD(user?.rewards_earned || 0)}
+        {formattedMoneyUSD(user?.referral_reward || 0)}
       </p>
       <p className="text-sm mt-2">
         Daily reward rate: {user?.reward_rate || 0.15}%
