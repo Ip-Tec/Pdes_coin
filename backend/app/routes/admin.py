@@ -53,13 +53,12 @@ def get_dashboard_total(current_user):
     # Fix for Total Withdrawals: Ensure we're correctly filtering withdrawal transactions
     total_withdrawals = db.session.query(func.sum(Transaction.amount)).filter(
         Transaction.transaction_type == "withdrawal",
-        Transaction.status == "completed"  # Ensure this matches your data
+        # Transaction.status == "completed"  # Ensure this matches your data
     ).scalar() or 0
     
     # Fix for Total Rewards: Query the rewards from transactions specifically marked as rewards
-    total_rewards = db.session.query(func.sum(Transaction.amount)).filter(
-        Transaction.transaction_type == "reward",
-        Transaction.status == "completed"
+    total_rewards = db.session.query(func.sum(User.referral_reward)).filter(
+        User.referral_reward > 0
     ).scalar() or 0
     
     # Also check user balances for rewards that might be stored there
@@ -392,7 +391,7 @@ def confirm_user_deposit(current_user, *args, **kwargs):
         # Get the user_id from the request data
         data = request.get_json()
         user_id = data.get("user_id")
-        print(f"data:: {data=}")
+        # print(f"data:: {data=}")
 
         # Validate user_id
         if not user_id:
@@ -532,19 +531,22 @@ def confirm_user_deposit(current_user, *args, **kwargs):
         if user.referrer_id:
             referrer = User.query.get(user.referrer_id)
             if referrer:
-                referrer_balance = Balance.query.filter_by(
-                    user_id=referrer.id
-                ).first()
-                if referrer_balance:
-                    # Get the referrer's percentage from Utility table
-                    utility = Utility.query.first()
-                    referrer_percentage = utility.referral_percentage
-                    referrer_balance.balance += (
-                        amount_in_dollars * referrer_percentage
-                    )
-                    referrer_balance.rewards += 0.1
-                    db.session.add(referrer_balance)
-                    db.session.commit()
+                # Get the referrer's percentage from Utility table
+                utility = Utility.query.first()
+                referrer_percentage = utility.referral_percentage
+
+                # Calculate the reward
+                reward = amount_in_dollars * referrer_percentage
+
+                # Update the referrer's reward
+                referrer.referral_reward += reward
+
+                # Optionally, update the referrer's balance if needed
+                # referrer_balance = Balance.query.filter_by(user_id=referrer.id).first()
+                # if referrer_balance:
+                #     referrer_balance.balance += reward
+
+                db.session.commit()
 
         # Return the created transaction as a response
         return (
