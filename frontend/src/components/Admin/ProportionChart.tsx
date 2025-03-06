@@ -68,7 +68,7 @@ const ProportionChart: React.FC<ProportionChartProps> = ({ type }) => {
     ],
   };
 
-  return <Pie data={data} />;
+  return <Pie className="md:w-2/3" data={data} />;
 };
 
 export default ProportionChart;

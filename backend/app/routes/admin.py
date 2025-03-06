@@ -53,7 +53,7 @@ def get_dashboard_total(current_user):
     # Fix for Total Withdrawals: Ensure we're correctly filtering withdrawal transactions
     total_withdrawals = db.session.query(func.sum(Transaction.amount)).filter(
         Transaction.transaction_type == "withdrawal",
-        Transaction.status == "completed"
+        Transaction.status == "completed"  # Ensure this matches your data
     ).scalar() or 0
     
     # Fix for Total Rewards: Query the rewards from transactions specifically marked as rewards
