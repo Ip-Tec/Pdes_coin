@@ -62,8 +62,8 @@ def calculate_weekly_rewards(app):
                 reward_amount = user.balance.balance * daily_rate * days_since_reward
 
                 # Update user balance and rewards
-                user.balance.balance += reward_amount
-                user.balance.rewards += reward_amount
+                # user.balance.balance += reward_amount
+                user.referral_reward += reward_amount
                 user.last_reward_date = datetime.datetime.utcnow()
                 
                 print(f"User {user.id} rewarded: {reward_amount:.4f} PDES (for {days_since_reward:.2f} days)")
@@ -98,8 +98,8 @@ def calculate_daily_rewards(app):
                 reward_amount = user.balance.balance * daily_rate * days_since_reward
 
                 # Update user balance and rewards
-                user.balance.balance += reward_amount
-                user.balance.rewards += reward_amount
+                # user.balance.balance += reward_amount
+                user.referral_reward += reward_amount
                 user.last_reward_date = datetime.datetime.utcnow()
 
                 print(f"User {user.id} rewarded: {reward_amount:.4f} PDES (for {days_since_reward:.2f} days)")
