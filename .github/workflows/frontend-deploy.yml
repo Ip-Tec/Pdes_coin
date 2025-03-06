@@ -37,8 +37,8 @@ jobs:
           key: ${{ secrets.DEPLOY_KEY }}
           script: |
             # Use correct Node.js version
-            nvm install 22
-            nvm use 22
+            # nvm install 22
+            # nvm use 22
 
             # Move to the project directory
             cd /var/www/myapp/frontend
