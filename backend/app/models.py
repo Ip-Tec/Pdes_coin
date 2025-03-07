@@ -37,6 +37,7 @@ class User(db.Model):
     responses = db.relationship(
         "SupportResponse", back_populates="user", cascade="all, delete-orphan"
     )
+    user_reward_history = db.relationship("UserRewardHistory", back_populates="user", cascade="all, delete-orphan")
 
     referral_code = db.Column(db.String(16), unique=True, nullable=True)
     referrer_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
