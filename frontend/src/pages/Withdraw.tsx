@@ -26,7 +26,7 @@ function Withdraw() {
     ? user?.balance || 0 
     : user?.referral_reward || 0;
     
-  const withdrawalLimit = 5;
+  const withdrawalLimit = 2.1;
   const [selectedOption, setSelectedOption] = useState("");
   const [cryptoAddress, setCryptoAddress] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
@@ -43,7 +43,7 @@ function Withdraw() {
       try {
         const response = await API.get(apiUrl("/transactions/conversion-rate"));
         const conversion_rate = response.data.conversion_rate;
-        setConversionRate(conversion_rate.conversion_rate);
+        setConversionRate(conversion_rate.conversion_rate - 120);
       } catch (error) {
         toast.error("Failed to fetch conversion rate. Please try again.");
         console.error("Conversion Rate Error:", error);
@@ -112,7 +112,7 @@ function Withdraw() {
         // Add the required properties to match AccountDetails type
         response = await withdrawReward({
           ...requestData,
-          amount: userBalance, // Include the reward balance amount
+          amount: userBalance, // Include the reward balance amount"One or more mappers failed to initialize - can't proceed with initialization of other mappers. Triggering mapper: 'Mapper[UserRewardHistory(user_reward_history)]'. Original exception was: Could not determine join condition between parent/child tables on relationship UserRewardHistory.user - there are no foreign keys linking these tables.  Ensure that referencing columns are associated with a ForeignKey or ForeignKeyConstraint, or specify a 'primaryjoin' expression."
           type: selectedOption  // Include the selected option as type
         });
       } else {
