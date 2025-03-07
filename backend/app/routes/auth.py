@@ -81,7 +81,7 @@ def login():
     # Set tokens in cookies with proper settings for CORS
     response = jsonify({
         "message": "Login successful",
-        "user": user.to_dict(),
+        "user": user.serialize(),
         "access_token": access_token,
         "refresh_token": refresh_token
     })
