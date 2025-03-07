@@ -60,7 +60,7 @@ def get_dashboard_total(current_user):
     ).scalar() or 0
     
     # Also check user balances for rewards that might be stored there
-    total_rewards_from_balances = db.session.query(func.sum(Balance.rewards_earned)).scalar() or 0
+    total_rewards_from_balances = db.session.query(func.sum(Balance.rewards)).scalar() or 0
     total_rewards += total_rewards_from_balances
     
     # Check if we have a RewardConfig and total rewards processed
