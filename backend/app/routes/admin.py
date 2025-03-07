@@ -26,6 +26,7 @@ from app.models import (
     Balance,
     AccountDetail,
     Utility,
+    UserRewardHistory,
 ) 
 from sqlalchemy.exc import IntegrityError, SQLAlchemyError
 
@@ -1456,12 +1457,25 @@ def get_users():
 def give_reward(current_user, *args, **kwargs):
     """ Give user their reward manually """
     try:
-        # Get reward settings from Utility table
+        # Get reward settings
+        reward_setting = RewardSetting.query.filter_by(is_active=True).first()
         utility = Utility.query.first()
+        
         if not utility:
             return jsonify({"error": "Reward settings not found"}), 404
             
-        reward_percentage = utility.reward_percentage
+        if not reward_setting:
+            return jsonify({"error": "No active reward setting found"}), 404
+        
+        # Current date for comparison
+        current_date = datetime.utcnow()
+        
+        # If reward setting has end date and it's passed, don't give rewards
+        if reward_setting.end_date and current_date > reward_setting.end_date:
+            return jsonify({"error": "Reward period has ended"}), 400
+            
+        # Get reward percentage from utility
+        reward_percentage = float(utility.reward_percentage)
         
         # Get all users or filter as needed
         users = User.query.all()
@@ -1469,7 +1483,7 @@ def give_reward(current_user, *args, **kwargs):
         total_rewards_given = 0
         
         for user in users:
-            # Check if user has made deposits by looking for 'deposit' transactions
+            # Check if user has made deposits
             deposits = Transaction.query.filter_by(
                 user_id=user.id,
                 transaction_type='deposit',
@@ -1484,6 +1498,13 @@ def give_reward(current_user, *args, **kwargs):
             
             if deposit_balance <= 0:
                 continue  # Skip users with zero or negative deposit balance
+                
+            # Check if the user has already received a reward in the last frequency_days
+            last_reward = UserRewardHistory.query.filter_by(user_id=user.id).order_by(UserRewardHistory.created_at.desc()).first()
+            if last_reward:
+                days_since_last_reward = (current_date - last_reward.created_at).days
+                if days_since_last_reward < reward_setting.frequency_days:
+                    continue  # Skip if the user is not eligible for a new reward yet
                 
             # Calculate reward based on deposit balance and reward percentage
             reward_amount = deposit_balance * float(reward_percentage)
@@ -1507,6 +1528,15 @@ def give_reward(current_user, *args, **kwargs):
                 currency="usd",
             )
             db.session.add(reward_transaction)
+            
+            # Log the reward in UserRewardHistory
+            reward_history = UserRewardHistory(
+                user_id=user.id,
+                amount=reward_amount,
+                percentage_rate=reward_percentage,
+                deposit_balance=deposit_balance
+            )
+            db.session.add(reward_history)
             
             # Add to our tracking lists
             rewarded_users.append({

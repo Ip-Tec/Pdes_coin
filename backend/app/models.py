@@ -345,7 +345,7 @@ class Crypto(db.Model):
 class RewardConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     percentage_weekly = db.Column(db.Float, default=1.0)  # Keep for backward compatibility
-    percentage_daily = db.Column(db.Float, default=0.15)  # Daily percentage (about 1% weekly)
+    # percentage_daily = db.Column(db.Float, default=0.15)  # Daily percentage (about 1% weekly)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
     
     def __init__(self, percentage_weekly=1.0, percentage_daily=0.15):
@@ -364,15 +364,28 @@ class RewardConfig(db.Model):
 
 # Reward percentage rate and its duration
 class RewardSetting(db.Model):
+    __tablename__ = "reward_settings"
+    
     id = db.Column(db.Integer, primary_key=True)
-    weekly_percentage = db.Column(
-        db.Float, nullable=False, default=20.0
-    )  # Weekly reward in %
-    start_date = db.Column(db.DateTime, default=db.func.current_timestamp())
-    end_date = db.Column(db.DateTime, nullable=True)  # Optional end date
-
-    def daily_rate(self):
-        return self.weekly_percentage / 7  # Convert weekly rate to daily
+    weekly_percentage = db.Column(db.Float, nullable=False, default=0.15)
+    start_date = db.Column(db.DateTime, nullable=False)
+    end_date = db.Column(db.DateTime, nullable=True)
+    frequency_days = db.Column(db.Integer, default=7)  # How often rewards can be claimed (default: weekly)
+    max_percentage = db.Column(db.Float, default=50)   # Max percentage of deposit that can be earned as reward
+    is_active = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "weekly_percentage": self.weekly_percentage,
+            "start_date": self.start_date.isoformat() if self.start_date else None,
+            "end_date": self.end_date.isoformat() if self.end_date else None,
+            "frequency_days": self.frequency_days,
+            "max_percentage": self.max_percentage,
+            "is_active": self.is_active,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
 
 
 # PdesTransaction model for handling buy/sell of Pdes coin
@@ -1033,3 +1046,27 @@ def process_daily_rewards():
     db.session.commit()
     
     return {"message": f"Rewards processed successfully. Total rewards given: {total_rewards_given}"}
+
+
+class UserRewardHistory(db.Model):
+    __tablename__ = "user_reward_history"
+    
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    percentage_rate = db.Column(db.Float, nullable=False)  # Store the rate used
+    deposit_balance = db.Column(db.Float, nullable=False)  # Store balance used for calculation
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationship with user
+    user = db.relationship("User", backref=db.backref("reward_history", lazy=True))
+    
+    def serialize(self):
+        return {
+            "id": self.id,
+            "user_id": self.user_id,
+            "amount": self.amount,
+            "percentage_rate": self.percentage_rate,
+            "deposit_balance": self.deposit_balance,
+            "created_at": self.created_at.isoformat() if self.created_at else None
+        }
