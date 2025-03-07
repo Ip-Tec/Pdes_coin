@@ -41,6 +41,9 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 @token_required
 @AccessLevel.role_required(["SUPPORT", "MODERATOR", "ADMIN", "SUPER_ADMIN", "OWNER"])
 def get_dashboard_total(current_user):
+    # Get the total number of transactions
+    total_transactions = Transaction.query.count()
+    
     # Calculate the different totals
     total_users = User.query.count()
     total_deposits = db.session.query(func.sum(Transaction.amount)).filter(
@@ -49,7 +52,7 @@ def get_dashboard_total(current_user):
     
     # Fix for Total Withdrawals: Ensure we're correctly filtering withdrawal transactions
     total_withdrawals = db.session.query(func.sum(Transaction.amount)).filter(
-        Transaction.transaction_type == "withdrawal"
+        Transaction.transaction_type.like("withdrawal")  # Using LIKE for case-sensitive match
     ).scalar() or 0
     
     # Calculate total rewards from user referral rewards
@@ -68,8 +71,9 @@ def get_dashboard_total(current_user):
     return jsonify({
         "total_users": total_users,
         "total_deposits": float(total_deposits),
+        "total_transactions": total_transactions,
         "total_withdrawals": float(total_withdrawals),
-        "total_rewards": float(total_rewards),
+        "total_rewards": "{:.4f}".format(total_rewards),  # Format as a string with 4 decimal places
         "reward_percentage": float(reward_percentage)
     }), 200
 
