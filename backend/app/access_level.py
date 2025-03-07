@@ -94,43 +94,13 @@ class AccessLevel:
             raise ValueError(str(e))
 
     @staticmethod
-    def role_required(required_roles):
-        """
-        Decorator to restrict access to users with any of the specified roles.
-        `required_roles` can be a string or a list of roles.
-        """
-
-        if isinstance(required_roles, str):
-            required_roles = [required_roles]
-
-        required_roles = [role.upper() for role in required_roles]
-
+    def role_required(roles):
         def decorator(f):
             @wraps(f)
-            def decorated_function(*args, **kwargs):
-                token = request.headers.get("Authorization")
-                if not token:
-                    return jsonify({"message": "Token is missing!"}), 401
-
-                try:
-                    data = AccessLevel.decode_token(token)
-                    current_user = User.query.get(data["user_id"])
-                except ValueError as e:
-                    return jsonify({"message": str(e)}), 401
-
-                userRole = current_user.role.upper()
-                if userRole not in required_roles:
-                    return (
-                        jsonify(
-                            {
-                                "message": f"Access denied. One of the following roles is required: {', '.join(required_roles)}"
-                            }
-                        ),
-                        403,
-                    )
-
+            def decorated_function(current_user, *args, **kwargs):
+                # Check if the user is in the required roles
+                if current_user.role not in roles:
+                    return jsonify({"message": "Unauthorized access"}), 403
                 return f(current_user, *args, **kwargs)
-
             return decorated_function
-
         return decorator
