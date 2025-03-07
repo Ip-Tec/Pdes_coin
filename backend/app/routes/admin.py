@@ -45,7 +45,7 @@ def get_dashboard_total(current_user):
     total_users = User.query.count()
     total_deposits = db.session.query(func.sum(Transaction.amount)).filter(
         Transaction.transaction_type == "deposit", 
-        Transaction.status == "completed"
+        # Transaction.status == "completed"
     ).scalar() or 0
     
     # Fix for Total Withdrawals: Ensure we're correctly filtering withdrawal transactions
