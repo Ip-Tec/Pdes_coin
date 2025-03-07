@@ -164,6 +164,7 @@ export const loginUser = async (loginData: {
     const response = await API.post(apiUrl("/auth/login"), loginData);
 
     console.log("Login response structure:", Object.keys(response.data));
+    console.log("Login response structure:", response.data);
 
     // Ensure the response contains what we need
     if (!response.data.access_token || !response.data.user) {

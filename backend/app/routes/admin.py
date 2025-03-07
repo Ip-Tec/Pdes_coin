@@ -39,11 +39,8 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # Get dashboard totals
 @admin_bp.route("/get-dashboard-total", methods=["POST"])
 @token_required
+@AccessLevel.role_required(["SUPPORT", "MODERATOR", "ADMIN", "SUPER_ADMIN", "OWNER"])
 def get_dashboard_total(current_user):
-    # Verify admin role
-    if not current_user.is_admin:
-        return jsonify({"message": "Unauthorized access"}), 403
-        
     # Calculate the different totals
     total_users = User.query.count()
     total_deposits = db.session.query(func.sum(Transaction.amount)).filter(

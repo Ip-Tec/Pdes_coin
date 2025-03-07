@@ -81,8 +81,9 @@ export const getDashboardTotal = async () => {
     console.log('Dashboard total response:', response.data);
     return response.data;
   } catch (error) {
+    console.log("Dashboard total error:", error);
     if (axios.isAxiosError(error)) {
-      console.error('Dashboard API error details:', {
+      console.error("Dashboard API error details:", {
         status: error.response?.status,
         data: error.response?.data,
         headers: error.response?.headers,
