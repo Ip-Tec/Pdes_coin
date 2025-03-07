@@ -480,3 +480,25 @@ export const getReferrersInRange = async (
     throw new Error("Network error. Please try again.");
   }
 };
+
+// Add this function to your adminAPI.ts file
+
+export const giveRewardsToUsers = async () => {
+  try {
+    const response = await AdminAPI.post(apiUrl("/admin/give-reward"));
+    
+    if (response.status === 200) {
+      toast.success(`Rewards distributed to ${response.data.rewarded_users.length} users`);
+      return response.data;
+    }
+    
+    return response.data;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.message || "Failed to distribute rewards");
+      throw new Error(errorData?.message || "Failed to distribute rewards");
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};

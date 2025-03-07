@@ -8,8 +8,11 @@ import BulkUpdateTransactions from "../../components/Admin/BulkUpdateTransaction
 import DownloadComponent from "../../components/Admin/DownloadComponent";
 import SlideInPanel from "../../components/Admin/SlideInPanel"; // Reusable slide-in panel
 import { DepositPropsWithUser, User } from "../../utils/type";
-import { ToastContainer } from "react-toastify";
+import { ToastContainer, toast } from "react-toastify";
 import ChartWithToggle from "../../components/Admin/ChartWithToggle";
+import { giveRewardsToUsers } from "../../services/adminAPI";
+import { useAuth } from "../../contexts/AuthContext";
+import { formattedMoneyUSD } from "../../utils/helpers";
 
 const AdminTransaction = () => {
   const [users, setUsers] = useState<User[] | DepositPropsWithUser[]>([]);
@@ -20,6 +23,8 @@ const AdminTransaction = () => {
     User | DepositPropsWithUser | null
   >(null);
   const [searchType, setSearchType] = useState("");
+  const [isGivingRewards, setIsGivingRewards] = useState(false);
+  const { user } = useAuth();
 
   // console.log({ selectedUser });
 
@@ -106,6 +111,39 @@ const AdminTransaction = () => {
         return null;
     }
   };
+
+  const handleGiveRewards = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to distribute rewards to all eligible users?"
+      )
+    ) {
+      return;
+    }
+
+    setIsGivingRewards(true);
+    try {
+      const result = await giveRewardsToUsers();
+
+      toast.success(
+        `Successfully distributed rewards to ${
+          result.rewarded_users.length
+        } users. Total rewards: ${formattedMoneyUSD(result.total_rewards)}`
+      );
+
+      // Optionally refresh transaction list if needed
+      // fetchTransactions();
+    } catch (error) {
+      console.error("Error giving rewards:", error);
+      toast.error("Failed to distribute rewards. Please try again.");
+    } finally {
+      setIsGivingRewards(false);
+    }
+  };
+
+  const canGiveRewards =
+    user && ["SUPER_ADMIN", "DEVELOPER", "OWNER"].includes(user.role);
+
   return (
     <AdminWrapper>
       <ToastContainer />
@@ -136,6 +174,29 @@ const AdminTransaction = () => {
             </div>
           }
         />
+
+        {/* Add the Give Rewards button */}
+        {canGiveRewards && (
+          <div className="mb-4">
+            <button
+              onClick={handleGiveRewards}
+              disabled={isGivingRewards}
+              className={`px-4 py-2 rounded-md ${
+                isGivingRewards
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700 text-white"
+              }`}
+            >
+              {isGivingRewards ? (
+                <>
+                  <span className="animate-pulse">Processing Rewards...</span>
+                </>
+              ) : (
+                "Give Rewards to Users"
+              )}
+            </button>
+          </div>
+        )}
 
         {/* Render Active Component */}
         {renderActiveComponent()}

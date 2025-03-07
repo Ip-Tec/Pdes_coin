@@ -1449,3 +1449,86 @@ def get_users():
     return jsonify([user.serialize_admin() for user in users])
 
 
+# Give user their reward manually
+@admin_bp.route('/give-reward', methods=['POST'])
+@token_required
+@AccessLevel.role_required(["SUPER_ADMIN", "DEVELOPER", "OWNER"])
+def give_reward(current_user, *args, **kwargs):
+    """ Give user their reward manually """
+    try:
+        # Get reward settings from Utility table
+        utility = Utility.query.first()
+        if not utility:
+            return jsonify({"error": "Reward settings not found"}), 404
+            
+        reward_percentage = utility.reward_percentage
+        
+        # Get all users or filter as needed
+        users = User.query.all()
+        rewarded_users = []
+        total_rewards_given = 0
+        
+        for user in users:
+            # Check if user has made deposits by looking for 'deposit' transactions
+            deposits = Transaction.query.filter_by(
+                user_id=user.id,
+                transaction_type='deposit',
+                transaction_completed=True
+            ).all()
+            
+            if not deposits:
+                continue  # Skip users with no deposits
+                
+            # Calculate the user's deposit balance (sum of deposit transactions)
+            deposit_balance = sum(deposit.amount for deposit in deposits)
+            
+            if deposit_balance <= 0:
+                continue  # Skip users with zero or negative deposit balance
+                
+            # Calculate reward based on deposit balance and reward percentage
+            reward_amount = deposit_balance * float(reward_percentage)
+            
+            if reward_amount <= 0:
+                continue  # Skip if calculated reward is zero or negative
+                
+            # Update user's referral_reward
+            user.referral_reward += reward_amount
+            
+            # Create a reward transaction record
+            reward_transaction = Transaction(
+                user_id=user.id,
+                confirm_by=current_user.id,
+                transaction_completed=True,
+                account_name=user.full_name,
+                account_number="",
+                crypto_address="",
+                transaction_type="reward",
+                amount=reward_amount,
+                currency="usd",
+            )
+            db.session.add(reward_transaction)
+            
+            # Add to our tracking lists
+            rewarded_users.append({
+                "user_id": user.id,
+                "name": user.full_name,
+                "email": user.email,
+                "deposit_balance": deposit_balance,
+                "reward_amount": reward_amount
+            })
+            total_rewards_given += reward_amount
+        
+        # Commit all changes to database
+        db.session.commit()
+        
+        return jsonify({
+            "message": f"Rewards distributed to {len(rewarded_users)} users",
+            "total_rewards": total_rewards_given,
+            "rewarded_users": rewarded_users
+        }), 200
+            
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
