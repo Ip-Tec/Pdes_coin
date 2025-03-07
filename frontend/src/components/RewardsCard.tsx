@@ -21,7 +21,7 @@ const RewardsCard: React.FC = () => {
       <p className="text-sm mt-2">
         Daily reward rate: {user?.reward_rate || 0.15}%
       </p>
-      <p className="text-xs mt-1">Earned on your crypto balance</p>
+      <p className="text-xs mt-1">Earned on your crypto balance {user?.referral_reward || 0.00}</p>
       {/* TODO: Add a button to claim rewards */}
       <div className="flex justify-between gap-2">
         <button className="px-4 py-2"></button>
