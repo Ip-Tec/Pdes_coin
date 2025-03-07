@@ -44,17 +44,15 @@ def get_dashboard_total(current_user):
     # Calculate the different totals
     total_users = User.query.count()
     total_deposits = db.session.query(func.sum(Transaction.amount)).filter(
-        Transaction.transaction_type == "deposit", 
-        # Transaction.status == "completed"
+        Transaction.transaction_type == "deposit"
     ).scalar() or 0
     
     # Fix for Total Withdrawals: Ensure we're correctly filtering withdrawal transactions
     total_withdrawals = db.session.query(func.sum(Transaction.amount)).filter(
-        Transaction.transaction_type == "withdrawal",
-        # Transaction.status == "completed"  # Ensure this matches your data
+        Transaction.transaction_type == "withdrawal"
     ).scalar() or 0
     
-    # Fix for Total Rewards: Query the rewards from transactions specifically marked as rewards
+    # Calculate total rewards from user referral rewards
     total_rewards = db.session.query(func.sum(User.referral_reward)).filter(
         User.referral_reward > 0
     ).scalar() or 0
@@ -66,11 +64,6 @@ def get_dashboard_total(current_user):
     # Check if we have a RewardConfig and total rewards processed
     reward_config = RewardConfig.query.first()
     reward_percentage = reward_config.percentage_weekly if reward_config else 0
-    
-    # Log the actual values to help debug
-    current_app.logger.info(f"Total deposits: {total_deposits}")
-    current_app.logger.info(f"Total withdrawals: {total_withdrawals}")
-    current_app.logger.info(f"Total rewards: {total_rewards}")
     
     return jsonify({
         "total_users": total_users,
