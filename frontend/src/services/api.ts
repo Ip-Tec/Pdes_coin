@@ -32,61 +32,61 @@ console.log("WebSocket URL:", websocketUrl);
 const API = axios.create({
   baseURL: url,
   timeout: 30000, // Increase timeout to 30 seconds
-  withCredentials: true,  // This is crucial for CORS with credentials
+  withCredentials: true, // This is crucial for CORS with credentials
   headers: {
-    'Content-Type': 'application/json',
-  }
+    "Content-Type": "application/json",
+  },
 });
 
 // Add request interceptor
 API.interceptors.request.use(
-  config => {
+  (config) => {
     // Add the token to every request
-    const token = localStorage.getItem('access_token');
-    
+    const token = localStorage.getItem("access_token");
+
     // For debugging
     // console.log(`Request to ${config.url} - Auth token exists: ${!!token}`);
-    
+
     if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
+      config.headers["Authorization"] = `Bearer ${token}`;
     }
     return config;
   },
-  error => {
-    console.error('Request interceptor error:', error);
+  (error) => {
+    console.error("Request interceptor error:", error);
     return Promise.reject(error);
   }
 );
 
 // Add response interceptor with better error handling
 API.interceptors.response.use(
-  response => {
+  (response) => {
     // For debugging
     // console.log(`Response from ${response.config.url}: Status ${response.status}`);
     return response;
   },
-  error => {
+  (error) => {
     // Don't reject timeout errors immediately - log them for debugging
-    if (axios.isAxiosError(error) && error.code === 'ECONNABORTED') {
-      console.error('Request timed out:', error.config?.url);
+    if (axios.isAxiosError(error) && error.code === "ECONNABORTED") {
+      console.error("Request timed out:", error.config?.url);
       // Return a custom error object instead of rejecting
-      return Promise.resolve({ 
-        data: null, 
-        error: 'Request timed out. Please try again.'
+      return Promise.resolve({
+        data: null,
+        error: "Request timed out. Please try again.",
       });
     }
-    
+
     // For 401 errors, clear authentication
     if (axios.isAxiosError(error) && error.response?.status === 401) {
-      console.log('Unauthorized request, clearing auth state');
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+      console.log("Unauthorized request, clearing auth state");
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
       // Only redirect if not already on login page
-      if (!window.location.pathname.includes('/login')) {
-        window.location.href = '/login';
+      if (!window.location.pathname.includes("/login")) {
+        window.location.href = "/login";
       }
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -160,48 +160,48 @@ export const loginUser = async (loginData: {
   password: string;
 }) => {
   try {
-    console.log('Attempting login for:', loginData.email);
+    console.log("Attempting login for:", loginData.email);
     const response = await API.post(apiUrl("/auth/login"), loginData);
-    
-    console.log('Login response structure:', Object.keys(response.data));
-    
+
+    console.log("Login response structure:", Object.keys(response.data));
+
     // Ensure the response contains what we need
     if (!response.data.access_token || !response.data.user) {
-      console.error('Invalid login response structure:', response.data);
-      throw new Error('Server returned an invalid response');
+      console.error("Invalid login response structure:", response.data);
+      throw new Error("Server returned an invalid response");
     }
-    
+
     // Store tokens in localStorage right away
-    localStorage.setItem('access_token', response.data.access_token);
+    localStorage.setItem("access_token", response.data.access_token);
     if (response.data.refresh_token) {
-      localStorage.setItem('refresh_token', response.data.refresh_token);
+      localStorage.setItem("refresh_token", response.data.refresh_token);
     }
-    
+
     const { user, access_token, refresh_token } = response.data;
     return { user, access_token, refresh_token };
   } catch (error) {
-    console.error('Login error:', error);
+    console.error("Login error:", error);
     if (axios.isAxiosError(error) && error.response) {
       // Use the server's error message if available
-      throw new Error(error.response.data?.message || 'Login failed');
+      throw new Error(error.response.data?.message || "Login failed");
     }
-    throw new Error('Network error during login');
+    throw new Error("Network error during login");
   }
 };
 
 // Get user info - Improved
 export const getUser = async () => {
   try {
-    const token = localStorage.getItem('access_token');
+    const token = localStorage.getItem("access_token");
     if (!token) {
-      console.log('No token found, skipping user info request');
+      console.log("No token found, skipping user info request");
       return null;
     }
-    
-    console.log('Fetching user info...');
+
+    console.log("Fetching user info...");
     const response = await API.get<User>(apiUrl("/users/users_info"));
-    
-    console.log('User info fetched successfully');
+
+    console.log("User info fetched successfully");
     return response.data;
   } catch (error) {
     console.error("Error fetching user:", error);
@@ -309,6 +309,22 @@ export const withdrawFunds = async (accountDetails: AccountDetails) => {
   }
 };
 
+// Withdraw Reward
+export const withdrawReward = async (accountDetails: AccountDetails) => {
+  try {
+    const response = await API.post(apiUrl("/transactions/withdraw-reward"), {
+      ...accountDetails,
+    });
+    return response;
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const errorData: ErrorResponse = error.response?.data;
+      toast.error(errorData?.message || "Withdrawal failed");
+      throw new Error(errorData?.message || "Withdrawal failed");
+    }
+    throw new Error("Network error. Please try again.");
+  }
+};
 // Transfer Funds
 export const transferFunds = async (amount: number, recipientId: string) => {
   try {
@@ -711,21 +727,25 @@ export const getDepositAccountDetail = async () => {
 // Updated LogoutUser function for JWT-based auth
 export const LogoutUser = async () => {
   try {
-    const token = localStorage.getItem('access_token');
-    
+    const token = localStorage.getItem("access_token");
+
     // Always clear the local storage regardless of API success
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
-    localStorage.removeItem('user');
-    
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("refresh_token");
+    localStorage.removeItem("user");
+
     // Only attempt to call the logout endpoint if we have a token
     if (token) {
-      const response = await API.post(apiUrl("/auth/logout"), {}, {
-        headers: {
-          'Authorization': `Bearer ${token}`
+      const response = await API.post(
+        apiUrl("/auth/logout"),
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
-      });
-      
+      );
+
       return response.data;
     }
     return { message: "Logged out locally" };

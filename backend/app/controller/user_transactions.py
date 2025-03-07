@@ -340,6 +340,69 @@ class UserTransactionsController:
                 500,
             )
 
+    @staticmethod
+    @token_required
+    def withdraw_reward(user):
+        try:
+            user_id = user.id
+
+            # Retrieve the user's referrer_reward balance
+            user_record = User.query.get(user_id)
+            if not user_record:
+                return jsonify({"error": "User not found."}), 404
+
+            # Use the entire referrer_reward balance
+            amount = user_record.referrer_reward
+            if amount <= 0:
+                return jsonify({"error": "No rewards available to withdraw."}), 400
+
+            # Extract accountDetails from the input payload
+            data = request.get_json()
+            account_details = data
+            if not account_details:
+                return jsonify({"error": "Account details are missing."}), 400
+
+            # Validate required fields in accountDetails
+            required_fields = ["accountName", "accountType"]
+            for field in required_fields:
+                if field not in account_details or not account_details[field]:
+                    return jsonify({"error": f"'{field}' field is required."}), 400
+
+            # Validate accountNumber or cryptoAddress
+            if not account_details.get("accountNumber") and not account_details.get("cryptoAddress"):
+                return jsonify({"error": "Provide either 'accountNumber' or 'cryptoAddress'."}), 400
+
+            if account_details.get("accountNumber") and account_details.get("cryptoAddress"):
+                return jsonify({"error": "Provide either 'accountNumber' or 'cryptoAddress', not both."}), 400
+
+            # Create a new transaction record
+            transaction = Transaction(
+                user_id=user_id,
+                amount=-amount,
+                currency=account_details.get("type", "naira"),  # Default to "naira"
+                transaction_completed=False,
+                account_name=account_details["accountName"],
+                crypto_address=account_details.get("cryptoAddress", ""),  # Default to empty string
+                account_number=account_details.get("accountNumber", ""),
+                transaction_type=f"withdraw + {account_details['accountType']}",
+            )
+            db.session.add(transaction)
+
+            # Deduct the amount from the user's referrer_reward
+            user_record.referrer_reward = 0
+
+            # Commit the transaction
+            db.session.commit()
+
+            # Return success response
+            return jsonify({"message": "Withdrawal in Progress", "data": transaction.serialize()}), 201
+
+        except Exception as e:
+            db.session.rollback()
+            # Log the exception for debugging purposes
+            print(f"Error during withdrawal: {e}")
+            return jsonify({"error": "Transaction failed due to an unexpected error."}), 500
+
 
 def get_pdes_coin_details():
     try:

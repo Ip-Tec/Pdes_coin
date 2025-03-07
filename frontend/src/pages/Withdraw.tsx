@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import logo from "../assets/pdes.png";
 import { FaArrowLeft } from "react-icons/fa";
-import { useNavigate } from "react-router-dom";
-import API, { apiUrl, withdrawFunds } from "../services/api";
+import { useNavigate, useLocation } from "react-router-dom";
+import API, { apiUrl, withdrawFunds, withdrawReward } from "../services/api";
 import { ToastContainer, toast } from "react-toastify";
 import { useAuth } from "../contexts/AuthContext";
 import InputField from "../components/InputField";
@@ -10,7 +10,22 @@ import { formattedMoneyNGN, formattedMoneyUSD } from "../utils/helpers";
 
 function Withdraw() {
   const { user, isAuth } = useAuth();
-  const userBalance = user?.balance || 0;
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Check if we're on the reward route
+  const isRewardRoute = location.pathname === "/withdraw/reward";
+  
+  // Set initial withdrawal type based on the route
+  const [withdrawalType, setWithdrawalType] = useState<"balance" | "reward">(
+    isRewardRoute ? "reward" : "balance"
+  );
+  
+  // Get the appropriate balance based on withdrawal type
+  const userBalance = withdrawalType === "balance" 
+    ? user?.balance || 0 
+    : user?.referral_reward || 0;
+    
   const withdrawalLimit = 5;
   const [selectedOption, setSelectedOption] = useState("");
   const [cryptoAddress, setCryptoAddress] = useState("");
@@ -18,7 +33,6 @@ function Withdraw() {
   const [accountType, setAccountType] = useState("Opay");
   const [accountName, setAccountName] = useState(user?.full_name || "");
   const [amount, setAmount] = useState("");
-  const navigate = useNavigate();
   const [conversionRate, setConversionRate] = useState<number>(2000);
 
   useEffect(() => {
@@ -29,8 +43,6 @@ function Withdraw() {
       try {
         const response = await API.get(apiUrl("/transactions/conversion-rate"));
         const conversion_rate = response.data.conversion_rate;
-        // console.log({ conversion_rate });
-
         setConversionRate(conversion_rate.conversion_rate);
       } catch (error) {
         toast.error("Failed to fetch conversion rate. Please try again.");
@@ -40,38 +52,53 @@ function Withdraw() {
 
     fetchConversionRate();
   }, [isAuth, navigate]);
+
+  // Reset amount field when switching withdrawal types
+  useEffect(() => {
+    setAmount("");
+  }, [withdrawalType]);
+
+  // Reset to the normal withdraw page if withdrawal type changes from reward
+  useEffect(() => {
+    if (!isRewardRoute && withdrawalType === "reward") {
+      // This is for when user manually toggles from reward to balance
+      navigate("/withdraw");
+    }
+  }, [withdrawalType, navigate, isRewardRoute]);
+
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     // Strip out any non-numeric characters before formatting
     const rawValue = e.target.value.replace(/[^\d.]/g, "");
-
     // Format the raw value using formattedMoneyNGN function
     const formattedValue = formattedMoneyUSD(Number(rawValue));
-
     // Set the amount to the formatted value
     setAmount(formattedValue);
   };
 
   const handleProceed = async () => {
-    const withdrawalAmount = parseFloat(amount.replace(/[^\d.]/g, ""));
+    // For reward withdrawals, we withdraw the entire reward amount
+    const withdrawalAmount = withdrawalType === "reward" 
+      ? userBalance 
+      : parseFloat(amount.replace(/[^\d.]/g, ""));
 
-    if (isNaN(withdrawalAmount)) {
-      toast.error("Please enter a valid amount.");
-      return;
-    }
+    if (withdrawalType === "balance") {
+      if (isNaN(withdrawalAmount)) {
+        toast.error("Please enter a valid amount.");
+        return;
+      }
 
-    if (withdrawalAmount < withdrawalLimit) {
-      toast.error(`Minimum withdrawal amount is ${withdrawalLimit}.`);
-      return;
-    }
+      if (withdrawalAmount < withdrawalLimit) {
+        toast.error(`Minimum withdrawal amount is ${withdrawalLimit}.`);
+        return;
+      }
 
-    if (withdrawalAmount > userBalance) {
-      toast.error("You cannot withdraw more than your balance.");
-      return;
+      if (withdrawalAmount > userBalance) {
+        toast.error("You cannot withdraw more than your balance.");
+        return;
+      }
     }
 
     const requestData = {
-      amount: withdrawalAmount,
-      type: selectedOption,
       accountName: accountName,
       cryptoAddress: selectedOption === "BTC" ? cryptoAddress : undefined,
       accountNumber: selectedOption === "Naira" ? accountNumber : undefined,
@@ -79,18 +106,40 @@ function Withdraw() {
     };
 
     try {
-      const response = await withdrawFunds(requestData);
+      let response;
+      
+      if (withdrawalType === "reward") {
+        // Add the required properties to match AccountDetails type
+        response = await withdrawReward({
+          ...requestData,
+          amount: userBalance, // Include the reward balance amount
+          type: selectedOption  // Include the selected option as type
+        });
+      } else {
+        response = await withdrawFunds({
+          ...requestData,
+          amount: withdrawalAmount,
+          type: selectedOption,
+        });
+      }
+
       if (response.status == 201) {
-        const updatedBalance = userBalance - withdrawalAmount;
         if (user) {
-          user.balance = updatedBalance;
+          if (withdrawalType === "reward") {
+            user.referral_reward = 0; // Set reward balance to 0 after withdrawal
+          } else {
+            user.balance = user.balance - withdrawalAmount;
+          }
         }
+        
+        // Reset form
         setAmount("");
         setSelectedOption("");
         setCryptoAddress("");
         setAccountNumber("");
         setAccountType("Opay");
         setAccountName(user?.full_name || "");
+        
         toast.success(response.data.message);
       } else {
         toast.error(`Withdrawal failed: ${response.data.message}`);
@@ -100,6 +149,7 @@ function Withdraw() {
       console.error("Withdrawal Error:", error);
     }
   };
+
   useEffect(() => {
     toast.info("Note: Withdrawals are subject to a 15% stamp duty deduction.");
   }, []);
@@ -123,8 +173,35 @@ function Withdraw() {
           <h1 className="text-2xl font-bold mb-4 text-center">
             Withdraw Funds
           </h1>
+          
+          {/* Add withdrawal type toggle */}
+          <div className="mb-4">
+            <div className="flex justify-center space-x-4 mb-2">
+              <button
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  withdrawalType === "balance"
+                    ? "bg-secondary text-white"
+                    : "bg-gray-200 text-gray-800"
+                }`}
+                onClick={() => setWithdrawalType("balance")}
+              >
+                Main Balance
+              </button>
+              <button
+                className={`px-4 py-2 rounded-lg font-medium ${
+                  withdrawalType === "reward"
+                    ? "bg-secondary text-white"
+                    : "bg-gray-200 text-gray-800"
+                }`}
+                onClick={() => setWithdrawalType("reward")}
+              >
+                Reward Balance
+              </button>
+            </div>
+          </div>
+          
           <p className="text-center text-gray-600 mb-4">
-            Balance:{" "}
+            {withdrawalType === "reward" ? "Reward Balance: " : "Balance: "}
             <span className="text-secondary font-bold">
               {formattedMoneyUSD(userBalance)}
             </span>
@@ -136,6 +213,21 @@ function Withdraw() {
               1 USD = {formattedMoneyNGN(conversionRate)}
             </span>
           </p>
+          
+          {/* Display message for reward withdrawals */}
+          {withdrawalType === "reward" && userBalance > 0 && (
+            <div className="bg-green-100 border border-green-300 text-green-700 p-3 rounded-lg mb-4 text-center">
+              You are withdrawing your entire reward balance: {formattedMoneyUSD(userBalance)}
+            </div>
+          )}
+          
+          {/* Show warning if reward balance is 0 */}
+          {withdrawalType === "reward" && userBalance <= 0 && (
+            <div className="bg-yellow-100 border border-yellow-300 text-yellow-700 p-3 rounded-lg mb-4 text-center">
+              You don't have any rewards to withdraw.
+            </div>
+          )}
+          
           <div className="flex justify-around mb-6">
             <button
               className={`px-4 py-2 rounded-lg font-medium ${
@@ -158,7 +250,9 @@ function Withdraw() {
               Withdraw Naira
             </button>
           </div>
-          {selectedOption && (
+          
+          {/* Only show amount field for balance withdrawals */}
+          {withdrawalType === "balance" && selectedOption && (
             <div>
               <InputField
                 type="number"
@@ -170,6 +264,7 @@ function Withdraw() {
               />
             </div>
           )}
+          
           {selectedOption === "BTC" && (
             <InputField
               label="Enter BTC Address"
@@ -180,6 +275,7 @@ function Withdraw() {
               placeholder="e.g., 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa"
             />
           )}
+          
           {selectedOption === "Naira" && (
             <>
               <label
@@ -219,14 +315,22 @@ function Withdraw() {
               />
             </>
           )}
+          
+          {/* Only enable the button if proper conditions are met */}
           {selectedOption && (
             <button
-              className="w-full mt-6 bg-bgColor text-white py-2 rounded-lg hover:bg-secondary"
+              className={`w-full mt-6 py-2 rounded-lg ${
+                (withdrawalType === "reward" && userBalance <= 0)
+                  ? "bg-gray-400 cursor-not-allowed" 
+                  : "bg-bgColor hover:bg-secondary text-white"
+              }`}
               onClick={handleProceed}
+              disabled={withdrawalType === "reward" && userBalance <= 0}
             >
               Proceed
             </button>
           )}
+          
           {!selectedOption && (
             <p className="text-center text-gray-600 mt-4">
               Please select an option to proceed.

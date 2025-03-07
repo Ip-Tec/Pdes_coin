@@ -76,6 +76,13 @@ def deposit_funds(current_user):
 def withdraw_funds(current_user):
     return UserTransactionsController.withdraw_money()
 
+# Transaction Withdrawal router
+@txn_bp.route("/withdraw-reward", methods=["POST"])
+@token_required
+def withdraw_reward(current_user):
+    return UserTransactionsController.withdraw_reward()
+
+
 
 # Get account balance router
 @txn_bp.route("/balance", methods=["GET"])

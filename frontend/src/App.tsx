@@ -106,6 +106,7 @@ const App: React.FC<AppProps> = ({ installPrompt, isInstalled, onInstall }) => {
             <Route path="/dashboard" element={<ProtectedRoute requiredRoles={["USER", "MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><Dashboard /></ProtectedRoute>} />
             <Route path="/activity" element={<ProtectedRoute requiredRoles={["USER", "MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><Activity /></ProtectedRoute>} />
             <Route path="/withdraw" element={<ProtectedRoute requiredRoles={["USER", "MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><Withdraw /></ProtectedRoute>} />
+            <Route path="/withdraw/reward" element={<ProtectedRoute requiredRoles={["USER", "MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><Withdraw /></ProtectedRoute>} />
             <Route path="/explore" element={<ProtectedRoute requiredRoles={["USER", "MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><Explore /></ProtectedRoute>} />
             <Route path="/profile" element={<ProtectedRoute requiredRoles={["USER", "MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><Profile /></ProtectedRoute>} />
             <Route path="/wallet" element={<ProtectedRoute requiredRoles={["USER", "MODERATOR", "SUPPORT", "ADMIN", "SUPER_ADMIN", "DEVELOPER", "OWNER"]}><WalletPage /></ProtectedRoute>} />

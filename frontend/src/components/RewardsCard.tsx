@@ -1,26 +1,15 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { formattedMoneyUSD } from "../utils/formatters";
-import API from "../services/api";
-import { toast } from "react-toastify";
 
 const RewardsCard: React.FC = () => {
-  const { user, setUser } = useAuth();
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const handleClaimRewards = async () => {
-    try {
-      const response = await API.post("/api/claim-rewards");
-      const { reward } = response.data;
-      toast.success(`Rewards claimed: ${formattedMoneyUSD(reward)}`);
-
-      // Update user balance locally
-      if (user) {
-        setUser({ ...user, balance: user.balance + reward });
-      }
-    } catch (error) {
-      console.error("Error claiming rewards:", error);
-      toast.error("Failed to claim rewards. Please try again.");
-    }
+    // Navigate to the withdraw page with reward parameter
+    navigate("/withdraw/reward");
   };
 
   return (
