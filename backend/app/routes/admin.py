@@ -52,7 +52,7 @@ def get_dashboard_total(current_user):
     
     # Fix for Total Withdrawals: Ensure we're correctly filtering withdrawal transactions
     total_withdrawals = db.session.query(func.sum(Transaction.amount)).filter(
-        Transaction.transaction_type.like("withdrawal")  # Using LIKE for case-sensitive match
+        Transaction.transaction_type.like("%withdrawal%")
     ).scalar() or 0
     
     # Calculate total rewards from user referral rewards
