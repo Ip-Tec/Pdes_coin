@@ -37,7 +37,9 @@ class User(db.Model):
     responses = db.relationship(
         "SupportResponse", back_populates="user", cascade="all, delete-orphan"
     )
-    user_reward_history = db.relationship("UserRewardHistory", back_populates="user", cascade="all, delete-orphan")
+    user_reward_history = db.relationship(
+        "UserRewardHistory", back_populates="user", cascade="all, delete-orphan"
+    )
 
     referral_code = db.Column(db.String(16), unique=True, nullable=True)
     referrer_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=True)
@@ -126,7 +128,7 @@ class User(db.Model):
     def set_password(self, password):
         """Hash and set the user's password"""
         self.password = generate_password_hash(password)
-        
+
     def check_password(self, password):
         """Check if the provided password matches the stored hash"""
         if not self.password:
@@ -346,10 +348,12 @@ class Crypto(db.Model):
 # Current percentage for rewards
 class RewardConfig(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    percentage_weekly = db.Column(db.Float, default=1.0)  # Keep for backward compatibility
+    percentage_weekly = db.Column(
+        db.Float, default=1.0
+    )  # Keep for backward compatibility
     # percentage_daily = db.Column(db.Float, default=0.15)  # Daily percentage (about 1% weekly)
     last_updated = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def __init__(self, percentage_weekly=1.0, percentage_daily=0.15):
         self.percentage_weekly = percentage_weekly
         self.percentage_daily = percentage_daily
@@ -367,16 +371,20 @@ class RewardConfig(db.Model):
 # Reward percentage rate and its duration
 class RewardSetting(db.Model):
     __tablename__ = "reward_settings"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     weekly_percentage = db.Column(db.Float, nullable=False, default=0.15)
     start_date = db.Column(db.DateTime, nullable=False)
     end_date = db.Column(db.DateTime, nullable=True)
-    frequency_days = db.Column(db.Integer, default=7)  # How often rewards can be claimed (default: weekly)
-    max_percentage = db.Column(db.Float, default=50)   # Max percentage of deposit that can be earned as reward
+    frequency_days = db.Column(
+        db.Integer, default=7
+    )  # How often rewards can be claimed (default: weekly)
+    max_percentage = db.Column(
+        db.Float, default=50
+    )  # Max percentage of deposit that can be earned as reward
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     def serialize(self):
         return {
             "id": self.id,
@@ -386,7 +394,7 @@ class RewardSetting(db.Model):
             "frequency_days": self.frequency_days,
             "max_percentage": self.max_percentage,
             "is_active": self.is_active,
-            "created_at": self.created_at.isoformat() if self.created_at else None
+            "created_at": self.created_at.isoformat() if self.created_at else None,
         }
 
 
@@ -987,41 +995,48 @@ def calculate_total_balance(user_id):
 # Add a function to calculate total rewards in the system
 def calculate_total_rewards():
     # Method 1: Sum rewards from completed reward transactions
-    reward_transactions = db.session.query(func.sum(Transaction.amount)).filter(
-        Transaction.transaction_type == "reward",
-        Transaction.status == "completed"
-    ).scalar() or 0
-    
+    reward_transactions = (
+        db.session.query(func.sum(Transaction.amount))
+        .filter(
+            Transaction.transaction_type == "reward", Transaction.status == "completed"
+        )
+        .scalar()
+        or 0
+    )
+
     # Method 2: Sum rewards tracked in user balances
-    rewards_from_balances = db.session.query(func.sum(Balance.rewards_earned)).scalar() or 0
-    
+    rewards_from_balances = (
+        db.session.query(func.sum(Balance.rewards_earned)).scalar() or 0
+    )
+
     # Combine both sources
     total_rewards = float(reward_transactions) + float(rewards_from_balances)
-    
+
     return total_rewards
 
 
 # Update the rewards function to process daily rewards only for users who have deposited
 
+
 def process_daily_rewards():
     reward_config = RewardConfig.query.first()
     if not reward_config:
         return {"message": "Reward configuration not found"}
-    
+
     # Get percentage from config
     percentage = reward_config.percentage_weekly
-    
+
     # Get all users
     users = User.query.all()
     total_rewards_given = 0
-    
+
     for user in users:
         # Calculate user's crypto balance
         crypto_balance = calculate_total_balance(user.id)
-        
+
         # Calculate reward amount
         reward_amount = crypto_balance * (percentage / 100)
-        
+
         if reward_amount > 0:
             # Create a reward transaction
             reward_transaction = Transaction(
@@ -1029,40 +1044,44 @@ def process_daily_rewards():
                 amount=reward_amount,
                 transaction_type="reward",
                 status="completed",
-                description=f"Weekly reward of {percentage}% on crypto balance"
+                description=f"Weekly reward of {percentage}% on crypto balance",
             )
-            
+
             # Update user's balance
             user.balance.balance += reward_amount
             user.balance.rewards_earned += reward_amount  # Track rewards specifically
-            
+
             # Add transaction to database
             db.session.add(reward_transaction)
-            
+
             # Update user's last reward date
             user.last_reward_date = datetime.utcnow()
-            
+
             total_rewards_given += reward_amount
-    
+
     # Commit all changes to database
     db.session.commit()
-    
-    return {"message": f"Rewards processed successfully. Total rewards given: {total_rewards_given}"}
+
+    return {
+        "message": f"Rewards processed successfully. Total rewards given: {total_rewards_given}"
+    }
 
 
 class UserRewardHistory(db.Model):
     __tablename__ = "user_reward_history"
-    
+
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     percentage_rate = db.Column(db.Float, nullable=False)  # Store the rate used
-    deposit_balance = db.Column(db.Float, nullable=False)  # Store balance used for calculation
+    deposit_balance = db.Column(
+        db.Float, nullable=False
+    )  # Store balance used for calculation
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
     # Relationship with user
     user = db.relationship("User", backref=db.backref("reward_history", lazy=True))
-    
+
     def serialize(self):
         return {
             "id": self.id,
