@@ -10,6 +10,7 @@ from sqlalchemy import func
 
 # User model
 class User(db.Model):
+    __tablename__ = "user"
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -1052,7 +1053,7 @@ class UserRewardHistory(db.Model):
     __tablename__ = "user_reward_history"
     
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     amount = db.Column(db.Float, nullable=False)
     percentage_rate = db.Column(db.Float, nullable=False)  # Store the rate used
     deposit_balance = db.Column(db.Float, nullable=False)  # Store balance used for calculation
